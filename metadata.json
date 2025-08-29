@@ -1,0 +1,5 @@
+{
+  "name": "실시간 코인 가격 비교 웹사이트(레퍼럴)",
+  "description": "A web application to monitor cryptocurrency prices and arbitrage opportunities ('Kimchi Premium') between domestic and overseas exchanges in real-time.",
+  "requestFramePermissions": []
+}

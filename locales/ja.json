@@ -1,0 +1,115 @@
+{
+  "header": {
+    "tether_premium": "テザープレミアム",
+    "coinbase_premium": "コインベースプレミアム",
+    "search_placeholder": "コインを検索..."
+  },
+  "auth": {
+    "login": "ログイン",
+    "signup": "会員登録",
+    "logout": "ログアウト",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "confirm_password": "パスワード確認"
+  },
+  "sidebar": {
+    "premium_header": "プレミアム",
+    "premium": "プレミアム",
+    "arbitrage": "アービトラージ",
+    "live_status": "リアルタイム状況",
+    "exchange_rate": "為替レート計算",
+    "payback": "ペイバック",
+    "guide": "裁定取引ガイド",
+    "logged_in_as": "ログインアカウント",
+    "login_required": "ログインが必要です"
+  },
+  "bottom_nav": {
+    "gimp": "プレミアム",
+    "arbitrage": "アービトラージ",
+    "trends": "トレンド",
+    "payback": "ペイバック",
+    "search": "検索"
+  },
+  "home": {
+    "title": "キムチプレミアム",
+    "subtitle": "国内外の取引所の価格差を確認してください。",
+    "domestic_exchange": "国内取引所",
+    "overseas_exchange": "海外取引所",
+    "unlock_button": "すべてのコインを見る"
+  },
+  "table": {
+    "name": "名前",
+    "price": "{{exchangeName}} 現在価格",
+    "premium": "プレミアム",
+    "change": "前日比",
+    "volume": "取引高"
+  },
+  "login": {
+    "welcome_back": "おかえりなさい",
+    "subtitle": "ログインしてダッシュボードにアクセスしてください。",
+    "error": "ログインに失敗しました。情報を確認してください。",
+    "no_account": "アカウントがありませんか？"
+  },
+  "signup": {
+    "title": "アカウント作成",
+    "subtitle": "今すぐ登録して、暗号資産プレミアムを追跡しましょう。",
+    "error_password_match": "パスワードが一致しません。",
+    "error_generic": "アカウントの作成に失敗しました。もう一度お試しください。",
+    "has_account": "すでにアカウントをお持ちですか？"
+  },
+  "subscription": {
+    "back_to_dashboard": "ダッシュボードに戻る",
+    "title": "プレミアムアクセスのロックを解除",
+    "subtitle": "すべてのコイン、リアルタイムアラート、高度な分析への無制限アクセスで、取引利益を最大化しましょう。",
+    "features_title": "含まれる機能",
+    "feature1": "50以上のすべての上場コインを表示",
+    "feature2": "リアルタイム価格アラート",
+    "feature3": "高度なアービトラージダッシュボード",
+    "feature4": "優先カスタマーサポート",
+    "feature5": "CSVへのデータエクスポート",
+    "feature6": "広告なしの体験",
+    "monthly_plan": "月額",
+    "yearly_plan": "年額",
+    "month": "月",
+    "monthly_desc": "プレミアム機能を始めて試すのに最適です。",
+    "yearly_desc": "25%以上節約し、長期トレーダーに最高の価値を。年間請求されます。",
+    "best_value": "ベストバリュー",
+    "choose_plan": "{{plan}}を選択"
+  },
+  "admin": {
+    "title": "管理パネル",
+    "back_to_main": "メインに戻る",
+    "tabs": {
+      "dashboard": "ダッシュボード",
+      "announcements": "お知らせ管理",
+      "news": "ニュース管理",
+      "settings": "設定"
+    },
+    "dashboard": {
+      "title": "ダッシュボード",
+      "total_announcements": "総お知らせ数",
+      "total_news": "総ニュース数",
+      "active_exchanges": "アクティブな取引所",
+      "exchanges_unit": "件",
+      "last_update": "最終更新",
+      "recent_activity": "最近の活動"
+    },
+    "announcements": {
+      "title": "お知らせ管理",
+      "refresh": "更新"
+    },
+    "news": {
+      "title": "ニュース管理",
+      "wip_title": "準備中の機能です。",
+      "wip_desc": "ニュース管理機能は現在開発中です。"
+    },
+    "settings": {
+      "title": "設定",
+      "auto_collection_title": "自動収集設定",
+      "collection_interval": "収集間隔（分）",
+      "retention_days": "最大保管日数",
+      "enable_exchanges_title": "取引所を有効にする",
+      "save_button": "設定を保存"
+    }
+  }
+}
