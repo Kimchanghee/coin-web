@@ -1,4 +1,3 @@
-// components/services/exchanges/upbit.ts
 import type { ExchangeService, PriceUpdateCallback } from '../../../types';
 
 const createUpbitService = (): ExchangeService => {
@@ -7,42 +6,38 @@ const createUpbitService = (): ExchangeService => {
   let reconnectTimeout: number | undefined;
   let pingInterval: number | undefined;
   
-  // Upbit에서 거래되는 주요 코인들
-  const symbols = ['BTC', 'ETH', 'SOL', 'XRP', 'USDT', 'ADA', 'DOGE', 'MATIC', 'DOT', 
-                   'AVAX', 'SHIB', 'TRX', 'LTC', 'BCH', 'LINK', 'UNI', 'ATOM', 'XLM', 
-                   'ALGO', 'NEAR', 'FIL', 'SAND', 'MANA', 'AAVE', 'GRT', 'FTM'];
-  
-  const upbitSymbols = symbols.map(s => {
-    // USDT는 KRW 마켓에서 거래되지 않으므로 제외
-    if (s === 'USDT') return null;
-    return `KRW-${s}`;
-  }).filter(Boolean);
-
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {
       try {
         console.log(`[${id}] Connecting to Upbit WebSocket...`);
         ws = new WebSocket('wss://api.upbit.com/websocket/v1');
-        
         ws.binaryType = 'blob';
         
         ws.onopen = () => {
-          console.log(`[${id}] WebSocket connected successfully`);
+          console.log(`[${id}] WebSocket connected successfully!`);
           
-          // Upbit 구독 메시지 형식
-          const subscribeMsg = [
-            { ticket: 'upbit-ticker' },
+          // Upbit 실시간 ticker 구독
+          const subscribeMessage = [
+            { ticket: "uniqueTicket" },
             { 
-              type: 'ticker', 
-              codes: upbitSymbols,
-              isOnlyRealtime: true 
-            },
-            { format: 'DEFAULT' }
+              type: "ticker", 
+              codes: [
+                "KRW-BTC", "KRW-ETH", "KRW-SOL", "KRW-XRP", "KRW-ADA", 
+                "KRW-DOGE", "KRW-MATIC", "KRW-DOT", "KRW-AVAX", "KRW-SHIB",
+                "KRW-TRX", "KRW-LTC", "KRW-BCH", "KRW-LINK", "KRW-UNI",
+                "KRW-ATOM", "KRW-XLM", "KRW-ALGO", "KRW-NEAR", "KRW-FIL",
+                "KRW-SAND", "KRW-MANA", "KRW-AAVE", "KRW-GRT", "KRW-FTM",
+                "KRW-VET", "KRW-ICP", "KRW-HBAR", "KRW-XTZ", "KRW-EOS",
+                "KRW-MKR", "KRW-ENJ", "KRW-BAT"
+              ],
+              isOnlyRealtime: true
+            }
           ];
           
-          ws?.send(JSON.stringify(subscribeMsg));
+          ws?.send(JSON.stringify(subscribeMessage));
+          console.log(`[${id}] Subscription sent`);
           
-          // 30초마다 ping 전송
+          // Ping 전송 (30초마다)
           pingInterval = setInterval(() => {
             if (ws?.readyState === WebSocket.OPEN) {
               ws.send('PING');
@@ -54,7 +49,7 @@ const createUpbitService = (): ExchangeService => {
           try {
             let data;
             
-            // Upbit은 Blob 형식으로 데이터를 전송
+            // Upbit은 Blob 형태로 데이터를 보냄
             if (event.data instanceof Blob) {
               const text = await event.data.text();
               data = JSON.parse(text);
@@ -62,19 +57,21 @@ const createUpbitService = (): ExchangeService => {
               data = JSON.parse(event.data);
             }
             
+            // ticker 데이터 처리
             if (data.type === 'ticker') {
               const symbol = data.code.replace('KRW-', '');
               const price = data.trade_price;
               
-              // 가격 업데이트 콜백 호출
+              // 가격 업데이트 콜백
               callback({
                 priceKey: `${id}-${symbol}`,
                 price: price
               });
               
-              // 24시간 변동률 등 추가 정보도 전달 가능
-              // data.signed_change_rate: 변동률
-              // data.acc_trade_volume_24h: 24시간 거래량
+              // 디버깅용 로그 (가끔씩만)
+              if (Math.random() < 0.01) {
+                console.log(`[${id}] ${symbol}: ₩${price.toLocaleString('ko-KR')}`);
+              }
             }
           } catch (error) {
             console.error(`[${id}] Error parsing message:`, error);
@@ -87,43 +84,34 @@ const createUpbitService = (): ExchangeService => {
 
         ws.onclose = (event) => {
           console.log(`[${id}] WebSocket disconnected. Code: ${event.code}, Reason: ${event.reason}`);
-          cleanup();
           
-          // 5초 후 재연결 시도
-          if (!reconnectTimeout) {
-            reconnectTimeout = setTimeout(() => {
-              reconnectTimeout = undefined;
-              connectWebSocket();
-            }, 5000);
+          // Cleanup
+          if (pingInterval) {
+            clearInterval(pingInterval);
+            pingInterval = undefined;
           }
+          
+          ws = null;
+          
+          // 3초 후 재연결
+          reconnectTimeout = setTimeout(() => {
+            console.log(`[${id}] Attempting to reconnect...`);
+            connectWebSocket();
+          }, 3000);
         };
         
       } catch (error) {
         console.error(`[${id}] Failed to connect:`, error);
-        
-        // 연결 실패 시 5초 후 재시도
-        if (!reconnectTimeout) {
-          reconnectTimeout = setTimeout(() => {
-            reconnectTimeout = undefined;
-            connectWebSocket();
-          }, 5000);
-        }
+        reconnectTimeout = setTimeout(connectWebSocket, 3000);
       }
     };
 
-    const cleanup = () => {
-      if (pingInterval) {
-        clearInterval(pingInterval);
-        pingInterval = undefined;
-      }
-    };
-
-    // WebSocket 연결 시작
+    // 연결 시작
     connectWebSocket();
   };
 
   const disconnect = () => {
-    console.log(`[${id}] Disconnecting...`);
+    console.log(`[${id}] Disconnecting service...`);
     
     if (reconnectTimeout) {
       clearTimeout(reconnectTimeout);

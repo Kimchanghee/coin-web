@@ -1,4 +1,3 @@
-// components/services/exchanges/binance.spot.ts
 import type { ExchangeService, PriceUpdateCallback } from '../../../types';
 
 const createBinanceSpotService = (): ExchangeService => {
@@ -6,47 +5,54 @@ const createBinanceSpotService = (): ExchangeService => {
   let ws: WebSocket | null = null;
   let reconnectTimeout: number | undefined;
   
-  // Binance에서 거래되는 주요 코인들 (USDT 페어)
-  const symbols = ['btc', 'eth', 'sol', 'xrp', 'ada', 'doge', 'matic', 'dot', 
-                   'avax', 'shib', 'trx', 'ltc', 'bch', 'link', 'uni', 'atom', 
-                   'xlm', 'algo', 'near', 'fil', 'sand', 'mana', 'aave', 'grt', 
-                   'ftm', 'vet', 'icp', 'hbar', 'xtz', 'eos', 'mkr', 'enj'];
-  
-  // Binance WebSocket streams 형식
-  const streams = symbols.map(s => `${s}usdt@ticker`).join('/');
-
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {
       try {
         console.log(`[${id}] Connecting to Binance Spot WebSocket...`);
         
-        // Binance Spot WebSocket endpoint
+        // Binance WebSocket streams
+        const symbols = [
+          'btcusdt', 'ethusdt', 'solusdt', 'xrpusdt', 'adausdt', 
+          'dogeusdt', 'maticusdt', 'dotusdt', 'avaxusdt', 'shibusdt',
+          'trxusdt', 'ltcusdt', 'bchusdt', 'linkusdt', 'uniusdt',
+          'atomusdt', 'xlmusdt', 'algousdt', 'nearusdt', 'filusdt',
+          'sandusdt', 'manausdt', 'aaveusdt', 'grtusdt', 'ftmusdt',
+          'vetusdt', 'icpusdt', 'hbarusdt', 'xtzusdt', 'eosusdt',
+          'mkrusdt', 'enjusdt', 'batusdt'
+        ];
+        
+        const streams = symbols.map(s => `${s}@ticker`).join('/');
         const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
+        
         ws = new WebSocket(wsUrl);
         
         ws.onopen = () => {
-          console.log(`[${id}] WebSocket connected successfully`);
+          console.log(`[${id}] WebSocket connected successfully!`);
         };
 
         ws.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data);
+            const message = JSON.parse(event.data);
             
-            // Binance stream 데이터 형식
-            if (data.stream && data.data) {
-              const ticker = data.data;
+            if (message.stream && message.data) {
+              const data = message.data;
               // s: symbol (e.g., "BTCUSDT")
               // c: current price (last price)
               // P: price change percent
               // v: volume
               
-              const symbol = ticker.s.replace('USDT', '').toUpperCase();
-              const price = parseFloat(ticker.c);
+              const symbol = data.s.replace('USDT', '');
+              const price = parseFloat(data.c);
               
               callback({
                 priceKey: `${id}-${symbol}`,
                 price: price
               });
+              
+              // 디버깅용 로그
+              if (Math.random() < 0.01) {
+                console.log(`[${id}] ${symbol}: $${price.toFixed(2)}`);
+              }
             }
           } catch (error) {
             console.error(`[${id}] Error parsing message:`, error);
@@ -62,33 +68,24 @@ const createBinanceSpotService = (): ExchangeService => {
           ws = null;
           
           // 3초 후 재연결
-          if (!reconnectTimeout) {
-            reconnectTimeout = setTimeout(() => {
-              reconnectTimeout = undefined;
-              connectWebSocket();
-            }, 3000);
-          }
+          reconnectTimeout = setTimeout(() => {
+            console.log(`[${id}] Attempting to reconnect...`);
+            connectWebSocket();
+          }, 3000);
         };
-
-        // Binance는 자동으로 ping/pong을 처리하므로 별도 구현 불필요
         
       } catch (error) {
         console.error(`[${id}] Failed to connect:`, error);
-        
-        if (!reconnectTimeout) {
-          reconnectTimeout = setTimeout(() => {
-            reconnectTimeout = undefined;
-            connectWebSocket();
-          }, 3000);
-        }
+        reconnectTimeout = setTimeout(connectWebSocket, 3000);
       }
     };
 
+    // 연결 시작
     connectWebSocket();
   };
 
   const disconnect = () => {
-    console.log(`[${id}] Disconnecting...`);
+    console.log(`[${id}] Disconnecting service...`);
     
     if (reconnectTimeout) {
       clearTimeout(reconnectTimeout);

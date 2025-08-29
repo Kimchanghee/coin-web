@@ -362,7 +362,8 @@ const ReferralBanner: React.FC = () => {
                 </div>
             </div>
             
-            <style jsx>{`
+            {/* FIX: The 'jsx' prop on the <style> tag is a Next.js feature. This is a regular React app, so it's not supported. Removed 'jsx' prop. */}
+            <style>{`
                 @keyframes slide {
                     0% { transform: translate(0, 0); }
                     100% { transform: translate(40px, 40px); }

@@ -1,39 +1,77 @@
 import type { ExchangeService, PriceUpdateCallback } from '../../../types';
-import { MOCK_COIN_DATA } from '../../../constants';
 
 const createCoinoneService = (): ExchangeService => {
   const id = 'coinone_krw';
   let intervalId: number | undefined;
-  const prices: { [key: string]: number } = {};
-
-  MOCK_COIN_DATA.forEach(coin => {
-    prices[coin.symbol] = coin.domesticPrice * 1.002;
-  });
+  let isActive = false;
 
   const connect = (callback: PriceUpdateCallback) => {
-    intervalId = setInterval(() => {
-      MOCK_COIN_DATA.forEach(coin => {
-        const volatility = coin.symbol === 'BTC' ? 0.004 : coin.symbol === 'ETH' ? 0.006 : 0.009;
-        const isJump = Math.random() < 0.01;
-        const jumpMultiplier = isJump ? (Math.random() > 0.5 ? 1.02 : 0.98) : 1;
-        const priceChangePercent = (Math.random() - 0.5) * volatility;
-        prices[coin.symbol] *= (1 + priceChangePercent) * jumpMultiplier;
-
-        if (prices[coin.symbol] < 0) {
-            prices[coin.symbol] = 0.01;
+    isActive = true;
+    
+    const fetchPrices = async () => {
+      if (!isActive) return;
+      
+      try {
+        // Vite 프록시를 통해 호출 (CORS 우회)
+        const response = await fetch('/api/coinone/ticker?currency=all');
+        
+        if (!response.ok) {
+          console.error(`[${id}] HTTP error! status: ${response.status}`);
+          return;
         }
         
-        callback({
-          priceKey: `${id}-${coin.symbol}`,
-          price: prices[coin.symbol],
-        });
-      });
-    }, 2500 + Math.random() * 1000);
+        const data = await response.json();
+        
+        if (data.result === 'success') {
+          // 각 코인별로 가격 업데이트
+          Object.keys(data).forEach(key => {
+            // result, errorCode, timestamp 필드는 제외
+            if (key !== 'result' && key !== 'errorCode' && key !== 'timestamp') {
+              const symbol = key.toUpperCase();
+              const coinData = data[key];
+              
+              if (coinData && coinData.last) {
+                const price = parseFloat(coinData.last);
+                
+                if (!isNaN(price) && price > 0) {
+                  callback({
+                    priceKey: `${id}-${symbol}`,
+                    price: price
+                  });
+                  
+                  // 디버깅용 로그
+                  if (Math.random() < 0.02) {
+                    console.log(`[${id}] ${symbol}: ₩${price.toLocaleString('ko-KR')}`);
+                  }
+                }
+              }
+            }
+          });
+          
+          console.log(`[${id}] Prices updated at ${new Date().toLocaleTimeString('ko-KR')}`);
+        } else {
+          console.error(`[${id}] API returned error:`, data);
+        }
+      } catch (error) {
+        console.error(`[${id}] Error fetching prices:`, error);
+      }
+    };
+
+    // 초기 실행
+    console.log(`[${id}] Starting service with REST API polling...`);
+    fetchPrices();
+    
+    // 2초마다 업데이트
+    intervalId = setInterval(fetchPrices, 2000);
   };
 
   const disconnect = () => {
+    console.log(`[${id}] Disconnecting service...`);
+    isActive = false;
+    
     if (intervalId) {
       clearInterval(intervalId);
+      intervalId = undefined;
     }
   };
 

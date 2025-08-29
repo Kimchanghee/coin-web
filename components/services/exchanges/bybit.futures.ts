@@ -1,39 +1,122 @@
 import type { ExchangeService, PriceUpdateCallback } from '../../../types';
-import { MOCK_COIN_DATA } from '../../../constants';
 
 const createBybitFuturesService = (): ExchangeService => {
   const id = 'bybit_usdt_futures';
-  let intervalId: number | undefined;
-  const prices: { [key: string]: number } = {};
-
-  MOCK_COIN_DATA.forEach(coin => {
-    prices[coin.symbol] = coin.overseasPrice * 0.9992;
-  });
+  let ws: WebSocket | null = null;
+  let reconnectTimeout: number | undefined;
+  let pingInterval: number | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
-    intervalId = setInterval(() => {
-      MOCK_COIN_DATA.forEach(coin => {
-        const volatility = coin.symbol === 'BTC' ? 0.004 : coin.symbol === 'ETH' ? 0.006 : 0.009;
-        const isJump = Math.random() < 0.01;
-        const jumpMultiplier = isJump ? (Math.random() > 0.5 ? 1.02 : 0.98) : 1;
-        const priceChangePercent = (Math.random() - 0.5) * volatility;
-        prices[coin.symbol] *= (1 + priceChangePercent) * jumpMultiplier;
+    const connectWebSocket = () => {
+      try {
+        console.log(`[${id}] Connecting to Bybit Futures WebSocket...`);
+        ws = new WebSocket('wss://stream.bybit.com/v5/public/linear');
         
-        if (prices[coin.symbol] < 0) {
-            prices[coin.symbol] = 0.0001;
-        }
+        ws.onopen = () => {
+          console.log(`[${id}] WebSocket connected successfully!`);
+          
+          // Bybit v5 Linear (USDT Perpetual) subscription
+          const symbols = [
+            'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT',
+            'DOGEUSDT', 'MATICUSDT', 'DOTUSDT', 'AVAXUSDT', 'SHIBUSDT',
+            'TRXUSDT', 'LTCUSDT', 'BCHUSDT', 'LINKUSDT', 'UNIUSDT'
+          ];
+          
+          const subscribeMsg = {
+            op: 'subscribe',
+            args: symbols.map(symbol => `tickers.${symbol}`)
+          };
+          
+          ws?.send(JSON.stringify(subscribeMsg));
+          console.log(`[${id}] Subscription sent`);
+          
+          // Ping 전송 (20초마다)
+          pingInterval = setInterval(() => {
+            if (ws?.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ op: 'ping' }));
+            }
+          }, 20000);
+        };
 
-        callback({
-          priceKey: `${id}-${coin.symbol}`,
-          price: prices[coin.symbol],
-        });
-      });
-    }, 1950 + Math.random() * 1000);
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            // pong 응답 처리
+            if (data.ret_msg === 'pong') {
+              return;
+            }
+            
+            // ticker 데이터 처리
+            if (data.topic && data.topic.startsWith('tickers.')) {
+              if (data.data) {
+                const tickerData = data.data;
+                const symbol = tickerData.symbol.replace('USDT', '');
+                const price = parseFloat(tickerData.lastPrice);
+                
+                callback({
+                  priceKey: `${id}-${symbol}`,
+                  price: price
+                });
+                
+                // 디버깅용 로그
+                if (Math.random() < 0.01) {
+                  console.log(`[${id}] ${symbol}: $${price.toFixed(2)}`);
+                }
+              }
+            }
+          } catch (error) {
+            console.error(`[${id}] Error parsing message:`, error);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error(`[${id}] WebSocket error:`, error);
+        };
+
+        ws.onclose = (event) => {
+          console.log(`[${id}] WebSocket disconnected. Code: ${event.code}`);
+          
+          if (pingInterval) {
+            clearInterval(pingInterval);
+            pingInterval = undefined;
+          }
+          
+          ws = null;
+          
+          // 3초 후 재연결
+          reconnectTimeout = setTimeout(() => {
+            console.log(`[${id}] Attempting to reconnect...`);
+            connectWebSocket();
+          }, 3000);
+        };
+        
+      } catch (error) {
+        console.error(`[${id}] Failed to connect:`, error);
+        reconnectTimeout = setTimeout(connectWebSocket, 3000);
+      }
+    };
+
+    // 연결 시작
+    connectWebSocket();
   };
 
   const disconnect = () => {
-    if (intervalId) {
-      clearInterval(intervalId);
+    console.log(`[${id}] Disconnecting service...`);
+    
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = undefined;
+    }
+    
+    if (pingInterval) {
+      clearInterval(pingInterval);
+      pingInterval = undefined;
+    }
+    
+    if (ws) {
+      ws.close();
+      ws = null;
     }
   };
 
