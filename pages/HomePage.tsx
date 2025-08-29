@@ -274,65 +274,116 @@ const KimchiPremiumTable: React.FC<{
     );
 };
 
+// HomePage.tsx 내의 ReferralBanner 컴포넌트 부분만 교체
+// (HomePage.tsx 파일의 다른 부분은 그대로 유지)
+
 const ReferralBanner: React.FC = () => {
     const { t } = useTranslation();
     const referralLink = "https://www.gate.com/share/DJBWKAIF";
-  
-    return (
-      <a href={referralLink} target="_blank" rel="noopener noreferrer" className="block banner-wrapper mx-auto">
-        {/* PC Banner */}
-        <div className="pc-banner-container">
-          <div className="pc-banner">
-            <svg className="chart-bg" viewBox="0 0 300 120">
-              <polyline className="chart-line" points="10,100 50,80 90,40 130,60 170,20 210,50 250,30 290,10" />
-            </svg>
-            <span className="sparkle sparkle1">✦</span>
-            <span className="sparkle sparkle2">✦</span>
-            <span className="sparkle sparkle3">✦</span>
-            <span className="sparkle sparkle4">✦</span>
-            
-            <div className="banner-content">
-              <div className="logo">GATE.IO</div>
-              <div className="text-section">
-                <div className="main-title">{t('banner.pc_main_title')}</div>
-                <div className="sub-title">{t('banner.pc_sub_title')}</div>
-              </div>
-              <div>
-                <div className="discount-badge" data-upto={t('banner.up_to')}>50%</div>
-                <div className="discount-text">{t('banner.discount_text')}</div>
-              </div>
-              <div>
-                <button className="cta-button">{t('banner.cta_pc')}</button>
-                <div className="bonus-text" style={{textAlign: 'center', marginTop: '10px'}}>{t('banner.bonus_pc')}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-  
-        {/* Mobile Banner */}
-        <div className="mobile-banner-container">
-          <div className="mobile-banner">
-            <span className="sparkle sparkle1">✦</span>
-            <span className="sparkle sparkle3">✦</span>
-            
-            <div className="banner-content">
-              <div className="logo">GATE.IO</div>
-              <div className="text-section">
-                <div className="main-title">{t('banner.mobile_main_title')}</div>
-                <div className="sub-title">{t('banner.mobile_sub_title')}</div>
-              </div>
-              <div className="discount-badge" data-upto={t('banner.up_to')}>50%</div>
-              <div>
-                <button className="cta-button">{t('banner.cta_mobile')}</button>
-                <div className="bonus-text" style={{textAlign: 'center', marginTop: '10px'}}>{t('banner.bonus_mobile')}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </a>
-    );
-  };
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return (
+        <a 
+            href={referralLink} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="block w-full mb-8 no-underline"
+        >
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-black via-slate-900 to-black p-4 md:p-6 lg:p-8 border border-cyan-500/30 shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1">
+                {/* Animated background grid */}
+                <div className="absolute inset-0 opacity-20 pointer-events-none">
+                    <div 
+                        className="absolute inset-0 bg-[size:40px_40px] animate-slide"
+                        style={{
+                            backgroundImage: `linear-gradient(to right, rgba(8, 145, 178, 0.2) 1px, transparent 1px), 
+                                            linear-gradient(to bottom, rgba(8, 145, 178, 0.2) 1px, transparent 1px)`
+                        }}
+                    />
+                </div>
+                
+                {/* Sparkles */}
+                <span className="absolute top-4 left-4 text-yellow-400 text-xl animate-pulse">✦</span>
+                <span className="absolute top-8 right-8 text-yellow-400 text-xl animate-pulse" style={{animationDelay: '0.5s'}}>✦</span>
+                <span className="absolute bottom-4 left-1/3 text-yellow-400 text-xl animate-pulse" style={{animationDelay: '1s'}}>✦</span>
+                <span className="absolute bottom-8 right-4 text-yellow-400 text-xl animate-pulse" style={{animationDelay: '1.5s'}}>✦</span>
+                
+                {/* Content */}
+                <div className="relative z-10 flex flex-col md:flex-row items-center gap-4 md:gap-6 lg:gap-8">
+                    {/* Logo */}
+                    <div className="flex-shrink-0">
+                        <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/50 transform hover:rotate-3 transition-transform duration-300">
+                            <span className="text-white font-black text-base md:text-lg lg:text-xl">GATE.IO</span>
+                        </div>
+                    </div>
+                    
+                    {/* Text Section */}
+                    <div className="flex-1 text-center md:text-left">
+                        <h3 className="text-xl md:text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-400 to-white animate-shimmer bg-[size:200%_auto]">
+                            {isMobile ? t('banner.mobile_main_title') : t('banner.pc_main_title')}
+                        </h3>
+                        <p className="text-sm md:text-base text-gray-400 mt-1">
+                            {isMobile ? t('banner.mobile_sub_title') : t('banner.pc_sub_title')}
+                        </p>
+                    </div>
+                    
+                    {/* Discount Badge */}
+                    <div className="flex flex-col items-center">
+                        <div className="relative">
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap z-10">
+                                {t('banner.up_to')}
+                            </div>
+                            <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white font-black text-3xl md:text-4xl px-6 py-3 rounded-lg shadow-lg shadow-red-500/50 transform hover:scale-105 transition-transform duration-300">
+                                50%
+                            </div>
+                            <div className="text-xs text-green-400 font-bold text-center mt-1 uppercase tracking-wider">
+                                {t('banner.discount_text')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* CTA Button */}
+                    <div className="flex flex-col items-center gap-2">
+                        <button className="bg-gradient-to-r from-green-400 to-cyan-400 text-black font-black text-sm md:text-base px-6 md:px-8 py-2.5 md:py-3 rounded-lg shadow-lg hover:shadow-green-400/50 transition-all duration-300 hover:scale-105 uppercase tracking-wider whitespace-nowrap">
+                            {isMobile ? t('banner.cta_mobile') : t('banner.cta_pc')}
+                        </button>
+                        <span className="text-xs text-yellow-400 font-bold animate-pulse">
+                            {isMobile ? t('banner.bonus_mobile') : t('banner.bonus_pc')}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <style jsx>{`
+                @keyframes slide {
+                    0% { transform: translate(0, 0); }
+                    100% { transform: translate(40px, 40px); }
+                }
+                
+                @keyframes shimmer {
+                    0% { background-position: 0% center; }
+                    100% { background-position: 200% center; }
+                }
+                
+                .animate-slide {
+                    animation: slide 20s linear infinite;
+                }
+                
+                .animate-shimmer {
+                    animation: shimmer 3s linear infinite;
+                }
+            `}</style>
+        </a>
+    );
+};
 
 // Main Page Component
 const HomePage: React.FC = () => {
