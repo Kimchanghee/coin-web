@@ -428,12 +428,28 @@ const HomePage: React.FC = () => {
     }, [i18n.language, translatedDomesticExchanges, translatedOverseasExchanges]);
 
     useEffect(() => {
-        const handlePriceUpdate = (update: { priceKey: string; price: number }) => {
+        const handleUpdate = (update: any) => {
             setAllPrices(prev => ({ ...prev, [update.priceKey]: update.price }));
+            
+            if (update.change24h !== undefined || update.volume24h !== undefined) {
+                setAllExtendedData(prev => ({
+                    ...prev,
+                    [update.priceKey]: {
+                        change24h: update.change24h,
+                        volume24h: update.volume24h
+                    }
+                }));
+            }
         };
 
-        allServices.forEach(service => service.connect(handlePriceUpdate));
-
+        allServices.forEach(service => {
+            const extService = service as any;
+            if (extService.connectExtended) {
+                extService.connectExtended(handleUpdate);
+            } else {
+                service.connect(handleUpdate);
+            }
+        });
         return () => {
             allServices.forEach(service => service.disconnect());
         };
