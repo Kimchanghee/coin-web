@@ -3,7 +3,8 @@ import { MOCK_COIN_DATA } from '../../../constants';
 
 const createGateioService = (): ExchangeService => {
   const id = 'gateio_usdt';
-  let intervalId: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let intervalId: ReturnType<typeof setInterval> | undefined;
   const prices: { [key:string]: number } = {};
 
   MOCK_COIN_DATA.forEach(coin => {

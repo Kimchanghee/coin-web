@@ -2,7 +2,8 @@ import type { ExchangeService, PriceUpdateCallback } from '../../../types';
 
 const createCoinoneService = (): ExchangeService => {
   const id = 'coinone_krw';
-  let intervalId: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let intervalId: ReturnType<typeof setInterval> | undefined;
   let isActive = false;
 
   const connect = (callback: PriceUpdateCallback) => {

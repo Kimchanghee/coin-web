@@ -3,8 +3,10 @@ import type { ExchangeService, PriceUpdateCallback } from '../../../types';
 const createBybitFuturesService = (): ExchangeService => {
   const id = 'bybit_usdt_futures';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
-  let pingInterval: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let pingInterval: ReturnType<typeof setInterval> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {

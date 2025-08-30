@@ -2,7 +2,8 @@ import type { DashboardService, Stats, Activity, ExchangeId, StatsUpdateCallback
 import { EXCHANGES } from '../../constants';
 
 const createDashboardService = (): DashboardService => {
-  let statsInterval: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let statsInterval: ReturnType<typeof setInterval> | undefined;
 
   const connect = async (statsCallback: StatsUpdateCallback, activityCallback: ActivityUpdateCallback) => {
     try {

@@ -3,7 +3,8 @@ import type { ExchangeService, PriceUpdateCallback } from '../../../types';
 const createBinanceFuturesService = (): ExchangeService => {
   const id = 'binance_usdt_futures';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {

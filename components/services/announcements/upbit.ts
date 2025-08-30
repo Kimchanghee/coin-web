@@ -3,7 +3,8 @@ import type { ExchangeId, Announcement, AnnouncementService, AnnouncementCallbac
 
 const createUpbitAnnouncementService = (): AnnouncementService => {
   const id: ExchangeId = 'upbit';
-  let intervalId: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let intervalId: ReturnType<typeof setInterval> | undefined;
   let lastAnnouncementIds = new Set<string>();
   let isActive = false;
   

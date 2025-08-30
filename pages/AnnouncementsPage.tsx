@@ -20,7 +20,7 @@ const Header: React.FC<{ onMenuClick: () => void; user: User | null }> = ({ onMe
                         <i className="fas fa-bars"></i>
                     </button>
                     <Link to="/" className="font-bold text-black dark:text-white text-xl">
-                        theda
+                        TeamYM
                     </Link>
                 </div>
                 <div className="hidden md:flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300">

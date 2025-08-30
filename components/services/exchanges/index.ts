@@ -37,7 +37,8 @@ import type { ExchangeService, PriceUpdateCallback } from '../../../types';
 export const createUpbitService = (): ExchangeService => {
   const id = 'upbit_krw';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   
   const symbols = ['BTC', 'ETH', 'SOL', 'XRP', 'ADA', 'DOGE', 'MATIC', 'DOT', 
                    'AVAX', 'SHIB', 'TRX', 'LTC', 'BCH', 'LINK', 'UNI', 'ATOM'];
@@ -99,7 +100,8 @@ export const createUpbitService = (): ExchangeService => {
 // components/services/exchanges/bithumb.ts
 export const createBithumbService = (): ExchangeService => {
   const id = 'bithumb_krw';
-  let intervalId: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let intervalId: ReturnType<typeof setInterval> | undefined;
   
   const connect = (callback: PriceUpdateCallback) => {
     const fetchPrices = async () => {
@@ -138,7 +140,8 @@ export const createBithumbService = (): ExchangeService => {
 // components/services/exchanges/coinone.ts
 export const createCoinoneService = (): ExchangeService => {
   const id = 'coinone_krw';
-  let intervalId: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let intervalId: ReturnType<typeof setInterval> | undefined;
   
   const connect = (callback: PriceUpdateCallback) => {
     const fetchPrices = async () => {
@@ -178,7 +181,8 @@ export const createCoinoneService = (): ExchangeService => {
 export const createBinanceSpotService = (): ExchangeService => {
   const id = 'binance_usdt_spot';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   
   const symbols = ['btc', 'eth', 'sol', 'xrp', 'ada', 'doge', 'matic', 'dot', 
                    'avax', 'shib', 'trx', 'ltc', 'bch', 'link', 'uni', 'atom'];
@@ -231,7 +235,8 @@ export const createBinanceSpotService = (): ExchangeService => {
 export const createBinanceFuturesService = (): ExchangeService => {
   const id = 'binance_usdt_futures';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   
   const symbols = ['btc', 'eth', 'sol', 'xrp', 'ada', 'doge', 'matic', 'dot'];
   const streams = symbols.map(s => `${s}usdt@ticker`).join('/');
@@ -282,8 +287,10 @@ export const createBinanceFuturesService = (): ExchangeService => {
 export const createBybitSpotService = (): ExchangeService => {
   const id = 'bybit_usdt_spot';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
-  let pingInterval: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let pingInterval: ReturnType<typeof setInterval> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {
@@ -346,7 +353,8 @@ export const createBybitSpotService = (): ExchangeService => {
 export const createBybitFuturesService = (): ExchangeService => {
   const id = 'bybit_usdt_futures';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {
@@ -401,7 +409,8 @@ export const createBybitFuturesService = (): ExchangeService => {
 export const createOKXSpotService = (): ExchangeService => {
   const id = 'okx_usdt_spot';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {
@@ -458,7 +467,8 @@ export const createOKXSpotService = (): ExchangeService => {
 export const createOKXFuturesService = (): ExchangeService => {
   const id = 'okx_usdt_futures';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {
@@ -515,7 +525,8 @@ export const createOKXFuturesService = (): ExchangeService => {
 export const createGateioSpotService = (): ExchangeService => {
   const id = 'gateio_usdt_spot';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {
@@ -572,7 +583,8 @@ export const createGateioSpotService = (): ExchangeService => {
 export const createGateioFuturesService = (): ExchangeService => {
   const id = 'gateio_usdt_futures';
   let ws: WebSocket | null = null;
-  let reconnectTimeout: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
+  let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
     const connectWebSocket = () => {
@@ -630,7 +642,8 @@ export const createGateioFuturesService = (): ExchangeService => {
 // components/services/exchanges/bitget.spot.ts
 export const createBitgetSpotService = (): ExchangeService => {
   const id = 'bitget_usdt_spot';
-  let intervalId: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let intervalId: ReturnType<typeof setInterval> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
     const fetchPrices = async () => {
@@ -666,7 +679,8 @@ export const createBitgetSpotService = (): ExchangeService => {
 // components/services/exchanges/bitget.futures.ts
 export const createBitgetFuturesService = (): ExchangeService => {
   const id = 'bitget_usdt_futures';
-  let intervalId: number | undefined;
+  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
+  let intervalId: ReturnType<typeof setInterval> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
     const fetchPrices = async () => {
