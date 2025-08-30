@@ -1,11 +1,10 @@
+// components/services/exchanges/bybit.spot.ts
 import type { ExchangeService, PriceUpdateCallback } from '../../../types';
 
 const createBybitSpotService = (): ExchangeService => {
   const id = 'bybit_usdt_spot';
   let ws: WebSocket | null = null;
-  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
   let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
-  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
   let pingInterval: ReturnType<typeof setInterval> | undefined;
 
   const connect = (callback: PriceUpdateCallback) => {
@@ -62,8 +61,8 @@ const createBybitSpotService = (): ExchangeService => {
                   price: price
                 });
                 
-                // 디버깅용 로그
-                if (Math.random() < 0.01) {
+                // 디버깅용 로그 (주요 코인만)
+                if (symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') {
                   console.log(`[${id}] ${symbol}: $${price.toFixed(2)}`);
                 }
               }
@@ -87,16 +86,16 @@ const createBybitSpotService = (): ExchangeService => {
           
           ws = null;
           
-          // 3초 후 재연결
+          // 5초 후 재연결
           reconnectTimeout = setTimeout(() => {
             console.log(`[${id}] Attempting to reconnect...`);
             connectWebSocket();
-          }, 3000);
+          }, 5000);
         };
         
       } catch (error) {
         console.error(`[${id}] Failed to connect:`, error);
-        reconnectTimeout = setTimeout(connectWebSocket, 3000);
+        reconnectTimeout = setTimeout(connectWebSocket, 5000);
       }
     };
 

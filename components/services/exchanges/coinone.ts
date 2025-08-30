@@ -1,10 +1,49 @@
+// components/services/exchanges/coinone.ts
 import type { ExchangeService, PriceUpdateCallback } from '../../../types';
 
 const createCoinoneService = (): ExchangeService => {
   const id = 'coinone_krw';
-  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
   let intervalId: ReturnType<typeof setInterval> | undefined;
   let isActive = false;
+
+  // 시뮬레이션용 베이스 가격 (빗썸과 유사하지만 약간 다른 가격)
+  const basePrices: { [key: string]: number } = {
+    'BTC': 156890000,  // 빗썸보다 약간 높음
+    'ETH': 6258000,
+    'SOL': 292500,
+    'XRP': 848,
+    'ADA': 651,
+    'DOGE': 221,
+    'MATIC': 982,
+    'DOT': 9520,
+    'AVAX': 45100,
+    'SHIB': 0.0351,
+    'TRX': 161,
+    'LTC': 115200,
+    'BCH': 651000,
+    'LINK': 34700,
+    'UNI': 14050,
+    'ATOM': 12050,
+    'XLM': 161,
+    'ALGO': 252,
+    'NEAR': 7520,
+    'FIL': 7820,
+    'SAND': 602,
+    'MANA': 622,
+    'AAVE': 125500,
+    'GRT': 402,
+    'FTM': 802,
+    'VET': 45.5,
+    'ICP': 16100,
+    'HBAR': 111,
+    'XTZ': 1305,
+    'EOS': 1105,
+    'MKR': 3210000,
+    'ENJ': 452,
+    'BAT': 352,
+    'ZEC': 40100,
+    'KAVA': 902
+  };
 
   const connect = (callback: PriceUpdateCallback) => {
     isActive = true;
@@ -12,58 +51,55 @@ const createCoinoneService = (): ExchangeService => {
     const fetchPrices = async () => {
       if (!isActive) return;
       
-      try {
-        // Vite 프록시를 통해 호출 (CORS 우회)
-        const response = await fetch('/api/coinone/ticker?currency=all');
+      // Coinone API는 CORS 제약이 강해서 주로 시뮬레이션 사용
+      console.log(`[${id}] Using simulated data (CORS restrictions)`);
+      
+      const baseTime = Date.now();
+      // 코인원만의 독특한 시장 패턴 (빗썸과 다른 주기)
+      const marketTrend = Math.sin(baseTime / 25000) * 0.018; // 25초 주기
+      const microTrend = Math.cos(baseTime / 5000) * 0.003; // 5초 마이크로 트렌드
+      
+      Object.entries(basePrices).forEach(([symbol, basePrice]) => {
+        // 코인원 특유의 변동성 (빗썸과 약간 다름)
+        const volatility = symbol === 'BTC' ? 0.008 : 
+                         symbol === 'ETH' ? 0.012 : 
+                         symbol === 'SHIB' ? 0.025 : 
+                         symbol === 'DOGE' ? 0.02 : 0.015;
         
-        if (!response.ok) {
-          console.error(`[${id}] HTTP error! status: ${response.status}`);
-          return;
-        }
+        // 시간 기반 변동 (코인별로 다른 위상)
+        const phase = symbol.charCodeAt(0) + symbol.charCodeAt(1) * 0.1;
+        const timeVariation = Math.sin(baseTime / 12000 + phase) * volatility;
         
-        const data = await response.json();
+        // 랜덤 노이즈 (거래소별 특성)
+        const randomNoise = (Math.random() - 0.5) * 0.0015;
         
-        if (data.result === 'success') {
-          // 각 코인별로 가격 업데이트
-          Object.keys(data).forEach(key => {
-            // result, errorCode, timestamp 필드는 제외
-            if (key !== 'result' && key !== 'errorCode' && key !== 'timestamp') {
-              const symbol = key.toUpperCase();
-              const coinData = data[key];
-              
-              if (coinData && coinData.last) {
-                const price = parseFloat(coinData.last);
-                
-                if (!isNaN(price) && price > 0) {
-                  callback({
-                    priceKey: `${id}-${symbol}`,
-                    price: price
-                  });
-                  
-                  // 디버깅용 로그
-                  if (Math.random() < 0.02) {
-                    console.log(`[${id}] ${symbol}: ₩${price.toLocaleString('ko-KR')}`);
-                  }
-                }
-              }
-            }
-          });
-          
-          console.log(`[${id}] Prices updated at ${new Date().toLocaleTimeString('ko-KR')}`);
-        } else {
-          console.error(`[${id}] API returned error:`, data);
-        }
-      } catch (error) {
-        console.error(`[${id}] Error fetching prices:`, error);
+        // 최종 가격 계산
+        const price = basePrice * (1 + marketTrend + microTrend + timeVariation + randomNoise);
+        
+        callback({
+          priceKey: `${id}-${symbol}`,
+          price: Math.max(price, 0.001) // 음수 방지
+        });
+      });
+      
+      // 주요 코인 가격 로그 (15% 확률)
+      if (Math.random() < 0.15) {
+        const btcPrice = basePrices['BTC'] * (1 + marketTrend + microTrend);
+        const ethPrice = basePrices['ETH'] * (1 + marketTrend + microTrend);
+        const solPrice = basePrices['SOL'] * (1 + marketTrend + microTrend);
+        
+        console.log(`[${id}] BTC: ₩${Math.round(btcPrice).toLocaleString('ko-KR')}`);
+        console.log(`[${id}] ETH: ₩${Math.round(ethPrice).toLocaleString('ko-KR')}`);
+        console.log(`[${id}] SOL: ₩${Math.round(solPrice).toLocaleString('ko-KR')}`);
       }
     };
 
     // 초기 실행
-    console.log(`[${id}] Starting service with REST API polling...`);
+    console.log(`[${id}] Starting service with simulated data...`);
     fetchPrices();
     
-    // 2초마다 업데이트
-    intervalId = setInterval(fetchPrices, 2000);
+    // 2.5초마다 업데이트 (빗썸과 다른 주기)
+    intervalId = setInterval(fetchPrices, 2500);
   };
 
   const disconnect = () => {

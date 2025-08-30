@@ -94,3 +94,32 @@ export interface DashboardService {
   connect: (statsCallback: StatsUpdateCallback, activityCallback: ActivityUpdateCallback) => void;
   disconnect: () => void;
 }
+
+// types.ts에 추가할 타입들
+export interface ExtendedPriceUpdate extends PriceUpdate {
+  change24h?: number;      // 24시간 변동률 (%)
+  volume24h?: number;       // 24시간 거래대금 (KRW or USD)
+  changePrice?: number;     // 변동 금액
+}
+
+export type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
+
+export interface ExtendedExchangeService extends ExchangeService {
+  connectExtended?: (callback: ExtendedPriceUpdateCallback) => void;
+}
+
+// Types for Exchange Services
+export interface PriceUpdate {
+  priceKey: string; // e.g., 'upbit_krw-BTC'
+  price: number;
+}
+
+// Extended price update with volume and change data
+export interface ExtendedPriceUpdate extends PriceUpdate {
+  change24h?: number;      // 24시간 변동률 (%)
+  volume24h?: number;       // 24시간 거래대금 (KRW or USD)
+  changePrice?: number;     // 변동 금액
+}
+
+export type PriceUpdateCallback = (update: PriceUpdate) => void;
+export type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;

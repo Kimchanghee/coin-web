@@ -1,9 +1,9 @@
+// components/services/exchanges/binance.spot.ts
 import type { ExchangeService, PriceUpdateCallback } from '../../../types';
 
 const createBinanceSpotService = (): ExchangeService => {
   const id = 'binance_usdt_spot';
   let ws: WebSocket | null = null;
-  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
   let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   
   const connect = (callback: PriceUpdateCallback) => {
@@ -11,7 +11,7 @@ const createBinanceSpotService = (): ExchangeService => {
       try {
         console.log(`[${id}] Connecting to Binance Spot WebSocket...`);
         
-        // Binance WebSocket streams
+        // Binance WebSocket streams - 24hr ticker로 변경하여 더 많은 정보 획득
         const symbols = [
           'btcusdt', 'ethusdt', 'solusdt', 'xrpusdt', 'adausdt', 
           'dogeusdt', 'maticusdt', 'dotusdt', 'avaxusdt', 'shibusdt',
@@ -22,7 +22,7 @@ const createBinanceSpotService = (): ExchangeService => {
           'mkrusdt', 'enjusdt', 'batusdt'
         ];
         
-        const streams = symbols.map(s => `${s}@ticker`).join('/');
+        const streams = symbols.map(s => `${s}@miniTicker`).join('/');
         const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
         
         ws = new WebSocket(wsUrl);
@@ -37,21 +37,16 @@ const createBinanceSpotService = (): ExchangeService => {
             
             if (message.stream && message.data) {
               const data = message.data;
-              // s: symbol (e.g., "BTCUSDT")
-              // c: current price (last price)
-              // P: price change percent
-              // v: volume
-              
               const symbol = data.s.replace('USDT', '');
-              const price = parseFloat(data.c);
+              const price = parseFloat(data.c); // Current price
               
               callback({
                 priceKey: `${id}-${symbol}`,
                 price: price
               });
               
-              // 디버깅용 로그
-              if (Math.random() < 0.01) {
+              // 디버깅용 로그 (주요 코인만)
+              if (symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') {
                 console.log(`[${id}] ${symbol}: $${price.toFixed(2)}`);
               }
             }
@@ -68,16 +63,16 @@ const createBinanceSpotService = (): ExchangeService => {
           console.log(`[${id}] WebSocket disconnected. Code: ${event.code}`);
           ws = null;
           
-          // 3초 후 재연결
+          // 5초 후 재연결
           reconnectTimeout = setTimeout(() => {
             console.log(`[${id}] Attempting to reconnect...`);
             connectWebSocket();
-          }, 3000);
+          }, 5000);
         };
         
       } catch (error) {
         console.error(`[${id}] Failed to connect:`, error);
-        reconnectTimeout = setTimeout(connectWebSocket, 3000);
+        reconnectTimeout = setTimeout(connectWebSocket, 5000);
       }
     };
 

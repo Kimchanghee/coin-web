@@ -390,6 +390,7 @@ const ReferralBanner: React.FC = () => {
 const HomePage: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [allPrices, setAllPrices] = useState<Record<string, number>>({});
+    const [allExtendedData, setAllExtendedData] = useState<Record<string, { change24h?: number; volume24h?: number }>>({});
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'volume', direction: 'desc' });
     const { user } = useAuth();
     const { t, i18n } = useTranslation();

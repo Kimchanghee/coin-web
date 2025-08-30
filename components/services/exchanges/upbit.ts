@@ -1,14 +1,20 @@
-import type { ExchangeService, PriceUpdateCallback } from '../../../types';
+// components/services/exchanges/upbit.ts
+import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+
+// ExtendedPriceUpdate 타입을 사용 (types.ts에 정의됨)
+type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
 const createUpbitService = (): ExchangeService => {
   const id = 'upbit_krw';
   let ws: WebSocket | null = null;
-  // FIX: Changed type from 'number' to a type compatible with setTimeout's return value in all environments.
   let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
-  // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
   let pingInterval: ReturnType<typeof setInterval> | undefined;
   
-  const connect = (callback: PriceUpdateCallback) => {
+  // 거래대금과 전일대비 데이터를 저장
+  const extendedData: Map<string, ExtendedPriceUpdate> = new Map();
+  
+  // 확장된 콜백 지원
+  const connectExtended = (callback: ExtendedPriceUpdateCallback) => {
     const connectWebSocket = () => {
       try {
         console.log(`[${id}] Connecting to Upbit WebSocket...`);
@@ -30,21 +36,23 @@ const createUpbitService = (): ExchangeService => {
                 "KRW-ATOM", "KRW-XLM", "KRW-ALGO", "KRW-NEAR", "KRW-FIL",
                 "KRW-SAND", "KRW-MANA", "KRW-AAVE", "KRW-GRT", "KRW-FTM",
                 "KRW-VET", "KRW-ICP", "KRW-HBAR", "KRW-XTZ", "KRW-EOS",
-                "KRW-MKR", "KRW-ENJ", "KRW-BAT"
+                "KRW-MKR", "KRW-ENJ", "KRW-BAT", "KRW-ZEC", "KRW-KAVA"
               ],
               isOnlyRealtime: true
-            }
+            },
+            { format: "DEFAULT" }
           ];
           
           ws?.send(JSON.stringify(subscribeMessage));
           console.log(`[${id}] Subscription sent`);
           
-          // Ping 전송 (30초마다)
+          // Ping 전송 (60초마다) - Upbit은 120초 타임아웃
           pingInterval = setInterval(() => {
             if (ws?.readyState === WebSocket.OPEN) {
               ws.send('PING');
+              console.log(`[${id}] Ping sent`);
             }
-          }, 30000);
+          }, 60000);
         };
 
         ws.onmessage = async (event) => {
@@ -63,16 +71,33 @@ const createUpbitService = (): ExchangeService => {
             if (data.type === 'ticker') {
               const symbol = data.code.replace('KRW-', '');
               const price = data.trade_price;
+              const change24h = data.signed_change_rate * 100; // 변동률 (%)
+              const volume24h = data.acc_trade_price_24h; // 24시간 거래대금 (KRW)
+              const changePrice = data.signed_change_price; // 변동 금액
               
-              // 가격 업데이트 콜백
-              callback({
-                priceKey: `${id}-${symbol}`,
-                price: price
+              // 확장 데이터 저장
+              const priceKey = `${id}-${symbol}`;
+              extendedData.set(priceKey, {
+                priceKey,
+                price,
+                change24h,
+                volume24h,
+                changePrice
               });
               
-              // 디버깅용 로그 (가끔씩만)
-              if (Math.random() < 0.01) {
-                console.log(`[${id}] ${symbol}: ₩${price.toLocaleString('ko-KR')}`);
+              // 확장 데이터로 콜백 호출
+              callback({
+                priceKey: priceKey,
+                price: price,
+                change24h: change24h,
+                volume24h: volume24h,
+                changePrice: changePrice
+              });
+              
+              // 디버깅용 로그 (주요 코인만)
+              if (symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') {
+                const volumeInBillion = (volume24h / 100000000).toFixed(0);
+                console.log(`[${id}] ${symbol}: ₩${price.toLocaleString('ko-KR')} | 전일대비: ${change24h.toFixed(2)}% | 거래대금: ₩${volumeInBillion}억`);
               }
             }
           } catch (error) {
@@ -95,21 +120,32 @@ const createUpbitService = (): ExchangeService => {
           
           ws = null;
           
-          // 3초 후 재연결
+          // 5초 후 재연결
           reconnectTimeout = setTimeout(() => {
             console.log(`[${id}] Attempting to reconnect...`);
             connectWebSocket();
-          }, 3000);
+          }, 5000);
         };
         
       } catch (error) {
         console.error(`[${id}] Failed to connect:`, error);
-        reconnectTimeout = setTimeout(connectWebSocket, 3000);
+        reconnectTimeout = setTimeout(connectWebSocket, 5000);
       }
     };
 
     // 연결 시작
     connectWebSocket();
+  };
+  
+  // 기본 connect (하위 호환성)
+  const connect = (callback: PriceUpdateCallback) => {
+    // ExtendedPriceUpdate를 PriceUpdate로 변환
+    connectExtended((update) => {
+      callback({
+        priceKey: update.priceKey,
+        price: update.price
+      });
+    });
   };
 
   const disconnect = () => {
@@ -129,9 +165,23 @@ const createUpbitService = (): ExchangeService => {
       ws.close();
       ws = null;
     }
+    
+    extendedData.clear();
   };
 
-  return { id, connect, disconnect };
+  // 확장 데이터 가져오기 (필요시 사용)
+  const getExtendedData = (symbol: string): ExtendedPriceUpdate | undefined => {
+    return extendedData.get(`${id}-${symbol}`);
+  };
+
+  return { 
+    id, 
+    connect,
+    connectExtended, // 확장 연결 메서드 추가
+    disconnect,
+    // 확장 기능 (선택적)
+    getExtendedData
+  };
 };
 
 export const upbitService = createUpbitService();
