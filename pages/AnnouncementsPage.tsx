@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../context/AuthContext';
-import type { Announcement, ExchangeId, User } from '../types';
-import { EXCHANGES } from '../constants';
-import { allAnnouncementServices } from '../components/services/announcements';
-import LanguageSwitcher from '../components/LanguageSwitcher';
-import Clock from '../components/Clock';
-import ThemeToggle from '../components/ThemeToggle';
+import { useAuth } from '../context/AuthContext.js';
+import type { Announcement, ExchangeId, User } from '../types.js';
+import { EXCHANGES } from '../constants.js';
+import { allAnnouncementServices } from '../components/services/announcements/index.js';
+import LanguageSwitcher from '../components/LanguageSwitcher.js';
+import Clock from '../components/Clock.js';
+import ThemeToggle from '../components/ThemeToggle.js';
 
 // Header Component (copied from HomePage)
 const Header: React.FC<{ onMenuClick: () => void; user: User | null }> = ({ onMenuClick, user }) => {
