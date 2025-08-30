@@ -94,10 +94,16 @@ const createUpbitService = (): ExchangeService => {
                 changePrice: changePrice
               });
               
-              // 디버깅용 로그 (주요 코인만)
+              // 디버깅용 상세 로그
               if (symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') {
                 const volumeInBillion = (volume24h / 100000000).toFixed(0);
-                console.log(`[${id}] ${symbol}: ₩${price.toLocaleString('ko-KR')} | 전일대비: ${change24h.toFixed(2)}% | 거래대금: ₩${volumeInBillion}억`);
+                console.log(`[${id}] Extended Data Sent:`, {
+                  symbol,
+                  price,
+                  change24h: `${change24h.toFixed(2)}%`,
+                  volume24h,
+                  volumeFormatted: `₩${volumeInBillion}억`
+                });
               }
             }
           } catch (error) {

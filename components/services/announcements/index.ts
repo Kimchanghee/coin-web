@@ -1,17 +1,36 @@
-import { upbitAnnouncementService } from './upbit';
-import { bithumbAnnouncementService } from './bithumb';
-import { coinoneAnnouncementService } from './coinone';
-import { binanceAnnouncementService } from './binance';
-import { bybitAnnouncementService } from './bybit';
-import { okxAnnouncementService } from './okx';
-import { gateioAnnouncementService } from './gateio';
+// components/services/exchanges/index.ts
+import { upbitService } from './upbit';
+import { bithumbService } from './bithumb';
+import { coinoneService } from './coinone';
+import { binanceSpotService } from './binance.spot';
+import { binanceFuturesService } from './binance.futures';
+import { bitgetSpotService } from './bitget.spot';
+import { bitgetFuturesService } from './bitget.futures';
+import { bybitSpotService } from './bybit.spot';
+import { bybitFuturesService } from './bybit.futures';
+import { okxSpotService } from './okx.spot';
+import { okxFuturesService } from './okx.futures';
+import { gateioSpotService } from './gateio.spot';
+import { gateioFuturesService } from './gateio.futures';
 
-export const allAnnouncementServices = [
-    upbitAnnouncementService,
-    bithumbAnnouncementService,
-    coinoneAnnouncementService,
-    binanceAnnouncementService,
-    bybitAnnouncementService,
-    okxAnnouncementService,
-    gateioAnnouncementService,
+export const domesticServices = [upbitService, bithumbService, coinoneService];
+
+export const overseasServices = [
+    binanceSpotService, 
+    binanceFuturesService,
+    bitgetSpotService,
+    bitgetFuturesService,
+    bybitSpotService,
+    bybitFuturesService,
+    okxSpotService,
+    okxFuturesService,
+    gateioSpotService,
+    gateioFuturesService
 ];
+
+export const allServices = [...domesticServices, ...overseasServices];
+
+// Export individual services for direct access
+export { upbitService } from './upbit';
+export { bithumbService } from './bithumb';
+export { coinoneService } from './coinone';

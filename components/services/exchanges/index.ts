@@ -30,6 +30,11 @@ export const overseasServices = [
 
 export const allServices = [...domesticServices, ...overseasServices];
 
+// Export individual services for direct access
+export { upbitService } from './upbit';
+export { bithumbService } from './bithumb';
+export { coinoneService } from './coinone';
+
 // ===== 1. UPBIT (WebSocket) =====
 // components/services/exchanges/upbit.ts
 import type { ExchangeService, PriceUpdateCallback } from '../../../types';
