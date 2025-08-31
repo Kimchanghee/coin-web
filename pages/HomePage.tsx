@@ -11,7 +11,7 @@ import ThemeToggle from '../components/ThemeToggle';
 
 type ExchangeOption = { id: string; name: string };
 
-type SortKey = 'name' | keyof Pick<CoinData, 'domesticPrice' | 'kimchiPremium' | 'change24h' | 'volume'>;
+type SortKey = 'name' | 'domesticPrice' | 'overseasPrice' | 'kimchiPremium' | 'change24h' | 'domesticVolume' | 'overseasVolume';
 type SortDirection = 'asc' | 'desc';
 
 
@@ -196,13 +196,20 @@ const BottomNav: React.FC = () => {
     );
 };
 
-// Main Table Component
+// Enhanced CoinData type for processed data
+interface ProcessedCoinData extends CoinData {
+    domesticVolume: string;
+    overseasVolume: string;
+}
+
+// Main Table Component with improved UI
 const KimchiPremiumTable: React.FC<{ 
-    data: CoinData[];
+    data: ProcessedCoinData[];
     onSort: (key: SortKey) => void;
     sortConfig: { key: SortKey; direction: SortDirection };
     domesticExchangeName: string;
-}> = ({ data, onSort, sortConfig, domesticExchangeName }) => {
+    overseasExchangeName: string;
+}> = ({ data, onSort, sortConfig, domesticExchangeName, overseasExchangeName }) => {
     const { t, i18n } = useTranslation();
     const formatNumber = (num: number) => num.toLocaleString('ko-KR');
     const formatPercentage = (num: number) => `${num.toFixed(2)}%`;
@@ -210,65 +217,155 @@ const KimchiPremiumTable: React.FC<{
 
     const getSortIcon = (key: SortKey) => {
         if (sortConfig.key !== key) {
-            return <i className="fas fa-sort ml-2 text-gray-400 dark:text-gray-600"></i>;
+            return <i className="fas fa-sort ml-1 text-gray-400 dark:text-gray-600 text-xs"></i>;
         }
         if (sortConfig.direction === 'asc') {
-            return <i className="fas fa-sort-up ml-2 text-black dark:text-white"></i>;
+            return <i className="fas fa-sort-up ml-1 text-black dark:text-white text-xs"></i>;
         }
-        return <i className="fas fa-sort-down ml-2 text-black dark:text-white"></i>;
+        return <i className="fas fa-sort-down ml-1 text-black dark:text-white text-xs"></i>;
     };
-
-    const headers: { key: SortKey; labelKey: string; align: 'left' | 'right' }[] = [
-        { key: 'name', labelKey: 'table.name', align: 'left' },
-        { key: 'domesticPrice', labelKey: 'table.price', align: 'right' },
-        { key: 'kimchiPremium', labelKey: 'table.premium', align: 'right' },
-        { key: 'change24h', labelKey: 'table.change', align: 'right' },
-        { key: 'volume', labelKey: 'table.volume', align: 'right' },
-    ];
 
     return (
         <div className="bg-white dark:bg-[#1a1a1a] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800">
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 dark:bg-gray-900/50 text-xs text-gray-500 dark:text-gray-400 uppercase">
+                    <thead className="bg-gray-50 dark:bg-gray-900/50 text-xs text-gray-500 dark:text-gray-400">
                         <tr>
-                            {headers.map(header => (
-                                <th key={header.key} scope="col" className={`px-4 py-3 text-${header.align}`} onClick={() => onSort(header.key)}>
-                                    <div className={`flex items-center ${header.align === 'right' ? 'justify-end' : ''} cursor-pointer whitespace-nowrap`}>
-                                        {t(header.labelKey, { exchangeName: domesticExchangeName.split(' ')[0] })}
-                                        {getSortIcon(header.key)}
-                                    </div>
-                                </th>
-                            ))}
+                            {/* 코인 정보 */}
+                            <th scope="col" className="px-4 py-3 text-left sticky left-0 bg-gray-50 dark:bg-gray-900/50 z-10" onClick={() => onSort('name')}>
+                                <div className="flex items-center cursor-pointer whitespace-nowrap">
+                                    {t('table.name')}
+                                    {getSortIcon('name')}
+                                </div>
+                            </th>
+                            
+                            {/* 가격 섹션 */}
+                            <th scope="col" className="px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
+                                <div className="text-gray-600 dark:text-gray-300 font-semibold">현재가</div>
+                            </th>
+                            
+                            {/* 김프 */}
+                            <th scope="col" className="px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('kimchiPremium')}>
+                                <div className="flex items-center justify-end cursor-pointer whitespace-nowrap">
+                                    {t('table.premium')}
+                                    {getSortIcon('kimchiPremium')}
+                                </div>
+                            </th>
+                            
+                            {/* 전일대비 */}
+                            <th scope="col" className="px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('change24h')}>
+                                <div className="flex items-center justify-end cursor-pointer whitespace-nowrap">
+                                    {t('table.change')}
+                                    {getSortIcon('change24h')}
+                                </div>
+                            </th>
+                            
+                            {/* 거래대금 섹션 */}
+                            <th scope="col" className="px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
+                                <div className="text-gray-600 dark:text-gray-300 font-semibold">24h 거래대금</div>
+                            </th>
+                        </tr>
+                        <tr className="border-t border-gray-200 dark:border-gray-700">
+                            <th className="sticky left-0 bg-gray-50 dark:bg-gray-900/50"></th>
+                            {/* 가격 서브헤더 */}
+                            <th className="px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('domesticPrice')}>
+                                <div className="flex items-center justify-end cursor-pointer">
+                                    <span className="truncate max-w-[80px]">{domesticExchangeName.split(' ')[0]}</span>
+                                    {getSortIcon('domesticPrice')}
+                                </div>
+                            </th>
+                            <th className="px-3 py-2 text-right text-xs" onClick={() => onSort('overseasPrice')}>
+                                <div className="flex items-center justify-end cursor-pointer">
+                                    <span className="truncate max-w-[80px]">{overseasExchangeName.split(' ')[0]}</span>
+                                    {getSortIcon('overseasPrice')}
+                                </div>
+                            </th>
+                            <th className="border-l border-gray-200 dark:border-gray-700"></th>
+                            <th className="border-l border-gray-200 dark:border-gray-700"></th>
+                            {/* 거래대금 서브헤더 */}
+                            <th className="px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('domesticVolume')}>
+                                <div className="flex items-center justify-end cursor-pointer">
+                                    <span className="truncate max-w-[80px]">{domesticExchangeName.split(' ')[0]}</span>
+                                    {getSortIcon('domesticVolume')}
+                                </div>
+                            </th>
+                            <th className="px-3 py-2 text-right text-xs" onClick={() => onSort('overseasVolume')}>
+                                <div className="flex items-center justify-end cursor-pointer">
+                                    <span className="truncate max-w-[80px]">{overseasExchangeName.split(' ')[0]}</span>
+                                    {getSortIcon('overseasVolume')}
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {data.map(coin => (
                             <tr key={coin.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100/50 dark:hover:bg-gray-800/50">
-                                <td className="px-4 py-3 font-medium text-black dark:text-white">
+                                {/* 코인 정보 */}
+                                <td className="px-4 py-3 font-medium text-black dark:text-white sticky left-0 bg-white dark:bg-[#1a1a1a]">
                                     <div className="flex items-center gap-3">
                                         <span className="text-lg">{coin.logo}</span>
                                         <div>
-                                            <p>{coin.names[i18n.language] || coin.names['en']}</p>
+                                            <p className="font-semibold">{coin.names[i18n.language] || coin.names['en']}</p>
                                             <p className="text-xs text-gray-500">{coin.symbol}</p>
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 text-right text-gray-800 dark:text-gray-200">
+                                
+                                {/* 국내 가격 */}
+                                <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
                                     <p className="font-semibold">{formatNumber(coin.domesticPrice)}</p>
-                                    <p className="text-xs text-gray-500">${coin.overseasPrice.toFixed(2)}</p>
+                                    <p className="text-xs text-gray-500">
+                                        {coin.domesticPrice > 100 ? '₩' : `₩${coin.domesticPrice.toFixed(3)}`}
+                                    </p>
                                 </td>
-                                <td className={`px-4 py-3 text-right font-bold ${getTextColor(coin.kimchiPremium)}`}>
-                                    {formatPercentage(coin.kimchiPremium)}
+                                
+                                {/* 해외 가격 */}
+                                <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200">
+                                    <p className="font-semibold">${coin.overseasPrice.toFixed(coin.overseasPrice < 1 ? 4 : 2)}</p>
+                                    <p className="text-xs text-gray-500">
+                                        ₩{formatNumber(Math.round(coin.overseasPrice * 1385))}
+                                    </p>
                                 </td>
-                                <td className={`px-4 py-3 text-right font-bold ${getTextColor(coin.change24h)}`}>
+                                
+                                {/* 김프 */}
+                                <td className={`px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.kimchiPremium)}`}>
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-base">{formatPercentage(coin.kimchiPremium)}</span>
+                                        {Math.abs(coin.kimchiPremium) > 3 && (
+                                            <span className="text-xs mt-0.5">
+                                                {coin.kimchiPremium > 0 ? '↑' : '↓'} {Math.abs(coin.kimchiPremium).toFixed(1)}%
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                
+                                {/* 전일대비 */}
+                                <td className={`px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.change24h)}`}>
                                     {formatPercentage(coin.change24h)}
                                 </td>
-                                <td className="px-4 py-3 text-right text-gray-800 dark:text-gray-200">{coin.volume}</td>
+                                
+                                {/* 국내 거래대금 */}
+                                <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
+                                    <p className="font-medium">{coin.domesticVolume}</p>
+                                    <p className="text-xs text-gray-500">KRW</p>
+                                </td>
+                                
+                                {/* 해외 거래대금 */}
+                                <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200">
+                                    <p className="font-medium">{coin.overseasVolume}</p>
+                                    <p className="text-xs text-gray-500">USDT</p>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
+            
+            {/* 리스트된 코인 수 표시 */}
+            <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                    총 {data.length}개 코인 표시 중
+                </p>
             </div>
         </div>
     );
@@ -387,7 +484,7 @@ const HomePage: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [allPrices, setAllPrices] = useState<Record<string, number>>({});
     const [allExtendedData, setAllExtendedData] = useState<Record<string, { change24h?: number; volume24h?: number }>>({});
-    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'volume', direction: 'desc' });
+    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'domesticVolume', direction: 'desc' });
     const { user } = useAuth();
     const { t, i18n } = useTranslation();
     const [usdKrw, setUsdKrw] = useState(1385);
@@ -482,34 +579,73 @@ const HomePage: React.FC = () => {
             return volumeNum.toLocaleString('ko-KR');
         };
 
-        const liveData = MOCK_COIN_DATA.map(baseCoin => {
+        const formatOverseasVolume = (volumeNum: number): string => {
+            if (volumeNum >= 1000000000) {
+                return `${(volumeNum / 1000000000).toFixed(2)}B`;
+            }
+            if (volumeNum >= 1000000) {
+                return `${(volumeNum / 1000000).toFixed(2)}M`;
+            }
+            if (volumeNum >= 1000) {
+                return `${(volumeNum / 1000).toFixed(2)}K`;
+            }
+            return volumeNum.toFixed(2);
+        };
+
+        // 양쪽 거래소에 모두 존재하는 코인만 필터링
+        const filteredData = MOCK_COIN_DATA.filter(baseCoin => {
+            const domesticPriceKey = `${selectedDomestic.id}-${baseCoin.symbol}`;
+            const overseasPriceKey = `${selectedOverseas.id}-${baseCoin.symbol}`;
+            
+            const hasDomesticPrice = allPrices[domesticPriceKey] !== undefined;
+            const hasOverseasPrice = allPrices[overseasPriceKey] !== undefined;
+            
+            // 양쪽 모두에 가격이 있는 경우만 표시
+            return hasDomesticPrice && hasOverseasPrice;
+        });
+
+        const liveData = filteredData.map(baseCoin => {
             const domesticPriceKey = `${selectedDomestic.id}-${baseCoin.symbol}`;
             const overseasPriceKey = `${selectedOverseas.id}-${baseCoin.symbol}`;
 
             const domesticPrice = allPrices[domesticPriceKey] || baseCoin.domesticPrice;
             const overseasPrice = allPrices[overseasPriceKey] || baseCoin.overseasPrice;
             
-            // 확장 데이터 가져오기 (전일대비, 거래대금)
-            const extendedData = allExtendedData[domesticPriceKey] || {};
+            // 확장 데이터 가져오기
+            const domesticExtData = allExtendedData[domesticPriceKey] || {};
+            const overseasExtData = allExtendedData[overseasPriceKey] || {};
             
             const overseasPriceInKrw = overseasPrice * usdKrw;
             const kimchiPremium = overseasPriceInKrw > 0 
                 ? ((domesticPrice - overseasPriceInKrw) / overseasPriceInKrw) * 100
                 : 0;
 
-            // 실시간 전일대비 - 확장 데이터가 있으면 사용, 없으면 기본값 사용
-            const change24h = extendedData.change24h !== undefined 
-                ? extendedData.change24h 
+            // 전일대비 - 국내 거래소 기준
+            const change24h = domesticExtData.change24h !== undefined 
+                ? domesticExtData.change24h 
                 : baseCoin.change24h + (Math.random() - 0.5) * 0.2;
             
-            // 실시간 거래대금 - 확장 데이터가 있으면 사용, 없으면 기본값 사용
-            let volume: string;
-            if (extendedData.volume24h !== undefined) {
-                volume = formatVolume(extendedData.volume24h);
+            // 거래대금 - 각 거래소별로 표시
+            let domesticVolume: string;
+            let overseasVolume: string;
+            
+            // 국내 거래대금
+            if (domesticExtData.volume24h !== undefined) {
+                domesticVolume = formatVolume(domesticExtData.volume24h);
             } else {
                 const baseVolume = parseVolume(baseCoin.volume);
-                const liveVolume = baseVolume * (1 + (Math.random() - 0.5) * 0.05);
-                volume = formatVolume(liveVolume);
+                const liveDomesticVolume = baseVolume * (1 + (Math.random() - 0.5) * 0.05);
+                domesticVolume = formatVolume(liveDomesticVolume);
+            }
+            
+            // 해외 거래대금 (USDT 기준)
+            if (overseasExtData.volume24h !== undefined) {
+                overseasVolume = formatOverseasVolume(overseasExtData.volume24h);
+            } else {
+                // 시뮬레이션: 해외 거래대금은 보통 더 크므로 2-5배 정도로 설정
+                const baseVolume = parseVolume(baseCoin.volume);
+                const liveOverseasVolume = (baseVolume / usdKrw) * (2 + Math.random() * 3);
+                overseasVolume = formatOverseasVolume(liveOverseasVolume);
             }
 
             return {
@@ -518,8 +654,10 @@ const HomePage: React.FC = () => {
                 overseasPrice,
                 kimchiPremium,
                 change24h,
-                volume,
-            };
+                volume: domesticVolume, // deprecated but kept for compatibility
+                domesticVolume,
+                overseasVolume,
+            } as ProcessedCoinData;
         });
 
         liveData.sort((a, b) => {
@@ -527,15 +665,26 @@ const HomePage: React.FC = () => {
             let aValue: string | number;
             let bValue: string | number;
 
-            if (key === 'volume') {
-                aValue = parseVolume(a.volume);
-                bValue = parseVolume(b.volume);
+            if (key === 'domesticVolume') {
+                aValue = parseVolume(a.domesticVolume);
+                bValue = parseVolume(b.domesticVolume);
+            } else if (key === 'overseasVolume') {
+                // Parse overseas volume for sorting
+                const parseOverseasVolume = (vol: string): number => {
+                    const num = parseFloat(vol);
+                    if (vol.includes('B')) return num * 1000000000;
+                    if (vol.includes('M')) return num * 1000000;
+                    if (vol.includes('K')) return num * 1000;
+                    return num;
+                };
+                aValue = parseOverseasVolume(a.overseasVolume);
+                bValue = parseOverseasVolume(b.overseasVolume);
             } else if (key === 'name') {
                 aValue = a.names[i18n.language] || a.names['en'];
                 bValue = b.names[i18n.language] || b.names['en'];
             } else {
-                aValue = a[key] as number;
-                bValue = b[key] as number;
+                aValue = a[key as keyof ProcessedCoinData] as number;
+                bValue = b[key as keyof ProcessedCoinData] as number;
             }
             
             const dir = direction === 'asc' ? 1 : -1;
@@ -585,6 +734,7 @@ const HomePage: React.FC = () => {
                                 onSort={handleSort}
                                 sortConfig={sortConfig}
                                 domesticExchangeName={selectedDomestic.name}
+                                overseasExchangeName={selectedOverseas.name}
                             />
                             
                             {processedCoinData.length > COIN_DISPLAY_LIMIT && (
