@@ -34,16 +34,21 @@ export default {
   "home": {
     "title": "キムチプレミアム",
     "subtitle": "国内外の取引所の価格差を確認してください。",
-    "domestic_exchange": "基準取引所",
-    "overseas_exchange": "海外取引所",
+    "base_exchange": "基準取引所",
+    "comparison_exchange": "比較取引所",
     "unlock_button": "すべてのコインを見る"
   },
   "table": {
     "name": "名前",
-    "price": "{{exchangeName}} 現在価格",
-    "premium": "差額(プレミアム)",
-    "change": "前日比",
-    "volume": "{{exchangeName}} 取引高"
+    "current_price": "現在価格",
+    "price_difference": "差額(プレミアム)",
+    "daily_change": "前日比",
+    "trading_volume_24h": "24h 取引高",
+    "hundred_million": "億",
+    "trillion": "兆",
+    "billion": "B",
+    "million": "M", 
+    "thousand": "K"
   },
   "login": {
     "welcome_back": "おかえりなさい",

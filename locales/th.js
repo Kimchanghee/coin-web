@@ -34,16 +34,21 @@ export default {
   "home": {
     "title": "กิมจิพรีเมียม",
     "subtitle": "ตรวจสอบความแตกต่างของราคาระหว่างตลาดแลกเปลี่ยนในประเทศและต่างประเทศ",
-    "domestic_exchange": "ตลาดอ้างอิง",
-    "overseas_exchange": "ตลาดแลกเปลี่ยนต่างประเทศ",
+    "base_exchange": "ตลาดอ้างอิง",
+    "comparison_exchange": "ตลาดเปรียบเทียบ",
     "unlock_button": "ปลดล็อกเหรียญทั้งหมด"
   },
   "table": {
     "name": "ชื่อ",
-    "price": "ราคาปัจจุบัน {{exchangeName}}",
-    "premium": "ส่วนต่าง (พรีเมียม)",
-    "change": "เปลี่ยนแปลง 24 ชม.",
-    "volume": "{{exchangeName}} ปริมาณการซื้อขาย"
+    "current_price": "ราคาปัจจุบัน",
+    "price_difference": "ส่วนต่าง (พรีเมียม)",
+    "daily_change": "เปลี่ยนแปลง 24 ชม.",
+    "trading_volume_24h": "ปริมาณการซื้อขาย 24 ชม.",
+    "hundred_million": "ร้อยล้าน",
+    "trillion": "ล้านล้าน", 
+    "billion": "B",
+    "million": "M",
+    "thousand": "K"
   },
   "login": {
     "welcome_back": "ยินดีต้อนรับกลับ",

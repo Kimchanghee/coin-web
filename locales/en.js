@@ -34,16 +34,21 @@ export default {
   "home": {
     "title": "Kimchi Premium",
     "subtitle": "Check the price difference between domestic and overseas exchanges.",
-    "domestic_exchange": "Base Exchange",
-    "overseas_exchange": "Overseas Exchange",
+    "base_exchange": "Base Exchange",
+    "comparison_exchange": "Comparison Exchange", 
     "unlock_button": "Unlock All Coins"
   },
   "table": {
     "name": "Name",
-    "price": "{{exchangeName}} Price",
-    "premium": "Difference (Premium)",
-    "change": "24h Change",
-    "volume": "{{exchangeName}} Volume"
+    "current_price": "Current Price",
+    "price_difference": "Price Difference",
+    "daily_change": "24h Change",
+    "trading_volume_24h": "24h Volume",
+    "hundred_million": "100M",
+    "trillion": "T",
+    "billion": "B", 
+    "million": "M",
+    "thousand": "K"
   },
   "login": {
     "welcome_back": "Welcome Back",

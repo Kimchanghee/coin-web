@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MOCK_COIN_DATA, DOMESTIC_EXCHANGES, OVERSEAS_EXCHANGES, COIN_DISPLAY_LIMIT } from '../constants';
+import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP } from '../constants';
 import type { CoinData, User } from '../types';
 import { allServices } from '../components/services/exchanges';
 import { useAuth } from '../context/AuthContext';
@@ -10,27 +10,80 @@ import Clock from '../components/Clock';
 import ThemeToggle from '../components/ThemeToggle';
 
 type ExchangeOption = { id: string; name: string };
+type CurrencyCode = 'KRW' | 'USD' | 'JPY' | 'CNY' | 'THB' | 'VND';
 
-type SortKey = 'name' | 'domesticPrice' | 'overseasPrice' | 'kimchiPremium' | 'change24h' | 'domesticVolume' | 'overseasVolume';
+type SortKey = 'name' | 'basePrice' | 'comparisonPrice' | 'priceDifference' | 'change24h' | 'baseVolume' | 'comparisonVolume';
 type SortDirection = 'asc' | 'desc';
 
+// Currency conversion utility
+const convertCurrency = (amount: number, fromCurrency: string, toCurrency: CurrencyCode, usdKrw: number): number => {
+  // Convert to KRW first
+  let amountInKrw = amount;
+  if (fromCurrency === 'USD' || fromCurrency.includes('usdt')) {
+    amountInKrw = amount * usdKrw;
+  }
+  
+  // Then convert to target currency
+  const targetRate = CURRENCY_RATES[toCurrency]?.rate || 1;
+  return amountInKrw * targetRate;
+};
 
-// Custom Select Component (Controlled)
+// Format currency with proper symbol
+const formatCurrency = (amount: number, currency: CurrencyCode): string => {
+  const currencyInfo = CURRENCY_RATES[currency];
+  if (!currencyInfo) return amount.toLocaleString();
+  
+  const symbol = currencyInfo.symbol;
+  
+  if (currency === 'VND') {
+    return `${symbol}${Math.round(amount).toLocaleString('vi-VN')}`;
+  } else if (currency === 'JPY') {
+    return `${symbol}${Math.round(amount).toLocaleString('ja-JP')}`;
+  } else if (currency === 'CNY') {
+    return `${symbol}${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  } else if (currency === 'THB') {
+    return `${symbol}${amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  } else if (currency === 'USD') {
+    return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+  } else { // KRW
+    return `${symbol}${Math.round(amount).toLocaleString('ko-KR')}`;
+  }
+};
+
+// Custom Select Component (Fixed with outside click)
 const CustomSelect: React.FC<{
     options: ExchangeOption[];
     value: ExchangeOption;
     onChange: (value: ExchangeOption) => void;
 }> = ({ options, value, onChange }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    // 드롭다운 바깥 클릭 시 닫기
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
 
     return (
-        <div className="relative w-full">
+        <div className="relative w-full" ref={dropdownRef}>
             <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-black dark:text-white">
                 <span>{value.name}</span>
                 <i className={`fas fa-chevron-down transition-transform ${isOpen ? 'rotate-180' : ''}`}></i>
             </button>
             {isOpen && (
-                <div className="absolute z-10 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg">
+                <div className="absolute z-10 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                     {options.map(option => (
                         <div key={option.id} onClick={() => { onChange(option); setIsOpen(false); }} className="px-3 py-2 text-sm text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
                             {option.name}
@@ -41,7 +94,6 @@ const CustomSelect: React.FC<{
         </div>
     );
 };
-
 
 // Header Component
 const Header: React.FC<{ onMenuClick: () => void; user: User | null, usdKrw: number }> = ({ onMenuClick, user, usdKrw }) => {
@@ -105,6 +157,7 @@ const Header: React.FC<{ onMenuClick: () => void; user: User | null, usdKrw: num
         </header>
     );
 };
+
 // Sidebar Component
 const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const { user, logout } = useAuth();
@@ -113,7 +166,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
 
     const handleLogout = () => {
         logout();
-        navigate('/'); // Navigate to home on logout
+        navigate('/');
     }
 
     const menuItems = [
@@ -198,20 +251,60 @@ const BottomNav: React.FC = () => {
 
 // Enhanced CoinData type for processed data
 interface ProcessedCoinData extends CoinData {
-    domesticVolume: string;
-    overseasVolume: string;
+    basePrice: number;
+    comparisonPrice: number;
+    priceDifference: number;
+    priceDifferencePercentage: number;
+    baseVolume: string;
+    comparisonVolume: string;
 }
 
-// Main Table Component with improved UI
-const KimchiPremiumTable: React.FC<{ 
+// Format volume with proper localization
+const formatVolume = (volumeNum: number, currency: CurrencyCode, t: any): string => {
+    if (currency === 'KRW') {
+        if (volumeNum >= 1000000000000) {
+            return `${(volumeNum / 1000000000000).toFixed(2)}${t('table.trillion')}`;
+        }
+        if (volumeNum >= 100000000) {
+            return `${(volumeNum / 100000000).toLocaleString('ko-KR', {maximumFractionDigits: 0})}${t('table.hundred_million')}`;
+        }
+        return volumeNum.toLocaleString('ko-KR');
+    } else if (currency === 'VND') {
+        if (volumeNum >= 1000000000000) {
+            return `${(volumeNum / 1000000000000).toFixed(2)}${t('table.trillion')}`;
+        }
+        if (volumeNum >= 1000000000) {
+            return `${(volumeNum / 1000000000).toFixed(2)}${t('table.billion')}`;
+        }
+        if (volumeNum >= 1000000) {
+            return `${(volumeNum / 1000000).toFixed(2)}${t('table.million')}`;
+        }
+        return volumeNum.toLocaleString('vi-VN');
+    } else {
+        // USD, JPY, CNY, THB
+        if (volumeNum >= 1000000000) {
+            return `${(volumeNum / 1000000000).toFixed(2)}${t('table.billion')}`;
+        }
+        if (volumeNum >= 1000000) {
+            return `${(volumeNum / 1000000).toFixed(2)}${t('table.million')}`;
+        }
+        if (volumeNum >= 1000) {
+            return `${(volumeNum / 1000).toFixed(2)}${t('table.thousand')}`;
+        }
+        return volumeNum.toFixed(2);
+    }
+};
+
+// Main Table Component with multi-currency support
+const CryptoPriceComparisonTable: React.FC<{ 
     data: ProcessedCoinData[];
     onSort: (key: SortKey) => void;
     sortConfig: { key: SortKey; direction: SortDirection };
-    domesticExchangeName: string;
-    overseasExchangeName: string;
-}> = ({ data, onSort, sortConfig, domesticExchangeName, overseasExchangeName }) => {
+    baseExchangeName: string;
+    comparisonExchangeName: string;
+    currency: CurrencyCode;
+}> = ({ data, onSort, sortConfig, baseExchangeName, comparisonExchangeName, currency }) => {
     const { t, i18n } = useTranslation();
-    const formatNumber = (num: number) => num.toLocaleString('ko-KR');
     const formatPercentage = (num: number) => `${num.toFixed(2)}%`;
     const getTextColor = (num: number) => num > 0 ? 'text-green-500' : num < 0 ? 'text-red-500' : 'text-gray-800 dark:text-gray-300';
 
@@ -241,58 +334,58 @@ const KimchiPremiumTable: React.FC<{
                             
                             {/* 가격 섹션 */}
                             <th scope="col" className="px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
-                                <div className="text-gray-600 dark:text-gray-300 font-semibold">현재가</div>
+                                <div className="text-gray-600 dark:text-gray-300 font-semibold">{t('table.current_price')}</div>
                             </th>
                             
-                            {/* 김프 */}
-                            <th scope="col" className="px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('kimchiPremium')}>
+                            {/* 가격 차이 */}
+                            <th scope="col" className="px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('priceDifference')}>
                                 <div className="flex items-center justify-end cursor-pointer whitespace-nowrap">
-                                    {t('table.premium')}
-                                    {getSortIcon('kimchiPremium')}
+                                    {t('table.price_difference')}
+                                    {getSortIcon('priceDifference')}
                                 </div>
                             </th>
                             
                             {/* 전일대비 */}
                             <th scope="col" className="px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('change24h')}>
                                 <div className="flex items-center justify-end cursor-pointer whitespace-nowrap">
-                                    {t('table.change')}
+                                    {t('table.daily_change')}
                                     {getSortIcon('change24h')}
                                 </div>
                             </th>
                             
                             {/* 거래대금 섹션 */}
                             <th scope="col" className="px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
-                                <div className="text-gray-600 dark:text-gray-300 font-semibold">24h 거래대금</div>
+                                <div className="text-gray-600 dark:text-gray-300 font-semibold">{t('table.trading_volume_24h')}</div>
                             </th>
                         </tr>
                         <tr className="border-t border-gray-200 dark:border-gray-700">
                             <th className="sticky left-0 bg-gray-50 dark:bg-gray-900/50"></th>
                             {/* 가격 서브헤더 */}
-                            <th className="px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('domesticPrice')}>
+                            <th className="px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('basePrice')}>
                                 <div className="flex items-center justify-end cursor-pointer">
-                                    <span className="truncate max-w-[80px]">{domesticExchangeName.split(' ')[0]}</span>
-                                    {getSortIcon('domesticPrice')}
+                                    <span className="truncate max-w-[80px]">{baseExchangeName.split(' ')[0]}</span>
+                                    {getSortIcon('basePrice')}
                                 </div>
                             </th>
-                            <th className="px-3 py-2 text-right text-xs" onClick={() => onSort('overseasPrice')}>
+                            <th className="px-3 py-2 text-right text-xs" onClick={() => onSort('comparisonPrice')}>
                                 <div className="flex items-center justify-end cursor-pointer">
-                                    <span className="truncate max-w-[80px]">{overseasExchangeName.split(' ')[0]}</span>
-                                    {getSortIcon('overseasPrice')}
+                                    <span className="truncate max-w-[80px]">{comparisonExchangeName.split(' ')[0]}</span>
+                                    {getSortIcon('comparisonPrice')}
                                 </div>
                             </th>
                             <th className="border-l border-gray-200 dark:border-gray-700"></th>
                             <th className="border-l border-gray-200 dark:border-gray-700"></th>
                             {/* 거래대금 서브헤더 */}
-                            <th className="px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('domesticVolume')}>
+                            <th className="px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('baseVolume')}>
                                 <div className="flex items-center justify-end cursor-pointer">
-                                    <span className="truncate max-w-[80px]">{domesticExchangeName.split(' ')[0]}</span>
-                                    {getSortIcon('domesticVolume')}
+                                    <span className="truncate max-w-[80px]">{baseExchangeName.split(' ')[0]}</span>
+                                    {getSortIcon('baseVolume')}
                                 </div>
                             </th>
-                            <th className="px-3 py-2 text-right text-xs" onClick={() => onSort('overseasVolume')}>
+                            <th className="px-3 py-2 text-right text-xs" onClick={() => onSort('comparisonVolume')}>
                                 <div className="flex items-center justify-end cursor-pointer">
-                                    <span className="truncate max-w-[80px]">{overseasExchangeName.split(' ')[0]}</span>
-                                    {getSortIcon('overseasVolume')}
+                                    <span className="truncate max-w-[80px]">{comparisonExchangeName.split(' ')[0]}</span>
+                                    {getSortIcon('comparisonVolume')}
                                 </div>
                             </th>
                         </tr>
@@ -311,31 +404,23 @@ const KimchiPremiumTable: React.FC<{
                                     </div>
                                 </td>
                                 
-                                {/* 국내 가격 */}
+                                {/* 기준 가격 */}
                                 <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
-                                    <p className="font-semibold">{formatNumber(coin.domesticPrice)}</p>
-                                    <p className="text-xs text-gray-500">
-                                        {coin.domesticPrice > 100 ? '₩' : `₩${coin.domesticPrice.toFixed(3)}`}
-                                    </p>
+                                    <p className="font-semibold">{formatCurrency(coin.basePrice, currency)}</p>
                                 </td>
                                 
-                                {/* 해외 가격 */}
+                                {/* 비교 가격 */}
                                 <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200">
-                                    <p className="font-semibold">${coin.overseasPrice.toFixed(coin.overseasPrice < 1 ? 4 : 2)}</p>
-                                    <p className="text-xs text-gray-500">
-                                        ₩{formatNumber(Math.round(coin.overseasPrice * 1385))}
-                                    </p>
+                                    <p className="font-semibold">{formatCurrency(coin.comparisonPrice, currency)}</p>
                                 </td>
                                 
-                                {/* 김프 */}
-                                <td className={`px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.kimchiPremium)}`}>
+                                {/* 가격 차이 */}
+                                <td className={`px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.priceDifferencePercentage)}`}>
                                     <div className="flex flex-col items-end">
-                                        <span className="text-base">{formatPercentage(coin.kimchiPremium)}</span>
-                                        {Math.abs(coin.kimchiPremium) > 3 && (
-                                            <span className="text-xs mt-0.5">
-                                                {coin.kimchiPremium > 0 ? '↑' : '↓'} {Math.abs(coin.kimchiPremium).toFixed(1)}%
-                                            </span>
-                                        )}
+                                        <span className="text-base">{formatPercentage(coin.priceDifferencePercentage)}</span>
+                                        <span className="text-xs mt-0.5 text-gray-500">
+                                            {coin.priceDifference > 0 ? '+' : ''}{formatCurrency(coin.priceDifference, currency)}
+                                        </span>
                                     </div>
                                 </td>
                                 
@@ -344,16 +429,16 @@ const KimchiPremiumTable: React.FC<{
                                     {formatPercentage(coin.change24h)}
                                 </td>
                                 
-                                {/* 국내 거래대금 */}
+                                {/* 기준 거래대금 */}
                                 <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
-                                    <p className="font-medium">{coin.domesticVolume}</p>
-                                    <p className="text-xs text-gray-500">KRW</p>
+                                    <p className="font-medium">{coin.baseVolume}</p>
+                                    <p className="text-xs text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
                                 </td>
                                 
-                                {/* 해외 거래대금 */}
+                                {/* 비교 거래대금 */}
                                 <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200">
-                                    <p className="font-medium">{coin.overseasVolume}</p>
-                                    <p className="text-xs text-gray-500">USDT</p>
+                                    <p className="font-medium">{coin.comparisonVolume}</p>
+                                    <p className="text-xs text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
                                 </td>
                             </tr>
                         ))}
@@ -364,7 +449,7 @@ const KimchiPremiumTable: React.FC<{
             {/* 리스트된 코인 수 표시 */}
             <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    총 {data.length}개 코인 표시 중
+                    총 {data.length}개 코인 표시 중 • {CURRENCY_RATES[currency]?.name} 기준
                 </p>
             </div>
         </div>
@@ -484,10 +569,13 @@ const HomePage: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [allPrices, setAllPrices] = useState<Record<string, number>>({});
     const [allExtendedData, setAllExtendedData] = useState<Record<string, { change24h?: number; volume24h?: number }>>({});
-    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'domesticVolume', direction: 'desc' });
+    const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'baseVolume', direction: 'desc' });
     const { user } = useAuth();
     const { t, i18n } = useTranslation();
     const [usdKrw, setUsdKrw] = useState(1385);
+
+    // Get current currency based on language
+    const currentCurrency: CurrencyCode = (LANGUAGE_CURRENCY_MAP as any)[i18n.language] || 'USD';
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -496,29 +584,24 @@ const HomePage: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const translatedDomesticExchanges = useMemo(() => 
-        DOMESTIC_EXCHANGES.map(ex => ({ id: ex.id, name: t(ex.nameKey) })),
+    const translatedAllExchanges = useMemo(() => 
+        ALL_EXCHANGES_FOR_COMPARISON.map(ex => ({ id: ex.id, name: t(ex.nameKey) })),
         [t]
     );
 
-    const translatedOverseasExchanges = useMemo(() => 
-        OVERSEAS_EXCHANGES.map(ex => ({ id: ex.id, name: t(ex.nameKey) })),
-        [t]
-    );
-
-    const [selectedDomestic, setSelectedDomestic] = useState<ExchangeOption>(translatedDomesticExchanges[0]);
-    const [selectedOverseas, setSelectedOverseas] = useState<ExchangeOption>(translatedOverseasExchanges[0]);
+    const [selectedBase, setSelectedBase] = useState<ExchangeOption>(translatedAllExchanges[0]);
+    const [selectedComparison, setSelectedComparison] = useState<ExchangeOption>(translatedAllExchanges[1]);
 
     useEffect(() => {
-        setSelectedDomestic(current => {
-            const match = translatedDomesticExchanges.find(ex => ex.id === current.id);
-            return match || translatedDomesticExchanges[0];
+        setSelectedBase(current => {
+            const match = translatedAllExchanges.find(ex => ex.id === current.id);
+            return match || translatedAllExchanges[0];
         });
-        setSelectedOverseas(current => {
-            const match = translatedOverseasExchanges.find(ex => ex.id === current.id);
-            return match || translatedOverseasExchanges[0];
+        setSelectedComparison(current => {
+            const match = translatedAllExchanges.find(ex => ex.id === current.id);
+            return match || translatedAllExchanges[1];
         });
-    }, [i18n.language, translatedDomesticExchanges, translatedOverseasExchanges]);
+    }, [i18n.language, translatedAllExchanges]);
 
     useEffect(() => {
         const handleUpdate = (update: any) => {
@@ -569,94 +652,86 @@ const HomePage: React.FC = () => {
             return isNaN(num) ? 0 : num * multiplier;
         };
         
-        const formatVolume = (volumeNum: number): string => {
-            if (volumeNum >= 1000000000000) {
-                return `${(volumeNum / 1000000000000).toFixed(2)}조`;
-            }
-            if (volumeNum >= 100000000) {
-                return `${(volumeNum / 100000000).toLocaleString('ko-KR', {maximumFractionDigits: 0})}억`;
-            }
-            return volumeNum.toLocaleString('ko-KR');
-        };
-
-        const formatOverseasVolume = (volumeNum: number): string => {
-            if (volumeNum >= 1000000000) {
-                return `${(volumeNum / 1000000000).toFixed(2)}B`;
-            }
-            if (volumeNum >= 1000000) {
-                return `${(volumeNum / 1000000).toFixed(2)}M`;
-            }
-            if (volumeNum >= 1000) {
-                return `${(volumeNum / 1000).toFixed(2)}K`;
-            }
-            return volumeNum.toFixed(2);
-        };
-
         // 양쪽 거래소에 모두 존재하는 코인만 필터링
         const filteredData = MOCK_COIN_DATA.filter(baseCoin => {
-            const domesticPriceKey = `${selectedDomestic.id}-${baseCoin.symbol}`;
-            const overseasPriceKey = `${selectedOverseas.id}-${baseCoin.symbol}`;
+            const basePriceKey = `${selectedBase.id}-${baseCoin.symbol}`;
+            const comparisonPriceKey = `${selectedComparison.id}-${baseCoin.symbol}`;
             
-            const hasDomesticPrice = allPrices[domesticPriceKey] !== undefined;
-            const hasOverseasPrice = allPrices[overseasPriceKey] !== undefined;
+            const hasBasePrice = allPrices[basePriceKey] !== undefined;
+            const hasComparisonPrice = allPrices[comparisonPriceKey] !== undefined;
             
-            // 양쪽 모두에 가격이 있는 경우만 표시
-            return hasDomesticPrice && hasOverseasPrice;
+            return hasBasePrice && hasComparisonPrice;
         });
 
         const liveData = filteredData.map(baseCoin => {
-            const domesticPriceKey = `${selectedDomestic.id}-${baseCoin.symbol}`;
-            const overseasPriceKey = `${selectedOverseas.id}-${baseCoin.symbol}`;
+            const basePriceKey = `${selectedBase.id}-${baseCoin.symbol}`;
+            const comparisonPriceKey = `${selectedComparison.id}-${baseCoin.symbol}`;
 
-            const domesticPrice = allPrices[domesticPriceKey] || baseCoin.domesticPrice;
-            const overseasPrice = allPrices[overseasPriceKey] || baseCoin.overseasPrice;
+            let rawBasePrice = allPrices[basePriceKey] || baseCoin.domesticPrice;
+            let rawComparisonPrice = allPrices[comparisonPriceKey] || baseCoin.overseasPrice;
+            
+            // Convert prices to the current currency
+            const baseCurrencyType = selectedBase.id.includes('krw') ? 'KRW' : 'USD';
+            const comparisonCurrencyType = selectedComparison.id.includes('krw') ? 'KRW' : 'USD';
+            
+            const basePrice = convertCurrency(rawBasePrice, baseCurrencyType, currentCurrency, usdKrw);
+            const comparisonPrice = convertCurrency(rawComparisonPrice, comparisonCurrencyType, currentCurrency, usdKrw);
+            
+            // Calculate price difference
+            const priceDifference = basePrice - comparisonPrice;
+            const priceDifferencePercentage = comparisonPrice > 0 
+                ? (priceDifference / comparisonPrice) * 100
+                : 0;
             
             // 확장 데이터 가져오기
-            const domesticExtData = allExtendedData[domesticPriceKey] || {};
-            const overseasExtData = allExtendedData[overseasPriceKey] || {};
+            const baseExtData = allExtendedData[basePriceKey] || {};
+            const comparisonExtData = allExtendedData[comparisonPriceKey] || {};
             
-            const overseasPriceInKrw = overseasPrice * usdKrw;
-            const kimchiPremium = overseasPriceInKrw > 0 
-                ? ((domesticPrice - overseasPriceInKrw) / overseasPriceInKrw) * 100
-                : 0;
-
-            // 전일대비 - 국내 거래소 기준
-            const change24h = domesticExtData.change24h !== undefined 
-                ? domesticExtData.change24h 
+            // 전일대비 - 기준 거래소 기준
+            const change24h = baseExtData.change24h !== undefined 
+                ? baseExtData.change24h 
                 : baseCoin.change24h + (Math.random() - 0.5) * 0.2;
             
-            // 거래대금 - 각 거래소별로 표시
-            let domesticVolume: string;
-            let overseasVolume: string;
+            // 거래대금 - 각 거래소별로 표시하고 현재 화폐로 변환
+            let baseVolume: string;
+            let comparisonVolume: string;
             
-            // 국내 거래대금
-            if (domesticExtData.volume24h !== undefined) {
-                domesticVolume = formatVolume(domesticExtData.volume24h);
+            if (baseExtData.volume24h !== undefined) {
+                const convertedVolume = convertCurrency(baseExtData.volume24h, baseCurrencyType, currentCurrency, usdKrw);
+                baseVolume = formatVolume(convertedVolume, currentCurrency, t);
             } else {
-                const baseVolume = parseVolume(baseCoin.volume);
-                const liveDomesticVolume = baseVolume * (1 + (Math.random() - 0.5) * 0.05);
-                domesticVolume = formatVolume(liveDomesticVolume);
+                const baseVolumeNum = parseVolume(baseCoin.volume);
+                const convertedVolume = convertCurrency(baseVolumeNum, 'KRW', currentCurrency, usdKrw);
+                const liveBaseVolume = convertedVolume * (1 + (Math.random() - 0.5) * 0.05);
+                baseVolume = formatVolume(liveBaseVolume, currentCurrency, t);
             }
             
-            // 해외 거래대금 (USDT 기준)
-            if (overseasExtData.volume24h !== undefined) {
-                overseasVolume = formatOverseasVolume(overseasExtData.volume24h);
+            if (comparisonExtData.volume24h !== undefined) {
+                const convertedVolume = convertCurrency(comparisonExtData.volume24h, comparisonCurrencyType, currentCurrency, usdKrw);
+                comparisonVolume = formatVolume(convertedVolume, currentCurrency, t);
             } else {
-                // 시뮬레이션: 해외 거래대금은 보통 더 크므로 2-5배 정도로 설정
-                const baseVolume = parseVolume(baseCoin.volume);
-                const liveOverseasVolume = (baseVolume / usdKrw) * (2 + Math.random() * 3);
-                overseasVolume = formatOverseasVolume(liveOverseasVolume);
+                const baseVolumeNum = parseVolume(baseCoin.volume);
+                const convertedVolume = convertCurrency(baseVolumeNum, 'KRW', currentCurrency, usdKrw);
+                const liveComparisonVolume = convertedVolume * (2 + Math.random() * 3);
+                comparisonVolume = formatVolume(liveComparisonVolume, currentCurrency, t);
             }
 
             return {
                 ...baseCoin,
-                domesticPrice,
-                overseasPrice,
-                kimchiPremium,
+                basePrice,
+                comparisonPrice,
+                priceDifference,
+                priceDifferencePercentage,
                 change24h,
-                volume: domesticVolume, // deprecated but kept for compatibility
-                domesticVolume,
-                overseasVolume,
+                baseVolume,
+                comparisonVolume,
+                // Legacy compatibility
+                domesticPrice: basePrice,
+                overseasPrice: comparisonPrice,
+                kimchiPremium: priceDifferencePercentage,
+                volume: baseVolume,
+                domesticVolume: baseVolume,
+                overseasVolume: comparisonVolume,
             } as ProcessedCoinData;
         });
 
@@ -665,20 +740,12 @@ const HomePage: React.FC = () => {
             let aValue: string | number;
             let bValue: string | number;
 
-            if (key === 'domesticVolume') {
-                aValue = parseVolume(a.domesticVolume);
-                bValue = parseVolume(b.domesticVolume);
-            } else if (key === 'overseasVolume') {
-                // Parse overseas volume for sorting
-                const parseOverseasVolume = (vol: string): number => {
-                    const num = parseFloat(vol);
-                    if (vol.includes('B')) return num * 1000000000;
-                    if (vol.includes('M')) return num * 1000000;
-                    if (vol.includes('K')) return num * 1000;
-                    return num;
-                };
-                aValue = parseOverseasVolume(a.overseasVolume);
-                bValue = parseOverseasVolume(b.overseasVolume);
+            if (key === 'baseVolume') {
+                aValue = parseVolume(a.baseVolume);
+                bValue = parseVolume(b.baseVolume);
+            } else if (key === 'comparisonVolume') {
+                aValue = parseVolume(a.comparisonVolume);
+                bValue = parseVolume(b.comparisonVolume);
             } else if (key === 'name') {
                 aValue = a.names[i18n.language] || a.names['en'];
                 bValue = b.names[i18n.language] || b.names['en'];
@@ -702,8 +769,7 @@ const HomePage: React.FC = () => {
         });
 
         return liveData;
-    }, [allPrices, allExtendedData, selectedDomestic, selectedOverseas, sortConfig, i18n.language, usdKrw]);
-
+    }, [allPrices, allExtendedData, selectedBase, selectedComparison, sortConfig, i18n.language, usdKrw, currentCurrency, t]);
 
     return (
         <div className="bg-gray-50 dark:bg-black min-h-screen text-gray-600 dark:text-gray-300 font-sans">
@@ -719,22 +785,23 @@ const HomePage: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                             <div>
-                                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{t('home.domestic_exchange')}</label>
-                                <CustomSelect options={translatedDomesticExchanges} value={selectedDomestic} onChange={setSelectedDomestic}/>
+                                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{t('home.base_exchange')}</label>
+                                <CustomSelect options={translatedAllExchanges} value={selectedBase} onChange={setSelectedBase}/>
                             </div>
                             <div>
-                                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{t('home.overseas_exchange')}</label>
-                                <CustomSelect options={translatedOverseasExchanges} value={selectedOverseas} onChange={setSelectedOverseas}/>
+                                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{t('home.comparison_exchange')}</label>
+                                <CustomSelect options={translatedAllExchanges} value={selectedComparison} onChange={setSelectedComparison}/>
                             </div>
                         </div>
                         
                         <div className="relative">
-                            <KimchiPremiumTable 
+                            <CryptoPriceComparisonTable 
                                 data={processedCoinData.slice(0, COIN_DISPLAY_LIMIT)} 
                                 onSort={handleSort}
                                 sortConfig={sortConfig}
-                                domesticExchangeName={selectedDomestic.name}
-                                overseasExchangeName={selectedOverseas.name}
+                                baseExchangeName={selectedBase.name}
+                                comparisonExchangeName={selectedComparison.name}
+                                currency={currentCurrency}
                             />
                             
                             {processedCoinData.length > COIN_DISPLAY_LIMIT && (

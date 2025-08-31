@@ -34,16 +34,21 @@ export default {
   "home": {
     "title": "김치 프리미엄",
     "subtitle": "국내와 해외 거래소의 가격차이를 확인하세요.",
-    "domestic_exchange": "기준 거래소",
-    "overseas_exchange": "해외 거래소",
+    "base_exchange": "기준 거래소",
+    "comparison_exchange": "비교 거래소",
     "unlock_button": "모든 코인 보기"
   },
   "table": {
     "name": "이름",
-    "price": "{{exchangeName}} 현재가",
-    "premium": "차이(김프)",
-    "change": "전일대비",
-    "volume": "{{exchangeName}} 거래대금"
+    "current_price": "현재가",
+    "price_difference": "차이(김프)",
+    "daily_change": "전일대비",
+    "trading_volume_24h": "24h 거래대금",
+    "hundred_million": "억",
+    "trillion": "조",
+    "billion": "B",
+    "million": "M",
+    "thousand": "K"
   },
   "login": {
     "welcome_back": "다시 오신 것을 환영합니다",

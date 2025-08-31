@@ -34,16 +34,21 @@ export default {
   "home": {
     "title": "泡菜溢价",
     "subtitle": "查看国内外交易所的价格差异。",
-    "domestic_exchange": "基准交易所",
-    "overseas_exchange": "海外交易所",
+    "base_exchange": "基准交易所",
+    "comparison_exchange": "比较交易所",
     "unlock_button": "解锁所有硬币"
   },
   "table": {
     "name": "名称",
-    "price": "{{exchangeName}} 现价",
-    "premium": "差价(溢价)",
-    "change": "24小时变化",
-    "volume": "{{exchangeName}} 交易量"
+    "current_price": "现价",
+    "price_difference": "差价(溢价)",
+    "daily_change": "24小时变化", 
+    "trading_volume_24h": "24h 交易量",
+    "hundred_million": "亿",
+    "trillion": "万亿",
+    "billion": "B",
+    "million": "M",
+    "thousand": "K"
   },
   "login": {
     "welcome_back": "欢迎回来",

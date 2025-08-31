@@ -34,16 +34,21 @@ export default {
   "home": {
     "title": "Chênh lệch giá Kimchi",
     "subtitle": "Kiểm tra chênh lệch giá giữa các sàn giao dịch trong nước và quốc tế.",
-    "domestic_exchange": "Sàn giao dịch cơ sở",
-    "overseas_exchange": "Sàn giao dịch quốc tế",
+    "base_exchange": "Sàn giao dịch cơ sở",
+    "comparison_exchange": "Sàn giao dịch so sánh",
     "unlock_button": "Mở khóa tất cả coin"
   },
   "table": {
     "name": "Tên",
-    "price": "Giá {{exchangeName}}",
-    "premium": "Chênh lệch (Premium)",
-    "change": "Thay đổi 24h",
-    "volume": "Khối lượng {{exchangeName}}"
+    "current_price": "Giá hiện tại",
+    "price_difference": "Chênh lệch giá",
+    "daily_change": "Thay đổi 24h",
+    "trading_volume_24h": "Khối lượng 24h",
+    "hundred_million": "trăm triệu",
+    "trillion": "nghìn tỷ",
+    "billion": "B",
+    "million": "M", 
+    "thousand": "K"
   },
   "login": {
     "welcome_back": "Chào mừng trở lại",
