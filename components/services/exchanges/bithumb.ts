@@ -1,5 +1,8 @@
 // components/services/exchanges/bithumb.ts
-import type { ExchangeService, PriceUpdateCallback } from '../../../types';
+import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+
+// ExtendedPriceUpdate 타입을 사용
+type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
 const createBithumbService = (): ExchangeService => {
   const id = 'bithumb_krw';
@@ -45,7 +48,7 @@ const createBithumbService = (): ExchangeService => {
     'KAVA': 900
   };
   
-  const connect = (callback: PriceUpdateCallback) => {
+  const connectExtended = (callback: ExtendedPriceUpdateCallback) => {
     isActive = true;
     
     const fetchPrices = async () => {
@@ -67,16 +70,20 @@ const createBithumbService = (): ExchangeService => {
             if (symbol !== 'date' && data.data[symbol]) {
               const priceData = data.data[symbol];
               const price = parseFloat(priceData.closing_price);
+              const change24h = parseFloat(priceData['24H_fluctate_rate']) || 0;
+              const volume24h = parseFloat(priceData.acc_trade_value_24H) || 0;
               
               if (!isNaN(price) && price > 0) {
                 callback({
                   priceKey: `${id}-${symbol}`,
-                  price: price
+                  price: price,
+                  change24h: change24h,
+                  volume24h: volume24h
                 });
                 
                 // 디버깅용 로그
                 if (symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') {
-                  console.log(`[${id}] ${symbol}: ₩${price.toLocaleString('ko-KR')} (API)`);
+                  console.log(`[${id}] ${symbol}: ₩${price.toLocaleString('ko-KR')} (API) | 전일대비: ${change24h.toFixed(2)}%`);
                 }
               }
             }
@@ -105,9 +112,18 @@ const createBithumbService = (): ExchangeService => {
           
           const price = basePrice * (1 + marketTrend + timeVariation + randomNoise);
           
+          // 전일대비 변동률 시뮬레이션
+          const change24h = (marketTrend + timeVariation) * 100 + (Math.random() - 0.5) * 2;
+          
+          // 거래대금 시뮬레이션 (원화)
+          const baseVolume = basePrice * (Math.random() * 1000000 + 500000); // 기본 거래량
+          const volume24h = baseVolume * (1 + marketTrend);
+          
           callback({
             priceKey: `${id}-${symbol}`,
-            price: Math.max(price, 0.001) // 음수 방지
+            price: Math.max(price, 0.001), // 음수 방지
+            change24h: change24h,
+            volume24h: volume24h
           });
         });
         
@@ -131,6 +147,17 @@ const createBithumbService = (): ExchangeService => {
     // 2초마다 업데이트
     intervalId = setInterval(fetchPrices, 2000);
   };
+  
+  // 기본 connect (하위 호환성)
+  const connect = (callback: PriceUpdateCallback) => {
+    // ExtendedPriceUpdate를 PriceUpdate로 변환
+    connectExtended((update) => {
+      callback({
+        priceKey: update.priceKey,
+        price: update.price
+      });
+    });
+  };
 
   const disconnect = () => {
     console.log(`[${id}] Disconnecting service...`);
@@ -142,7 +169,7 @@ const createBithumbService = (): ExchangeService => {
     }
   };
 
-  return { id, connect, disconnect };
+  return { id, connect, connectExtended, disconnect };
 };
 
 export const bithumbService = createBithumbService();

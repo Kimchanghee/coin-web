@@ -1,5 +1,8 @@
 // components/services/exchanges/coinone.ts
-import type { ExchangeService, PriceUpdateCallback } from '../../../types';
+import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+
+// ExtendedPriceUpdate 타입을 사용
+type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
 const createCoinoneService = (): ExchangeService => {
   const id = 'coinone_krw';
@@ -45,7 +48,7 @@ const createCoinoneService = (): ExchangeService => {
     'KAVA': 902
   };
 
-  const connect = (callback: PriceUpdateCallback) => {
+  const connectExtended = (callback: ExtendedPriceUpdateCallback) => {
     isActive = true;
     
     const fetchPrices = async () => {
@@ -76,9 +79,18 @@ const createCoinoneService = (): ExchangeService => {
         // 최종 가격 계산
         const price = basePrice * (1 + marketTrend + microTrend + timeVariation + randomNoise);
         
+        // 전일대비 변동률 시뮬레이션
+        const change24h = (marketTrend + microTrend + timeVariation) * 100 + (Math.random() - 0.5) * 1.5;
+        
+        // 거래대금 시뮬레이션 (원화)
+        const baseVolume = basePrice * (Math.random() * 800000 + 400000); // 빗썸보다 약간 적은 거래량
+        const volume24h = baseVolume * (1 + marketTrend + microTrend);
+        
         callback({
           priceKey: `${id}-${symbol}`,
-          price: Math.max(price, 0.001) // 음수 방지
+          price: Math.max(price, 0.001), // 음수 방지
+          change24h: change24h,
+          volume24h: volume24h
         });
       });
       
@@ -87,8 +99,9 @@ const createCoinoneService = (): ExchangeService => {
         const btcPrice = basePrices['BTC'] * (1 + marketTrend + microTrend);
         const ethPrice = basePrices['ETH'] * (1 + marketTrend + microTrend);
         const solPrice = basePrices['SOL'] * (1 + marketTrend + microTrend);
+        const btcChange = (marketTrend + microTrend) * 100;
         
-        console.log(`[${id}] BTC: ₩${Math.round(btcPrice).toLocaleString('ko-KR')}`);
+        console.log(`[${id}] BTC: ₩${Math.round(btcPrice).toLocaleString('ko-KR')} | 전일대비: ${btcChange.toFixed(2)}%`);
         console.log(`[${id}] ETH: ₩${Math.round(ethPrice).toLocaleString('ko-KR')}`);
         console.log(`[${id}] SOL: ₩${Math.round(solPrice).toLocaleString('ko-KR')}`);
       }
@@ -101,6 +114,17 @@ const createCoinoneService = (): ExchangeService => {
     // 2.5초마다 업데이트 (빗썸과 다른 주기)
     intervalId = setInterval(fetchPrices, 2500);
   };
+  
+  // 기본 connect (하위 호환성)
+  const connect = (callback: PriceUpdateCallback) => {
+    // ExtendedPriceUpdate를 PriceUpdate로 변환
+    connectExtended((update) => {
+      callback({
+        priceKey: update.priceKey,
+        price: update.price
+      });
+    });
+  };
 
   const disconnect = () => {
     console.log(`[${id}] Disconnecting service...`);
@@ -112,7 +136,7 @@ const createCoinoneService = (): ExchangeService => {
     }
   };
 
-  return { id, connect, disconnect };
+  return { id, connect, connectExtended, disconnect };
 };
 
 export const coinoneService = createCoinoneService();

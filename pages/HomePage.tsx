@@ -274,9 +274,6 @@ const KimchiPremiumTable: React.FC<{
     );
 };
 
-// HomePage.tsx 내의 ReferralBanner 컴포넌트 부분만 교체
-// (HomePage.tsx 파일의 다른 부분은 그대로 유지)
-
 const ReferralBanner: React.FC = () => {
     const { t } = useTranslation();
     const referralLink = "https://www.gate.com/share/DJBWKAIF";
@@ -362,7 +359,6 @@ const ReferralBanner: React.FC = () => {
                 </div>
             </div>
             
-            {/* FIX: The 'jsx' prop on the <style> tag is a Next.js feature. This is a regular React app, so it's not supported. Removed 'jsx' prop. */}
             <style>{`
                 @keyframes slide {
                     0% { transform: translate(0, 0); }
@@ -493,14 +489,28 @@ const HomePage: React.FC = () => {
             const domesticPrice = allPrices[domesticPriceKey] || baseCoin.domesticPrice;
             const overseasPrice = allPrices[overseasPriceKey] || baseCoin.overseasPrice;
             
+            // 확장 데이터 가져오기 (전일대비, 거래대금)
+            const extendedData = allExtendedData[domesticPriceKey] || {};
+            
             const overseasPriceInKrw = overseasPrice * usdKrw;
             const kimchiPremium = overseasPriceInKrw > 0 
                 ? ((domesticPrice - overseasPriceInKrw) / overseasPriceInKrw) * 100
                 : 0;
 
-            const change24h = baseCoin.change24h + (Math.random() - 0.5) * 0.2;
-            const baseVolume = parseVolume(baseCoin.volume);
-            const liveVolume = baseVolume * (1 + (Math.random() - 0.5) * 0.05);
+            // 실시간 전일대비 - 확장 데이터가 있으면 사용, 없으면 기본값 사용
+            const change24h = extendedData.change24h !== undefined 
+                ? extendedData.change24h 
+                : baseCoin.change24h + (Math.random() - 0.5) * 0.2;
+            
+            // 실시간 거래대금 - 확장 데이터가 있으면 사용, 없으면 기본값 사용
+            let volume: string;
+            if (extendedData.volume24h !== undefined) {
+                volume = formatVolume(extendedData.volume24h);
+            } else {
+                const baseVolume = parseVolume(baseCoin.volume);
+                const liveVolume = baseVolume * (1 + (Math.random() - 0.5) * 0.05);
+                volume = formatVolume(liveVolume);
+            }
 
             return {
                 ...baseCoin,
@@ -508,7 +518,7 @@ const HomePage: React.FC = () => {
                 overseasPrice,
                 kimchiPremium,
                 change24h,
-                volume: formatVolume(liveVolume),
+                volume,
             };
         });
 
@@ -543,7 +553,7 @@ const HomePage: React.FC = () => {
         });
 
         return liveData;
-    }, [allPrices, selectedDomestic, selectedOverseas, sortConfig, i18n.language, usdKrw]);
+    }, [allPrices, allExtendedData, selectedDomestic, selectedOverseas, sortConfig, i18n.language, usdKrw]);
 
 
     return (
