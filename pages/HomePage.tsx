@@ -647,6 +647,8 @@ const HomePage: React.FC = () => {
         setSortConfig({ key, direction });
     };
 
+    // pages/HomePage.tsx 의 processedCoinData useMemo 부분 수정
+
     const processedCoinData = useMemo(() => {
         const parseVolume = (volumeStr: string): number => {
             const valueStr = String(volumeStr).replace(/,/g, '');
@@ -660,8 +662,6 @@ const HomePage: React.FC = () => {
             return isNaN(num) ? 0 : num * multiplier;
         };
         
-        // PERF: Immediately render all coins with mock data, then update with live data.
-        // This removes the initial filter that waited for live prices, eliminating perceived loading time.
         const liveData = MOCK_COIN_DATA.map(baseCoin => {
             const basePriceKey = `${selectedBase.id}-${baseCoin.symbol}`;
             const comparisonPriceKey = `${selectedComparison.id}-${baseCoin.symbol}`;
@@ -686,33 +686,61 @@ const HomePage: React.FC = () => {
             const baseExtData = allExtendedData[basePriceKey] || {};
             const comparisonExtData = allExtendedData[comparisonPriceKey] || {};
             
-            // 전일대비 - 기준 거래소 기준
+            // 전일대비 - 기준 거래소 기준 (실시간 데이터 우선)
             const change24h = baseExtData.change24h !== undefined 
                 ? baseExtData.change24h 
                 : baseCoin.change24h + (Math.random() - 0.5) * 0.2;
             
-            // 거래대금 - 각 거래소별로 표시하고 현재 화폐로 변환
+            // 거래대금 계산 개선
             let baseVolume: string;
             let comparisonVolume: string;
             
+            // 기준 거래소 거래대금
             if (baseExtData.volume24h !== undefined) {
-                const convertedVolume = convertCurrency(baseExtData.volume24h, baseCurrencyType, currentCurrency, usdKrw);
+                // 실시간 API 데이터 사용
+                const volumeInOriginalCurrency = baseExtData.volume24h;
+                const convertedVolume = convertCurrency(volumeInOriginalCurrency, baseCurrencyType, currentCurrency, usdKrw);
                 baseVolume = formatVolume(convertedVolume, currentCurrency, t);
             } else {
-                const baseVolumeNum = parseVolume(baseCoin.volume);
-                const convertedVolume = convertCurrency(baseVolumeNum, 'KRW', currentCurrency, usdKrw);
-                const liveBaseVolume = convertedVolume * (1 + (Math.random() - 0.5) * 0.05);
-                baseVolume = formatVolume(liveBaseVolume, currentCurrency, t);
+                // Mock 데이터 기반 시뮬레이션
+                const mockVolumeKrw = parseVolume(baseCoin.volume);
+                const convertedVolume = convertCurrency(mockVolumeKrw, 'KRW', currentCurrency, usdKrw);
+                // 거래소별 거래량 특성 반영
+                let volumeMultiplier = 1;
+                if (selectedBase.id.includes('upbit')) volumeMultiplier = 1.0;
+                else if (selectedBase.id.includes('bithumb')) volumeMultiplier = 0.7;
+                else if (selectedBase.id.includes('coinone')) volumeMultiplier = 0.4;
+                else if (selectedBase.id.includes('binance')) volumeMultiplier = 3.5;
+                else if (selectedBase.id.includes('bybit')) volumeMultiplier = 2.8;
+                else if (selectedBase.id.includes('okx')) volumeMultiplier = 2.2;
+                else if (selectedBase.id.includes('gateio')) volumeMultiplier = 1.5;
+                
+                const adjustedVolume = convertedVolume * volumeMultiplier * (0.9 + Math.random() * 0.2);
+                baseVolume = formatVolume(adjustedVolume, currentCurrency, t);
             }
             
+            // 비교 거래소 거래대금
             if (comparisonExtData.volume24h !== undefined) {
-                const convertedVolume = convertCurrency(comparisonExtData.volume24h, comparisonCurrencyType, currentCurrency, usdKrw);
+                // 실시간 API 데이터 사용
+                const volumeInOriginalCurrency = comparisonExtData.volume24h;
+                const convertedVolume = convertCurrency(volumeInOriginalCurrency, comparisonCurrencyType, currentCurrency, usdKrw);
                 comparisonVolume = formatVolume(convertedVolume, currentCurrency, t);
             } else {
-                const baseVolumeNum = parseVolume(baseCoin.volume);
-                const convertedVolume = convertCurrency(baseVolumeNum, 'KRW', currentCurrency, usdKrw);
-                const liveComparisonVolume = convertedVolume * (2 + Math.random() * 3);
-                comparisonVolume = formatVolume(liveComparisonVolume, currentCurrency, t);
+                // Mock 데이터 기반 시뮬레이션
+                const mockVolumeKrw = parseVolume(baseCoin.volume);
+                const convertedVolume = convertCurrency(mockVolumeKrw, 'KRW', currentCurrency, usdKrw);
+                // 거래소별 거래량 특성 반영
+                let volumeMultiplier = 1;
+                if (selectedComparison.id.includes('upbit')) volumeMultiplier = 1.0;
+                else if (selectedComparison.id.includes('bithumb')) volumeMultiplier = 0.7;
+                else if (selectedComparison.id.includes('coinone')) volumeMultiplier = 0.4;
+                else if (selectedComparison.id.includes('binance')) volumeMultiplier = 3.5;
+                else if (selectedComparison.id.includes('bybit')) volumeMultiplier = 2.8;
+                else if (selectedComparison.id.includes('okx')) volumeMultiplier = 2.2;
+                else if (selectedComparison.id.includes('gateio')) volumeMultiplier = 1.5;
+                
+                const adjustedVolume = convertedVolume * volumeMultiplier * (0.9 + Math.random() * 0.2);
+                comparisonVolume = formatVolume(adjustedVolume, currentCurrency, t);
             }
 
             return {
@@ -734,6 +762,7 @@ const HomePage: React.FC = () => {
             } as ProcessedCoinData;
         });
 
+        // 정렬 로직
         liveData.sort((a, b) => {
             const { key, direction } = sortConfig;
             let aValue: string | number;
