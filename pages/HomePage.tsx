@@ -603,41 +603,62 @@ const HomePage: React.FC = () => {
         });
     }, [i18n.language, translatedAllExchanges]);
 
-    useEffect(() => {
-        // Collects all incoming updates into a buffer.
-        const handleUpdate = (update: any) => {
-            updatesBuffer.current.prices[update.priceKey] = update.price;
-            if (update.change24h !== undefined || update.volume24h !== undefined) {
-                updatesBuffer.current.extended[update.priceKey] = {
-                    change24h: update.change24h,
-                    volume24h: update.volume24h,
-                };
-            }
-        };
+useEffect(() => {
+    console.log('🔧 Starting exchange services...');
+    
+    // Collects all incoming updates into a buffer.
+    const handleUpdate = (update: any) => {
+        console.log('📊 Price update received:', update);
+        updatesBuffer.current.prices[update.priceKey] = update.price;
+        
+        if (update.change24h !== undefined || update.volume24h !== undefined) {
+            console.log('📈 Extended data received:', {
+                priceKey: update.priceKey,
+                change24h: update.change24h,
+                volume24h: update.volume24h,
+                changePrice: update.changePrice
+            });
+            updatesBuffer.current.extended[update.priceKey] = {
+                change24h: update.change24h,
+                volume24h: update.volume24h,
+                changePrice: update.changePrice
+            };
+        }
+    };
 
-        allServices.forEach(service => {
-            const extService = service as any;
-            if (extService.connectExtended) {
-                extService.connectExtended(handleUpdate);
-            } else {
-                service.connect(handleUpdate);
-            }
-        });
+    // 각 서비스별로 확장 데이터 지원 여부 확인하고 연결
+    allServices.forEach(service => {
+        console.log(`🏢 Connecting service: ${service.id}`);
+        
+        const extService = service as any;
+        if (extService.connectExtended && typeof extService.connectExtended === 'function') {
+            console.log(`✅ Using extended connection for: ${service.id}`);
+            extService.connectExtended(handleUpdate);
+        } else {
+            console.log(`⚠️ Using basic connection for: ${service.id} (no extended data)`);
+            service.connect(handleUpdate);
+        }
+    });
 
-        // Applies the buffered updates to the state every 1 second.
-        const intervalId = setInterval(() => {
-            if (Object.keys(updatesBuffer.current.prices).length > 0 || Object.keys(updatesBuffer.current.extended).length > 0) {
-                setAllPrices(prev => ({ ...prev, ...updatesBuffer.current.prices }));
-                setAllExtendedData(prev => ({ ...prev, ...updatesBuffer.current.extended }));
-                updatesBuffer.current = { prices: {}, extended: {} };
-            }
-        }, 1000);
+    // Applies the buffered updates to the state every 1 second.
+    const intervalId = setInterval(() => {
+        const priceUpdates = Object.keys(updatesBuffer.current.prices).length;
+        const extendedUpdates = Object.keys(updatesBuffer.current.extended).length;
+        
+        if (priceUpdates > 0 || extendedUpdates > 0) {
+            console.log(`🔄 Applying ${priceUpdates} price updates, ${extendedUpdates} extended updates`);
+            setAllPrices(prev => ({ ...prev, ...updatesBuffer.current.prices }));
+            setAllExtendedData(prev => ({ ...prev, ...updatesBuffer.current.extended }));
+            updatesBuffer.current = { prices: {}, extended: {} };
+        }
+    }, 1000);
 
-        return () => {
-            allServices.forEach(service => service.disconnect());
-            clearInterval(intervalId);
-        };
-    }, []);
+    return () => {
+        console.log('🛑 Disconnecting all services');
+        allServices.forEach(service => service.disconnect());
+        clearInterval(intervalId);
+    };
+}, []);
 
     const handleSort = (key: SortKey) => {
         let direction: SortDirection = 'desc';
@@ -646,8 +667,6 @@ const HomePage: React.FC = () => {
         }
         setSortConfig({ key, direction });
     };
-
-    // pages/HomePage.tsx 의 processedCoinData useMemo 부분 수정
 
     const processedCoinData = useMemo(() => {
         const parseVolume = (volumeStr: string): number => {
@@ -662,105 +681,146 @@ const HomePage: React.FC = () => {
             return isNaN(num) ? 0 : num * multiplier;
         };
         
-        const liveData = MOCK_COIN_DATA.map(baseCoin => {
-            const basePriceKey = `${selectedBase.id}-${baseCoin.symbol}`;
-            const comparisonPriceKey = `${selectedComparison.id}-${baseCoin.symbol}`;
+        console.log('🔄 Processing coin data...');
+        console.log('📊 Current prices:', Object.keys(allPrices).length);
+        console.log('📈 Extended data:', Object.keys(allExtendedData).length);
+        
+        const liveData = MOCK_COIN_DATA
+            .map(baseCoin => {
+                const basePriceKey = `${selectedBase.id}-${baseCoin.symbol}`;
+                const comparisonPriceKey = `${selectedComparison.id}-${baseCoin.symbol}`;
 
-            let rawBasePrice = allPrices[basePriceKey] ?? baseCoin.domesticPrice;
-            let rawComparisonPrice = allPrices[comparisonPriceKey] ?? baseCoin.overseasPrice;
-            
-            // Convert prices to the current currency
-            const baseCurrencyType = selectedBase.id.includes('krw') ? 'KRW' : 'USD';
-            const comparisonCurrencyType = selectedComparison.id.includes('krw') ? 'KRW' : 'USD';
-            
-            const basePrice = convertCurrency(rawBasePrice, baseCurrencyType, currentCurrency, usdKrw);
-            const comparisonPrice = convertCurrency(rawComparisonPrice, comparisonCurrencyType, currentCurrency, usdKrw);
-            
-            // Calculate price difference
-            const priceDifference = basePrice - comparisonPrice;
-            const priceDifferencePercentage = comparisonPrice > 0 
-                ? (priceDifference / comparisonPrice) * 100
-                : 0;
-            
-            // 확장 데이터 가져오기
-            const baseExtData = allExtendedData[basePriceKey] || {};
-            const comparisonExtData = allExtendedData[comparisonPriceKey] || {};
-            
-            // 전일대비 - 기준 거래소 기준 (실시간 데이터 우선)
-            const change24h = baseExtData.change24h !== undefined 
-                ? baseExtData.change24h 
-                : baseCoin.change24h + (Math.random() - 0.5) * 0.2;
-            
-            // 거래대금 계산 개선
-            let baseVolume: string;
-            let comparisonVolume: string;
-            
-            // 기준 거래소 거래대금
-            if (baseExtData.volume24h !== undefined) {
-                // 실시간 API 데이터 사용
-                const volumeInOriginalCurrency = baseExtData.volume24h;
-                const convertedVolume = convertCurrency(volumeInOriginalCurrency, baseCurrencyType, currentCurrency, usdKrw);
-                baseVolume = formatVolume(convertedVolume, currentCurrency, t);
-            } else {
-                // Mock 데이터 기반 시뮬레이션
-                const mockVolumeKrw = parseVolume(baseCoin.volume);
-                const convertedVolume = convertCurrency(mockVolumeKrw, 'KRW', currentCurrency, usdKrw);
-                // 거래소별 거래량 특성 반영
-                let volumeMultiplier = 1;
-                if (selectedBase.id.includes('upbit')) volumeMultiplier = 1.0;
-                else if (selectedBase.id.includes('bithumb')) volumeMultiplier = 0.7;
-                else if (selectedBase.id.includes('coinone')) volumeMultiplier = 0.4;
-                else if (selectedBase.id.includes('binance')) volumeMultiplier = 3.5;
-                else if (selectedBase.id.includes('bybit')) volumeMultiplier = 2.8;
-                else if (selectedBase.id.includes('okx')) volumeMultiplier = 2.2;
-                else if (selectedBase.id.includes('gateio')) volumeMultiplier = 1.5;
+                // 실제 가격 데이터 확인
+                const rawBasePrice = allPrices[basePriceKey];
+                const rawComparisonPrice = allPrices[comparisonPriceKey];
                 
-                const adjustedVolume = convertedVolume * volumeMultiplier * (0.9 + Math.random() * 0.2);
-                baseVolume = formatVolume(adjustedVolume, currentCurrency, t);
-            }
-            
-            // 비교 거래소 거래대금
-            if (comparisonExtData.volume24h !== undefined) {
-                // 실시간 API 데이터 사용
-                const volumeInOriginalCurrency = comparisonExtData.volume24h;
-                const convertedVolume = convertCurrency(volumeInOriginalCurrency, comparisonCurrencyType, currentCurrency, usdKrw);
-                comparisonVolume = formatVolume(convertedVolume, currentCurrency, t);
-            } else {
-                // Mock 데이터 기반 시뮬레이션
-                const mockVolumeKrw = parseVolume(baseCoin.volume);
-                const convertedVolume = convertCurrency(mockVolumeKrw, 'KRW', currentCurrency, usdKrw);
-                // 거래소별 거래량 특성 반영
-                let volumeMultiplier = 1;
-                if (selectedComparison.id.includes('upbit')) volumeMultiplier = 1.0;
-                else if (selectedComparison.id.includes('bithumb')) volumeMultiplier = 0.7;
-                else if (selectedComparison.id.includes('coinone')) volumeMultiplier = 0.4;
-                else if (selectedComparison.id.includes('binance')) volumeMultiplier = 3.5;
-                else if (selectedComparison.id.includes('bybit')) volumeMultiplier = 2.8;
-                else if (selectedComparison.id.includes('okx')) volumeMultiplier = 2.2;
-                else if (selectedComparison.id.includes('gateio')) volumeMultiplier = 1.5;
+                // 확장 데이터 가져오기 (디버깅 정보 포함)
+                const baseExtData = allExtendedData[basePriceKey] || {};
+                const comparisonExtData = allExtendedData[comparisonPriceKey] || {};
                 
-                const adjustedVolume = convertedVolume * volumeMultiplier * (0.9 + Math.random() * 0.2);
-                comparisonVolume = formatVolume(adjustedVolume, currentCurrency, t);
-            }
+                console.log(`💰 ${baseCoin.symbol}:`, {
+                    basePrice: rawBasePrice,
+                    comparisonPrice: rawComparisonPrice,
+                    baseExtData,
+                    comparisonExtData
+                });
+                
+                // 두 거래소 모두에서 실제 가격 데이터가 없는 경우 null 반환 (필터링됨)
+                if (rawBasePrice === undefined && rawComparisonPrice === undefined) {
+                    return null;
+                }
+                
+                // 한쪽 거래소에만 데이터가 있는 경우도 null 반환 (필터링됨)
+                if (rawBasePrice === undefined || rawComparisonPrice === undefined) {
+                    return null;
+                }
 
-            return {
-                ...baseCoin,
-                basePrice,
-                comparisonPrice,
-                priceDifference,
-                priceDifferencePercentage,
-                change24h,
-                baseVolume,
-                comparisonVolume,
-                // Legacy compatibility
-                domesticPrice: basePrice,
-                overseasPrice: comparisonPrice,
-                kimchiPremium: priceDifferencePercentage,
-                volume: baseVolume,
-                domesticVolume: baseVolume,
-                overseasVolume: comparisonVolume,
-            } as ProcessedCoinData;
-        });
+                // 가격이 0이거나 음수인 경우도 제외
+                if (rawBasePrice <= 0 || rawComparisonPrice <= 0) {
+                    return null;
+                }
+                
+                // 두 거래소 모두에 유효한 데이터가 있는 경우만 처리
+                const baseCurrencyType = selectedBase.id.includes('krw') ? 'KRW' : 'USD';
+                const comparisonCurrencyType = selectedComparison.id.includes('krw') ? 'KRW' : 'USD';
+                
+                const basePrice = convertCurrency(rawBasePrice, baseCurrencyType, currentCurrency, usdKrw);
+                const comparisonPrice = convertCurrency(rawComparisonPrice, comparisonCurrencyType, currentCurrency, usdKrw);
+                
+                // Calculate price difference
+                const priceDifference = basePrice - comparisonPrice;
+                const priceDifferencePercentage = comparisonPrice > 0 
+                    ? (priceDifference / comparisonPrice) * 100
+                    : 0;
+                
+                // ✅ 전일대비는 항상 기준 거래소 기준으로 사용
+                let change24h = 0;
+                if (baseExtData.change24h !== undefined) {
+                    change24h = baseExtData.change24h;
+                    console.log(`📈 Using real change24h for ${baseCoin.symbol}: ${change24h}%`);
+                } else {
+                    // 실시간 데이터가 없으면 Mock 데이터 + 약간의 변동
+                    change24h = baseCoin.change24h + (Math.random() - 0.5) * 0.2;
+                    console.log(`🎲 Using simulated change24h for ${baseCoin.symbol}: ${change24h}%`);
+                }
+                
+                // 거래대금 계산 개선
+                let baseVolume: string;
+                let comparisonVolume: string;
+                
+                // ✅ 기준 거래소 거래대금 - 실시간 데이터 우선 사용
+                if (baseExtData.volume24h !== undefined && baseExtData.volume24h > 0) {
+                    console.log(`💰 Using real volume24h for base ${baseCoin.symbol}: ${baseExtData.volume24h}`);
+                    const volumeInOriginalCurrency = baseExtData.volume24h;
+                    const convertedVolume = convertCurrency(volumeInOriginalCurrency, baseCurrencyType, currentCurrency, usdKrw);
+                    baseVolume = formatVolume(convertedVolume, currentCurrency, t);
+                } else {
+                    console.log(`🎲 Using simulated volume for base ${baseCoin.symbol}`);
+                    // Mock 데이터 기반 시뮬레이션
+                    const mockVolumeKrw = parseVolume(baseCoin.volume);
+                    const convertedVolume = convertCurrency(mockVolumeKrw, 'KRW', currentCurrency, usdKrw);
+                    
+                    // 거래소별 거래량 특성 반영
+                    let volumeMultiplier = 1;
+                    if (selectedBase.id.includes('upbit')) volumeMultiplier = 1.0;
+                    else if (selectedBase.id.includes('bithumb')) volumeMultiplier = 0.7;
+                    else if (selectedBase.id.includes('coinone')) volumeMultiplier = 0.4;
+                    else if (selectedBase.id.includes('binance')) volumeMultiplier = 3.5;
+                    else if (selectedBase.id.includes('bybit')) volumeMultiplier = 2.8;
+                    else if (selectedBase.id.includes('okx')) volumeMultiplier = 2.2;
+                    else if (selectedBase.id.includes('gateio')) volumeMultiplier = 1.5;
+                    
+                    const adjustedVolume = convertedVolume * volumeMultiplier * (0.9 + Math.random() * 0.2);
+                    baseVolume = formatVolume(adjustedVolume, currentCurrency, t);
+                }
+                
+                // ✅ 비교 거래소 거래대금 - 실시간 데이터 우선 사용
+                if (comparisonExtData.volume24h !== undefined && comparisonExtData.volume24h > 0) {
+                    console.log(`💰 Using real volume24h for comparison ${baseCoin.symbol}: ${comparisonExtData.volume24h}`);
+                    const volumeInOriginalCurrency = comparisonExtData.volume24h;
+                    const convertedVolume = convertCurrency(volumeInOriginalCurrency, comparisonCurrencyType, currentCurrency, usdKrw);
+                    comparisonVolume = formatVolume(convertedVolume, currentCurrency, t);
+                } else {
+                    console.log(`🎲 Using simulated volume for comparison ${baseCoin.symbol}`);
+                    // Mock 데이터 기반 시뮬레이션
+                    const mockVolumeKrw = parseVolume(baseCoin.volume);
+                    const convertedVolume = convertCurrency(mockVolumeKrw, 'KRW', currentCurrency, usdKrw);
+                    
+                    // 거래소별 거래량 특성 반영
+                    let volumeMultiplier = 1;
+                    if (selectedComparison.id.includes('upbit')) volumeMultiplier = 1.0;
+                    else if (selectedComparison.id.includes('bithumb')) volumeMultiplier = 0.7;
+                    else if (selectedComparison.id.includes('coinone')) volumeMultiplier = 0.4;
+                    else if (selectedComparison.id.includes('binance')) volumeMultiplier = 3.5;
+                    else if (selectedComparison.id.includes('bybit')) volumeMultiplier = 2.8;
+                    else if (selectedComparison.id.includes('okx')) volumeMultiplier = 2.2;
+                    else if (selectedComparison.id.includes('gateio')) volumeMultiplier = 1.5;
+                    
+                    const adjustedVolume = convertedVolume * volumeMultiplier * (0.9 + Math.random() * 0.2);
+                    comparisonVolume = formatVolume(adjustedVolume, currentCurrency, t);
+                }
+
+                return {
+                    ...baseCoin,
+                    basePrice,
+                    comparisonPrice,
+                    priceDifference,
+                    priceDifferencePercentage,
+                    change24h, // 기준 거래소 기준 전일대비
+                    baseVolume,
+                    comparisonVolume,
+                    // Legacy compatibility
+                    domesticPrice: basePrice,
+                    overseasPrice: comparisonPrice,
+                    kimchiPremium: priceDifferencePercentage,
+                    volume: baseVolume,
+                    domesticVolume: baseVolume,
+                    overseasVolume: comparisonVolume,
+                } as ProcessedCoinData;
+            })
+            .filter((coin): coin is ProcessedCoinData => coin !== null); // null 값들을 필터링
+
+        console.log(`✅ Processed ${liveData.length} coins`);
 
         // 정렬 로직
         liveData.sort((a, b) => {
@@ -798,7 +858,6 @@ const HomePage: React.FC = () => {
 
         return liveData;
     }, [allPrices, allExtendedData, selectedBase, selectedComparison, sortConfig, i18n.language, usdKrw, currentCurrency, t]);
-
     return (
         <div className="bg-gray-50 dark:bg-black min-h-screen text-gray-600 dark:text-gray-300 font-sans">
             <div className="flex">
