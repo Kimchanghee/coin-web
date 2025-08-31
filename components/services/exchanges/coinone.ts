@@ -111,8 +111,8 @@ const createCoinoneService = (): ExchangeService => {
     console.log(`[${id}] Starting service with simulated data...`);
     fetchPrices();
     
-    // 2.5초마다 업데이트 (빗썸과 다른 주기)
-    intervalId = setInterval(fetchPrices, 2500);
+    // 1초마다 업데이트
+    intervalId = setInterval(fetchPrices, 1000);
   };
   
   // 기본 connect (하위 호환성)

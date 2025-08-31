@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP } from '../constants';
@@ -325,7 +325,7 @@ const CryptoPriceComparisonTable: React.FC<{
                     <thead className="bg-gray-50 dark:bg-gray-900/50 text-xs text-gray-500 dark:text-gray-400">
                         <tr>
                             {/* 코인 정보 */}
-                            <th scope="col" className="px-4 py-3 text-left sticky left-0 bg-gray-50 dark:bg-gray-900/50 z-10" onClick={() => onSort('name')}>
+                            <th scope="col" className="px-1 sm:px-4 py-3 text-left sticky left-0 bg-gray-50 dark:bg-gray-900/50 z-10" onClick={() => onSort('name')}>
                                 <div className="flex items-center cursor-pointer whitespace-nowrap">
                                     {t('table.name')}
                                     {getSortIcon('name')}
@@ -333,12 +333,12 @@ const CryptoPriceComparisonTable: React.FC<{
                             </th>
                             
                             {/* 가격 섹션 */}
-                            <th scope="col" className="px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
+                            <th scope="col" className="px-1 sm:px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
                                 <div className="text-gray-600 dark:text-gray-300 font-semibold">{t('table.current_price')}</div>
                             </th>
                             
                             {/* 가격 차이 */}
-                            <th scope="col" className="px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('priceDifference')}>
+                            <th scope="col" className="px-1 sm:px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('priceDifference')}>
                                 <div className="flex items-center justify-end cursor-pointer whitespace-nowrap">
                                     {t('table.price_difference')}
                                     {getSortIcon('priceDifference')}
@@ -346,7 +346,7 @@ const CryptoPriceComparisonTable: React.FC<{
                             </th>
                             
                             {/* 전일대비 */}
-                            <th scope="col" className="px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('change24h')}>
+                            <th scope="col" className="px-1 sm:px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('change24h')}>
                                 <div className="flex items-center justify-end cursor-pointer whitespace-nowrap">
                                     {t('table.daily_change')}
                                     {getSortIcon('change24h')}
@@ -354,20 +354,20 @@ const CryptoPriceComparisonTable: React.FC<{
                             </th>
                             
                             {/* 거래대금 섹션 */}
-                            <th scope="col" className="px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
+                            <th scope="col" className="px-1 sm:px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
                                 <div className="text-gray-600 dark:text-gray-300 font-semibold">{t('table.trading_volume_24h')}</div>
                             </th>
                         </tr>
                         <tr className="border-t border-gray-200 dark:border-gray-700">
                             <th className="sticky left-0 bg-gray-50 dark:bg-gray-900/50"></th>
                             {/* 가격 서브헤더 */}
-                            <th className="px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('basePrice')}>
+                            <th className="px-1 sm:px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('basePrice')}>
                                 <div className="flex items-center justify-end cursor-pointer">
                                     <span className="truncate max-w-[80px]">{baseExchangeName.split(' ')[0]}</span>
                                     {getSortIcon('basePrice')}
                                 </div>
                             </th>
-                            <th className="px-3 py-2 text-right text-xs" onClick={() => onSort('comparisonPrice')}>
+                            <th className="px-1 sm:px-3 py-2 text-right text-xs" onClick={() => onSort('comparisonPrice')}>
                                 <div className="flex items-center justify-end cursor-pointer">
                                     <span className="truncate max-w-[80px]">{comparisonExchangeName.split(' ')[0]}</span>
                                     {getSortIcon('comparisonPrice')}
@@ -376,13 +376,13 @@ const CryptoPriceComparisonTable: React.FC<{
                             <th className="border-l border-gray-200 dark:border-gray-700"></th>
                             <th className="border-l border-gray-200 dark:border-gray-700"></th>
                             {/* 거래대금 서브헤더 */}
-                            <th className="px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('baseVolume')}>
+                            <th className="px-1 sm:px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('baseVolume')}>
                                 <div className="flex items-center justify-end cursor-pointer">
                                     <span className="truncate max-w-[80px]">{baseExchangeName.split(' ')[0]}</span>
                                     {getSortIcon('baseVolume')}
                                 </div>
                             </th>
-                            <th className="px-3 py-2 text-right text-xs" onClick={() => onSort('comparisonVolume')}>
+                            <th className="px-1 sm:px-3 py-2 text-right text-xs" onClick={() => onSort('comparisonVolume')}>
                                 <div className="flex items-center justify-end cursor-pointer">
                                     <span className="truncate max-w-[80px]">{comparisonExchangeName.split(' ')[0]}</span>
                                     {getSortIcon('comparisonVolume')}
@@ -394,51 +394,51 @@ const CryptoPriceComparisonTable: React.FC<{
                         {data.map(coin => (
                             <tr key={coin.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100/50 dark:hover:bg-gray-800/50">
                                 {/* 코인 정보 */}
-                                <td className="px-4 py-3 font-medium text-black dark:text-white sticky left-0 bg-white dark:bg-[#1a1a1a]">
-                                    <div className="flex items-center gap-3">
+                                <td className="px-1 sm:px-4 py-3 font-medium text-black dark:text-white sticky left-0 bg-white dark:bg-[#1a1a1a]">
+                                    <div className="flex items-center gap-2 sm:gap-3">
                                         <span className="text-lg">{coin.logo}</span>
                                         <div>
-                                            <p className="font-semibold">{coin.names[i18n.language] || coin.names['en']}</p>
+                                            <p className="font-semibold text-sm sm:text-base">{coin.names[i18n.language] || coin.names['en']}</p>
                                             <p className="text-xs text-gray-500">{coin.symbol}</p>
                                         </div>
                                     </div>
                                 </td>
                                 
                                 {/* 기준 가격 */}
-                                <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
-                                    <p className="font-semibold">{formatCurrency(coin.basePrice, currency)}</p>
+                                <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
+                                    <p className="font-semibold text-xs sm:text-base">{formatCurrency(coin.basePrice, currency)}</p>
                                 </td>
                                 
                                 {/* 비교 가격 */}
-                                <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200">
-                                    <p className="font-semibold">{formatCurrency(coin.comparisonPrice, currency)}</p>
+                                <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200">
+                                    <p className="font-semibold text-xs sm:text-base">{formatCurrency(coin.comparisonPrice, currency)}</p>
                                 </td>
                                 
                                 {/* 가격 차이 */}
-                                <td className={`px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.priceDifferencePercentage)}`}>
+                                <td className={`px-1 sm:px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.priceDifferencePercentage)}`}>
                                     <div className="flex flex-col items-end">
-                                        <span className="text-base">{formatPercentage(coin.priceDifferencePercentage)}</span>
-                                        <span className="text-xs mt-0.5 text-gray-500">
+                                        <span className="text-xs sm:text-base">{formatPercentage(coin.priceDifferencePercentage)}</span>
+                                        <span className="text-[10px] sm:text-xs mt-0.5 text-gray-500">
                                             {coin.priceDifference > 0 ? '+' : ''}{formatCurrency(coin.priceDifference, currency)}
                                         </span>
                                     </div>
                                 </td>
                                 
                                 {/* 전일대비 */}
-                                <td className={`px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.change24h)}`}>
-                                    {formatPercentage(coin.change24h)}
+                                <td className={`px-1 sm:px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.change24h)}`}>
+                                    <span className="text-xs sm:text-base">{formatPercentage(coin.change24h)}</span>
                                 </td>
                                 
                                 {/* 기준 거래대금 */}
-                                <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
-                                    <p className="font-medium">{coin.baseVolume}</p>
-                                    <p className="text-xs text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
+                                <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
+                                    <p className="font-medium text-xs sm:text-sm">{coin.baseVolume}</p>
+                                    <p className="text-[10px] text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
                                 </td>
                                 
                                 {/* 비교 거래대금 */}
-                                <td className="px-3 py-3 text-right text-gray-800 dark:text-gray-200">
-                                    <p className="font-medium">{coin.comparisonVolume}</p>
-                                    <p className="text-xs text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
+                                <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200">
+                                    <p className="font-medium text-xs sm:text-sm">{coin.comparisonVolume}</p>
+                                    <p className="text-[10px] text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
                                 </td>
                             </tr>
                         ))}
@@ -568,6 +568,12 @@ const HomePage: React.FC = () => {
     const { t, i18n } = useTranslation();
     const [usdKrw, setUsdKrw] = useState(1385);
 
+    // Buffer for incoming data to throttle UI updates
+    const updatesBuffer = useRef<{
+        prices: Record<string, number>;
+        extended: Record<string, { change24h?: number; volume24h?: number }>;
+    }>({ prices: {}, extended: {} });
+
     // Get current currency based on language
     const currentCurrency: CurrencyCode = (LANGUAGE_CURRENCY_MAP as any)[i18n.language] || 'USD';
 
@@ -598,17 +604,14 @@ const HomePage: React.FC = () => {
     }, [i18n.language, translatedAllExchanges]);
 
     useEffect(() => {
+        // Collects all incoming updates into a buffer.
         const handleUpdate = (update: any) => {
-            setAllPrices(prev => ({ ...prev, [update.priceKey]: update.price }));
-            
+            updatesBuffer.current.prices[update.priceKey] = update.price;
             if (update.change24h !== undefined || update.volume24h !== undefined) {
-                setAllExtendedData(prev => ({
-                    ...prev,
-                    [update.priceKey]: {
-                        change24h: update.change24h,
-                        volume24h: update.volume24h
-                    }
-                }));
+                updatesBuffer.current.extended[update.priceKey] = {
+                    change24h: update.change24h,
+                    volume24h: update.volume24h,
+                };
             }
         };
 
@@ -620,8 +623,19 @@ const HomePage: React.FC = () => {
                 service.connect(handleUpdate);
             }
         });
+
+        // Applies the buffered updates to the state every 1 second.
+        const intervalId = setInterval(() => {
+            if (Object.keys(updatesBuffer.current.prices).length > 0 || Object.keys(updatesBuffer.current.extended).length > 0) {
+                setAllPrices(prev => ({ ...prev, ...updatesBuffer.current.prices }));
+                setAllExtendedData(prev => ({ ...prev, ...updatesBuffer.current.extended }));
+                updatesBuffer.current = { prices: {}, extended: {} };
+            }
+        }, 1000);
+
         return () => {
             allServices.forEach(service => service.disconnect());
+            clearInterval(intervalId);
         };
     }, []);
 

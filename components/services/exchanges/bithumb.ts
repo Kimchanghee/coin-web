@@ -144,8 +144,8 @@ const createBithumbService = (): ExchangeService => {
     console.log(`[${id}] Starting service...`);
     fetchPrices();
     
-    // 2초마다 업데이트
-    intervalId = setInterval(fetchPrices, 2000);
+    // 1초마다 업데이트
+    intervalId = setInterval(fetchPrices, 1000);
   };
   
   // 기본 connect (하위 호환성)
