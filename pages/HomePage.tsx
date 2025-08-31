@@ -459,16 +459,6 @@ const CryptoPriceComparisonTable: React.FC<{
 const ReferralBanner: React.FC = () => {
     const { t } = useTranslation();
     const referralLink = "https://www.gate.com/share/DJBWKAIF";
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     return (
         <a 
@@ -477,7 +467,7 @@ const ReferralBanner: React.FC = () => {
             rel="noopener noreferrer" 
             className="block w-full mb-8 no-underline"
         >
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-black via-slate-900 to-black p-4 md:p-6 lg:p-8 border border-cyan-500/30 shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1">
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-black via-slate-900 to-black p-3 md:p-6 lg:p-8 border border-cyan-500/30 shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1">
                 {/* Animated background grid */}
                 <div className="absolute inset-0 opacity-20 pointer-events-none">
                     <div 
@@ -490,52 +480,55 @@ const ReferralBanner: React.FC = () => {
                 </div>
                 
                 {/* Sparkles */}
-                <span className="absolute top-4 left-4 text-yellow-400 text-xl animate-pulse">✦</span>
-                <span className="absolute top-8 right-8 text-yellow-400 text-xl animate-pulse" style={{animationDelay: '0.5s'}}>✦</span>
-                <span className="absolute bottom-4 left-1/3 text-yellow-400 text-xl animate-pulse" style={{animationDelay: '1s'}}>✦</span>
-                <span className="absolute bottom-8 right-4 text-yellow-400 text-xl animate-pulse" style={{animationDelay: '1.5s'}}>✦</span>
+                <span className="absolute top-4 left-4 text-yellow-400 text-lg md:text-xl animate-pulse">✦</span>
+                <span className="absolute top-8 right-8 text-yellow-400 text-lg md:text-xl animate-pulse" style={{animationDelay: '0.5s'}}>✦</span>
+                <span className="absolute bottom-4 left-1/3 text-yellow-400 text-lg md:text-xl animate-pulse" style={{animationDelay: '1s'}}>✦</span>
+                <span className="absolute bottom-8 right-4 text-yellow-400 text-lg md:text-xl animate-pulse" style={{animationDelay: '1.5s'}}>✦</span>
                 
                 {/* Content */}
-                <div className="relative z-10 flex flex-col md:flex-row items-center gap-4 md:gap-6 lg:gap-8">
+                <div className="relative z-10 flex flex-row items-center justify-between gap-2 md:gap-6 lg:gap-8">
                     {/* Logo */}
                     <div className="flex-shrink-0">
-                        <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/50 transform hover:rotate-3 transition-transform duration-300">
-                            <span className="text-white font-black text-base md:text-lg lg:text-xl">GATE.IO</span>
+                        <div className="w-14 h-14 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/50 transform hover:rotate-3 transition-transform duration-300">
+                            <span className="text-white font-black text-sm md:text-lg lg:text-xl">GATE.IO</span>
                         </div>
                     </div>
                     
                     {/* Text Section */}
-                    <div className="flex-1 text-center md:text-left">
-                        <h3 className="text-xl md:text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-400 to-white animate-shimmer bg-[size:200%_auto]">
-                            {isMobile ? t('banner.mobile_main_title') : t('banner.pc_main_title')}
+                    <div className="flex-1 text-center md:text-left min-w-0">
+                        <h3 className="text-base md:text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-400 to-white animate-shimmer bg-[size:200%_auto] truncate">
+                            <span className="md:hidden">{t('banner.mobile_main_title')}</span>
+                            <span className="hidden md:block">{t('banner.pc_main_title')}</span>
                         </h3>
-                        <p className="text-sm md:text-base text-gray-400 mt-1">
-                            {isMobile ? t('banner.mobile_sub_title') : t('banner.pc_sub_title')}
+                        <p className="text-xs text-gray-400 mt-1 hidden md:block">
+                            {t('banner.pc_sub_title')}
                         </p>
                     </div>
                     
                     {/* Discount Badge */}
-                    <div className="flex flex-col items-center">
+                    <div className="flex-shrink-0 flex flex-col items-center">
                         <div className="relative">
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap z-10">
+                            <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-black text-[9px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-full whitespace-nowrap z-10">
                                 {t('banner.up_to')}
                             </div>
-                            <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white font-black text-3xl md:text-4xl px-6 py-3 rounded-lg shadow-lg shadow-red-500/50 transform hover:scale-105 transition-transform duration-300">
+                            <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white font-black text-2xl md:text-4xl px-3 py-1 md:px-6 md:py-3 rounded-md md:rounded-lg shadow-lg shadow-red-500/50 transform hover:scale-105 transition-transform duration-300">
                                 50%
                             </div>
-                            <div className="text-xs text-green-400 font-bold text-center mt-1 uppercase tracking-wider">
+                            <div className="text-[9px] md:text-xs text-green-400 font-bold text-center mt-1 uppercase tracking-wider">
                                 {t('banner.discount_text')}
                             </div>
                         </div>
                     </div>
                     
                     {/* CTA Button */}
-                    <div className="flex flex-col items-center gap-2">
-                        <button className="bg-gradient-to-r from-green-400 to-cyan-400 text-black font-black text-sm md:text-base px-6 md:px-8 py-2.5 md:py-3 rounded-lg shadow-lg hover:shadow-green-400/50 transition-all duration-300 hover:scale-105 uppercase tracking-wider whitespace-nowrap">
-                            {isMobile ? t('banner.cta_mobile') : t('banner.cta_pc')}
+                    <div className="flex-shrink-0 flex flex-col items-center gap-1">
+                        <button className="bg-gradient-to-r from-green-400 to-cyan-400 text-black font-black text-xs md:text-base px-4 py-2 md:px-8 md:py-3 rounded-md md:rounded-lg shadow-lg hover:shadow-green-400/50 transition-all duration-300 hover:scale-105 uppercase tracking-wider whitespace-nowrap">
+                            <span className="md:hidden">{t('banner.cta_mobile')}</span>
+                            <span className="hidden md:block">{t('banner.cta_pc')}</span>
                         </button>
-                        <span className="text-xs text-yellow-400 font-bold animate-pulse">
-                            {isMobile ? t('banner.bonus_mobile') : t('banner.bonus_pc')}
+                        <span className="text-[9px] md:text-xs text-yellow-400 font-bold animate-pulse">
+                            <span className="md:hidden">{t('banner.bonus_mobile')}</span>
+                            <span className="hidden md:block">{t('banner.bonus_pc')}</span>
                         </span>
                     </div>
                 </div>
@@ -563,6 +556,7 @@ const ReferralBanner: React.FC = () => {
         </a>
     );
 };
+
 
 // Main Page Component
 const HomePage: React.FC = () => {
@@ -652,23 +646,14 @@ const HomePage: React.FC = () => {
             return isNaN(num) ? 0 : num * multiplier;
         };
         
-        // 양쪽 거래소에 모두 존재하는 코인만 필터링
-        const filteredData = MOCK_COIN_DATA.filter(baseCoin => {
-            const basePriceKey = `${selectedBase.id}-${baseCoin.symbol}`;
-            const comparisonPriceKey = `${selectedComparison.id}-${baseCoin.symbol}`;
-            
-            const hasBasePrice = allPrices[basePriceKey] !== undefined;
-            const hasComparisonPrice = allPrices[comparisonPriceKey] !== undefined;
-            
-            return hasBasePrice && hasComparisonPrice;
-        });
-
-        const liveData = filteredData.map(baseCoin => {
+        // PERF: Immediately render all coins with mock data, then update with live data.
+        // This removes the initial filter that waited for live prices, eliminating perceived loading time.
+        const liveData = MOCK_COIN_DATA.map(baseCoin => {
             const basePriceKey = `${selectedBase.id}-${baseCoin.symbol}`;
             const comparisonPriceKey = `${selectedComparison.id}-${baseCoin.symbol}`;
 
-            let rawBasePrice = allPrices[basePriceKey] || baseCoin.domesticPrice;
-            let rawComparisonPrice = allPrices[comparisonPriceKey] || baseCoin.overseasPrice;
+            let rawBasePrice = allPrices[basePriceKey] ?? baseCoin.domesticPrice;
+            let rawComparisonPrice = allPrices[comparisonPriceKey] ?? baseCoin.overseasPrice;
             
             // Convert prices to the current currency
             const baseCurrencyType = selectedBase.id.includes('krw') ? 'KRW' : 'USD';

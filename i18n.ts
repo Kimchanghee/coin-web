@@ -2,7 +2,6 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Use standard JavaScript module imports, which are universally supported.
 import en from './locales/en.js';
 import ko from './locales/ko.js';
 import ja from './locales/ja.js';
