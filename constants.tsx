@@ -1,8 +1,6 @@
 import React from 'react';
-// FIX: Import missing types Announcement, ExchangeId, and CoinId.
 import type { Exchange, CoinData, ExchangeId, CoinId } from './types';
 
-// FIX: Rename EXCHANGES_META to EXCHANGES to match usage in other components.
 export const EXCHANGES: Exchange[] = [
   { id: 'upbit', name: 'Upbit', color: 'border-t-blue-500', icon: <i className="fa-solid fa-cloud text-blue-500"></i> },
   { id: 'bithumb', name: 'Bithumb', color: 'border-t-orange-500', icon: <i className="fa-solid fa-bold text-orange-500"></i> },
@@ -13,7 +11,6 @@ export const EXCHANGES: Exchange[] = [
   { id: 'gateio', name: 'Gate.io', color: 'border-t-cyan-500', icon: <i className="fa-solid fa-door-open text-cyan-500"></i> },
 ];
 
-// FIX: Add missing TRACKED_COINS constant for AnnouncementCard component.
 export const TRACKED_COINS: CoinId[] = ['BTC', 'ETH', 'SOL'];
 
 export const DOMESTIC_EXCHANGES = [
@@ -34,8 +31,6 @@ export const OVERSEAS_EXCHANGES = [
     { id: 'gateio_usdt_spot', nameKey: 'exchanges.gateio_usdt_spot' },
     { id: 'gateio_usdt_futures', nameKey: 'exchanges.gateio_usdt_futures' },
 ];
-
-export const COIN_DISPLAY_LIMIT = 30;
 
 export const MOCK_COIN_DATA: CoinData[] = [
   { id: 'btc', names: { en: 'Bitcoin', ko: '비트코인', ja: 'ビットコイン', zh: '比特币', th: 'บิตคอยน์', vi: 'Bitcoin' }, symbol: 'BTC', logo: <i className="fa-brands fa-bitcoin text-yellow-500"></i>, domesticPrice: 156878000, overseasPrice: 112500, kimchiPremium: 0.86, change24h: 1.34, volume: '1,973억' },
