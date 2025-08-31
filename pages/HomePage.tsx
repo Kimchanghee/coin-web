@@ -562,7 +562,7 @@ const ReferralBanner: React.FC = () => {
 const HomePage: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [allPrices, setAllPrices] = useState<Record<string, number>>({});
-    const [allExtendedData, setAllExtendedData] = useState<Record<string, { change24h?: number; volume24h?: number }>>({});
+    const [allExtendedData, setAllExtendedData] = useState<Record<string, { change24h?: number; volume24h?: number; changePrice?: number }>>({});
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'baseVolume', direction: 'desc' });
     const { user } = useAuth();
     const { t, i18n } = useTranslation();
@@ -571,7 +571,7 @@ const HomePage: React.FC = () => {
     // Buffer for incoming data to throttle UI updates
     const updatesBuffer = useRef<{
         prices: Record<string, number>;
-        extended: Record<string, { change24h?: number; volume24h?: number }>;
+        extended: Record<string, { change24h?: number; volume24h?: number; changePrice?: number }>;
     }>({ prices: {}, extended: {} });
 
     // Get current currency based on language
@@ -621,10 +621,8 @@ useEffect(() => {
             updatesBuffer.current.extended[update.priceKey] = {
                 change24h: update.change24h,
                 volume24h: update.volume24h,
-                changePrice: update.changePrice
+                ...(update.changePrice !== undefined && { changePrice: update.changePrice })
             };
-        }
-    };
 
     // 각 서비스별로 확장 데이터 지원 여부 확인하고 연결
     allServices.forEach(service => {
