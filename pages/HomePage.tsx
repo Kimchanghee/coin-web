@@ -623,6 +623,8 @@ useEffect(() => {
                 volume24h: update.volume24h,
                 ...(update.changePrice !== undefined && { changePrice: update.changePrice })
             };
+        }
+    }; // Fixed: Added missing closing brace
 
     // 각 서비스별로 확장 데이터 지원 여부 확인하고 연결
     allServices.forEach(service => {

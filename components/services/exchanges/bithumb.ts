@@ -97,7 +97,7 @@ const createBithumbService = (): ExchangeService => {
     };
 
     console.log(`🚀 [${id}] Starting data fetch...`);
-    fetchData();
+    fetchPrices();
     intervalId = setInterval(fetchPrices, 1000); // 1초마다 업데이트
   };
   
