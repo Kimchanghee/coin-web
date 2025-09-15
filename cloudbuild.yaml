@@ -1,34 +1,27 @@
-# ----------------------
-# 1단계: React 프론트엔드 빌드
-# ----------------------
-FROM node:18 AS builder
-WORKDIR /app
+steps:
+# 1. Docker 이미지 빌드
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build',
+    '-t', 'gcr.io/$PROJECT_ID/coin-web:$COMMIT_SHA',
+    '-f', 'coin-web/Dockerfile',
+    'coin-web'
+  ]
 
-# 패키지 설치
-COPY package*.json ./
-RUN npm install
+# 2. Docker 이미지 푸시
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/coin-web:$COMMIT_SHA']
 
-# 소스 복사 및 React 빌드
-COPY . .
-RUN npm run build   # vite build 실행 -> /app/dist 생성
+# 3. Cloud Run 배포
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - 'run'
+  - 'deploy'
+  - 'coin-web'
+  - '--image=gcr.io/$PROJECT_ID/coin-web:$COMMIT_SHA'
+  - '--region=us-west1'
+  - '--platform=managed'
+  - '--allow-unauthenticated'
 
-# ----------------------
-# 2단계: Node.js 서버 실행
-# ----------------------
-FROM node:18
-WORKDIR /app
-
-# 프론트엔드 build 결과 복사
-COPY --from=builder /app/dist ./build
-
-# 백엔드 및 패키지 복사
-COPY backend ./backend
-COPY package*.json ./
-RUN npm install --production
-
-# 환경 변수
-ENV PORT=8080
-EXPOSE 8080
-
-# Express 서버 실행
-CMD ["node", "backend/server.js"]
+images:
+- 'gcr.io/$PROJECT_ID/coin-web:$COMMIT_SHA'
