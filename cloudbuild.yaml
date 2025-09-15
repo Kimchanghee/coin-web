@@ -10,7 +10,7 @@ RUN npm install
 
 # 소스 복사 및 React 빌드
 COPY . .
-RUN npm run build   # /app/build 폴더 생성
+RUN npm run build   # vite build 실행 -> /app/dist 생성
 
 # ----------------------
 # 2단계: Node.js 서버 실행
@@ -18,8 +18,10 @@ RUN npm run build   # /app/build 폴더 생성
 FROM node:18
 WORKDIR /app
 
-# backend 및 build 결과만 복사
-COPY --from=builder /app/build ./build
+# 프론트엔드 build 결과 복사
+COPY --from=builder /app/dist ./build
+
+# 백엔드 및 패키지 복사
 COPY backend ./backend
 COPY package*.json ./
 RUN npm install --production
@@ -28,5 +30,5 @@ RUN npm install --production
 ENV PORT=8080
 EXPOSE 8080
 
-# Express 서버 실행 (backend/server.js)
+# Express 서버 실행
 CMD ["node", "backend/server.js"]
