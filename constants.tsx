@@ -13,7 +13,11 @@ export const EXCHANGES: Exchange[] = [
 
 export const TRACKED_COINS: CoinId[] = ['BTC', 'ETH', 'SOL'];
 
-export const COIN_DISPLAY_LIMIT = 30;
+// Maximum number of coins visible on the main page without authentication
+export const COIN_DISPLAY_LIMIT = 45;
+
+// Maximum number of coins visible when the user is authenticated
+export const AUTH_COIN_DISPLAY_LIMIT = 100;
 
 // 모든 거래소를 하나로 합친 리스트 (기준거래소용)
 export const ALL_EXCHANGES_FOR_COMPARISON = [

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP } from '../constants';
+import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, AUTH_COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP } from '../constants';
 import type { CoinData, User } from '../types';
 import { allServices } from '../components/services/exchanges';
 import { useAuth } from '../context/AuthContext';
@@ -567,6 +567,7 @@ const HomePage: React.FC = () => {
     const { user } = useAuth();
     const { t, i18n } = useTranslation();
     const [usdKrw, setUsdKrw] = useState(1385);
+    const displayLimit = user ? AUTH_COIN_DISPLAY_LIMIT : COIN_DISPLAY_LIMIT;
 
     // Buffer for incoming data to throttle UI updates
     const updatesBuffer = useRef<{
@@ -883,7 +884,7 @@ useEffect(() => {
                         
                         <div className="relative">
                             <CryptoPriceComparisonTable 
-                                data={processedCoinData.slice(0, COIN_DISPLAY_LIMIT)} 
+                                data={processedCoinData.slice(0, displayLimit)}
                                 onSort={handleSort}
                                 sortConfig={sortConfig}
                                 baseExchangeName={selectedBase.name}
@@ -891,13 +892,13 @@ useEffect(() => {
                                 currency={currentCurrency}
                             />
                             
-                            {processedCoinData.length > COIN_DISPLAY_LIMIT && (
+                            {!user && processedCoinData.length > displayLimit && (
                                 <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-gray-50 dark:from-black via-gray-50/90 dark:via-black/90 to-transparent flex justify-center items-end pb-8">
                                     <Link 
-                                        to="/subscribe"
+                                        to="/login"
                                         className="bg-yellow-400 text-black font-bold px-8 py-3 rounded-lg hover:bg-yellow-500 transition-colors shadow-lg shadow-yellow-400/20 transform hover:scale-105"
                                     >
-                                        <i className="fas fa-unlock-alt mr-2"></i>
+                                        <i className="fas fa-sign-in-alt mr-2"></i>
                                         {t('home.unlock_button')}
                                     </Link>
                                 </div>
