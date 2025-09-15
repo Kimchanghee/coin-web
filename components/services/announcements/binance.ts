@@ -1,19 +1,47 @@
-import { createWebSocketAnnouncementService } from './websocket.js';
-import type { Announcement } from '../../../types';
+import type { ExchangeId, Announcement, AnnouncementService, AnnouncementCallback } from '../../../types';
 
-const parseAnnouncement = (data: any): Announcement | null => {
-  if (!data) return null;
-  return {
-    id: String(data.id ?? data.announcementId ?? Date.now()),
-    title: data.title ?? '',
-    url: data.url ?? '',
-    date: data.date ?? new Date().toISOString(),
-    category: data.category ?? 'general'
+const createBinanceAnnouncementService = (): AnnouncementService => {
+  const id: ExchangeId = 'binance';
+
+  const connect = (callback: AnnouncementCallback) => {
+    let isActive = true;
+
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/api/announcements/${id}.json`);
+        if (!response.ok) {
+          throw new Error(`Network response was not ok for ${id}.json`);
+        }
+        const data: Announcement[] = await response.json();
+
+        if (!isActive) return;
+
+        const sortedData = data
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 10);
+
+        for (const announcement of sortedData) {
+          if (!isActive) break;
+          await new Promise(resolve => setTimeout(resolve, 20));
+          if (isActive) {
+            callback({ exchangeId: id, announcement });
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to fetch announcements for ${id}:`, error);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isActive = false;
+    };
   };
+
+  const disconnect = () => {};
+
+  return { id, connect, disconnect };
 };
 
-export const binanceAnnouncementService = createWebSocketAnnouncementService(
-  'binance',
-  'wss://example.com/binance-announcements',
-  parseAnnouncement
-);
+export const binanceAnnouncementService = createBinanceAnnouncementService();

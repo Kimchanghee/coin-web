@@ -1,32 +1,33 @@
 # ----------------------
-# 1단계: React 프론트엔드 빌드
+# 1단계: React 프런트 빌드 (Vite => dist/)
 # ----------------------
-FROM node:18 AS builder
+FROM node:20 AS builder
 WORKDIR /app
 
-# 패키지 설치
 COPY package*.json ./
+# lock 파일이 없으므로 npm install 사용
 RUN npm install
 
-# 소스 복사 및 React 빌드
 COPY . .
-RUN npm run build   # /app/build 폴더 생성
+RUN npm run build  # => dist/ 생성
 
 # ----------------------
-# 2단계: Node.js 서버 실행
+# 2단계: 런타임 - server/ 사용
 # ----------------------
-FROM node:18
+FROM node:20
 WORKDIR /app
 
-# backend 및 build 결과만 복사
-COPY --from=builder /app/build ./build
-COPY backend ./backend
-COPY package*.json ./
-RUN npm install --production
+# 프런트 산출물
+COPY --from=builder /app/dist ./dist
 
-# 환경 변수
+# 서버 의존성 (server/package.json 기준)
+COPY server/package*.json ./server/
+RUN cd server && npm install --omit=dev
+
+# 서버 소스
+COPY server ./server
+
 ENV PORT=8080
 EXPOSE 8080
 
-# Express 서버 실행 (backend/server.js)
-CMD ["node", "backend/server.js"]
+CMD ["node", "server/server.js"]

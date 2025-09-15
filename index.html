@@ -5,41 +5,15 @@
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
+  <!-- Google AdSense 메타 태그 추가 -->
+  <meta name="google-adsense-account" content="ca-pub-5884595045902078">
+  
   <!-- SEO Meta Tags -->
   <title>Crypto Premium Monitor | Real-time Kimchi Premium & Arbitrage</title>
   <meta name="description" content="A web application to monitor cryptocurrency prices and arbitrage opportunities ('Kimchi Premium') between domestic and overseas exchanges in real-time." />
   <meta name="keywords" content="crypto, cryptocurrency, arbitrage, kimchi premium, bitcoin, ethereum, upbit, binance, bithumb, real-time, price, monitor, TeamYM, 김치프리미엄, 재정거래, 차익거래, 암호화폐, 가상자산" />
-  <meta name="robots" content="index,follow" />
-
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://[YOUR-WEBSITE-URL]/" />
-  <meta property="og:title" content="Crypto Premium Monitor" />
-  <meta property="og:description" content="Track real-time crypto prices and Kimchi Premium opportunities across exchanges." />
-  <meta property="og:image" content="/og-image.png" />
-
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Crypto Premium Monitor" />
-  <meta name="twitter:description" content="Track real-time crypto prices and Kimchi Premium opportunities across exchanges." />
-  <meta name="twitter:image" content="/og-image.png" />
-
-  <!-- Language & Canonical Tags -->
-  <!-- IMPORTANT: Replace [YOUR-WEBSITE-URL] with your actual domain -->
-  <link rel="canonical" href="https://[YOUR-WEBSITE-URL]/#/" />
-  <link rel="alternate" hreflang="en" href="https://[YOUR-WEBSITE-URL]/#/?lng=en" />
-  <link rel="alternate" hreflang="ko" href="https://[YOUR-WEBSITE-URL]/#/?lng=ko" />
-  <link rel="alternate" hreflang="ja" href="https://[YOUR-WEBSITE-URL]/#/?lng=ja" />
-  <link rel="alternate" hreflang="zh" href="https://[YOUR-WEBSITE-URL]/#/?lng=zh" />
-  <link rel="alternate" hreflang="th" href="https://[YOUR-WEBSITE-URL]/#/?lng=th" />
-  <link rel="alternate" hreflang="vi" href="https://[YOUR-WEBSITE-URL]/#/?lng=vi" />
-  <link rel="alternate" hreflang="x-default" href="https://[YOUR-WEBSITE-URL]/#/" />
   
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-  
-  <!-- Sitemap -->
-  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+  <!-- 나머지 meta 태그들... -->
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -49,37 +23,36 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="/styles.css">
-<script type="importmap">
-{
-  "imports": {
-    "react/jsx-runtime": "https://aistudiocdn.com/react@^19.1.1/jsx-runtime",
-    "react/jsx-dev-runtime": "https://aistudiocdn.com/react@^19.1.1/jsx-dev-runtime",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "react": "https://aistudiocdn.com/react@^19.1.1",
-    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.1.1/client",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "react-dom": "https://aistudiocdn.com/react-dom@^19.1.1",
-    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.8.2",
-    "i18next": "https://aistudiocdn.com/i18next@^23.11.5",
-    "react-i18next": "https://aistudiocdn.com/react-i18next@^14.1.2",
-    "i18next-browser-languagedetector": "https://aistudiocdn.com/i18next-browser-languagedetector@^8.0.0",
-    "vite": "https://aistudiocdn.com/vite@^7.1.3",
-    "path": "https://aistudiocdn.com/path@^0.12.7",
-    "url": "https://aistudiocdn.com/url@^0.11.4"
+  
+  <!-- Google Analytics 태그 추가 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-E4DP286FC9"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-E4DP286FC9');
+  </script>
+  
+  <script type="importmap">
+  {
+    "imports": {
+      "react/": "https://aistudiocdn.com/react@^19.1.1/",
+      "react": "https://aistudiocdn.com/react@^19.1.1",
+      "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+      "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.8.2",
+      "i18next": "https://aistudiocdn.com/i18next@^23.11.5",
+      "react-i18next": "https://aistudiocdn.com/react-i18next@^14.1.2",
+      "i18next-browser-languagedetector": "https://aistudiocdn.com/i18next-browser-languagedetector@^8.0.0",
+      "vite": "https://aistudiocdn.com/vite@^7.1.3",
+      "path": "https://aistudiocdn.com/path@^0.12.7",
+      "url": "https://aistudiocdn.com/url@^0.11.4"
+    }
   }
-}
-</script>
+  </script>
+<link rel="stylesheet" href="/index.css">
 </head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-E4DP286FC9"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-E4DP286FC9');
-</script>
 <body>
   <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
