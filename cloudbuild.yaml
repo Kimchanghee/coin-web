@@ -14,3 +14,6 @@ steps:
       - --allow-unauthenticated
 images:
   - 'gcr.io/$PROJECT_ID/coin-web:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
