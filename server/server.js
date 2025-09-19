@@ -28,6 +28,8 @@ const staticPath = path.resolve(__dirname, '..', 'dist');
 const publicPath = path.join(__dirname, 'public');
 const ANNOUNCEMENTS_DIR = path.resolve(__dirname, '..', 'api', 'announcements');
 const ANNOUNCEMENT_ID_REGEX = /^[a-z0-9_-]+$/i;
+const EXCHANGE_PROXY_TIMEOUT_MS = 8000;
+const exchangeHttpsAgent = new https.Agent({ keepAlive: true });
 
 if (!apiKey) {
   // 프록시 없이도 정적 파일은 서빙 가능하므로 종료하지 않음
@@ -54,12 +56,45 @@ const proxyLimiter = rateLimit({
   }
 });
 
+const createExchangeProxyHandler = (exchangeName, targetUrl) => async (_req, res) => {
+  try {
+    console.log(`[Proxy:${exchangeName}] Fetching ${targetUrl}`);
+    const response = await axios.get(targetUrl, {
+      timeout: EXCHANGE_PROXY_TIMEOUT_MS,
+      httpsAgent: exchangeHttpsAgent,
+      headers: {
+        'User-Agent': 'coin-web-server/1.0'
+      }
+    });
+
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    const upstreamStatus = error.response?.status;
+    const statusCode = typeof upstreamStatus === 'number' && Number.isFinite(upstreamStatus) ? upstreamStatus : 502;
+    const upstreamMessage = error.response?.data?.message || error.code || error.message;
+
+    console.error(`[Proxy:${exchangeName}] Request failed:`, error.message || error);
+
+    if (!res.headersSent) {
+      res.status(statusCode).json({
+        error: `Failed to fetch ${exchangeName} data`,
+        upstreamStatus: upstreamStatus ?? null,
+        upstreamMessage: upstreamMessage ?? null
+      });
+    }
+  }
+};
+
 // Health checks (Cloud Run)
 app.get('/healthz', (_req, res) => res.status(200).json({ ok: true }));
 app.get('/readyz', (_req, res) => res.status(200).json({ ready: true }));
 
 // Apply the rate limiter to the /api-proxy route
 app.use('/api-proxy', proxyLimiter);
+
+// Exchange proxy endpoints (used by frontend services)
+app.get('/api/proxy/bithumb', createExchangeProxyHandler('bithumb', 'https://api.bithumb.com/public/ticker/ALL_KRW'));
+app.get('/api/proxy/coinone', createExchangeProxyHandler('coinone', 'https://api.coinone.co.kr/ticker?currency=all'));
 
 // Proxy route for Gemini API calls (HTTP)
 app.use('/api-proxy', async (req, res, next) => {
@@ -180,6 +215,26 @@ app.get('/', (_req, res) => {
 app.get('/service-worker.js', (_req, res) => {
   return res.sendFile(path.join(publicPath, 'service-worker.js'));
 });
+
+if (fs.existsSync(ANNOUNCEMENTS_DIR)) {
+  app.use(
+    '/api/announcements',
+    express.static(ANNOUNCEMENTS_DIR, {
+      fallthrough: false,
+      maxAge: '60s',
+      setHeaders: (res) => {
+        res.type('application/json');
+        res.setHeader('Cache-Control', 'public, max-age=60');
+      }
+    })
+  );
+
+  app.use('/api/announcements', (_req, res) => {
+    res.status(404).json({ error: 'Announcement not found' });
+  });
+} else {
+  console.warn(`Announcements directory not found at ${ANNOUNCEMENTS_DIR}`);
+}
 
 app.use('/public', express.static(publicPath));
 app.use(express.static(staticPath));
