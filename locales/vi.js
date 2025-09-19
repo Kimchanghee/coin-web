@@ -36,7 +36,8 @@ export default {
     "subtitle": "Kiểm tra chênh lệch giá giữa các sàn giao dịch trong nước và quốc tế.",
     "base_exchange": "Sàn giao dịch cơ sở",
     "comparison_exchange": "Sàn giao dịch so sánh",
-    "unlock_button": "Mở khóa tất cả coin"
+    "unlock_button": "Mở khóa tất cả coin",
+    "login_to_view_more": "Đăng nhập để xem thêm coin"
   },
   "table": {
     "name": "Tên",
@@ -44,10 +45,11 @@ export default {
     "price_difference": "Chênh lệch giá",
     "daily_change": "Thay đổi 24h",
     "trading_volume_24h": "Khối lượng 24h",
+    "no_data": "Không có dữ liệu",
     "hundred_million": "trăm triệu",
     "trillion": "nghìn tỷ",
     "billion": "B",
-    "million": "M", 
+    "million": "M",
     "thousand": "K"
   },
   "login": {

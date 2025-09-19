@@ -36,14 +36,16 @@ export default {
     "subtitle": "查看国内外交易所的价格差异。",
     "base_exchange": "基准交易所",
     "comparison_exchange": "比较交易所",
-    "unlock_button": "解锁所有硬币"
+    "unlock_button": "解锁所有硬币",
+    "login_to_view_more": "登录以查看更多币种"
   },
   "table": {
     "name": "名称",
     "current_price": "现价",
     "price_difference": "差价(溢价)",
-    "daily_change": "24小时变化", 
+    "daily_change": "24小时变化",
     "trading_volume_24h": "24h 交易量",
+    "no_data": "无数据",
     "hundred_million": "亿",
     "trillion": "万亿",
     "billion": "B",

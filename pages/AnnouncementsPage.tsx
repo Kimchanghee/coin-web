@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext.js';
@@ -155,6 +155,7 @@ const AnnouncementsPage: React.FC = () => {
     const { user } = useAuth();
     const [announcements, setAnnouncements] = useState<Record<string, Announcement[]>>({});
     const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
+    const loadedExchangesRef = useRef<Partial<Record<ExchangeId, boolean>>>({});
     const [activeExchange, setActiveExchange] = useState<ExchangeId>(EXCHANGES[0].id);
 
     const handleNewAnnouncement = useCallback((update: { exchangeId: ExchangeId; announcement: Announcement }) => {
@@ -167,12 +168,14 @@ const AnnouncementsPage: React.FC = () => {
             }
             
             const newAnnouncementsList = [...currentAnnouncements, update.announcement];
-            
+
             // Sort by date (descending)
             newAnnouncementsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
             return { ...prev, [update.exchangeId]: newAnnouncementsList };
         });
+        loadedExchangesRef.current[update.exchangeId] = true;
+        setIsLoading(prev => ({ ...prev, [update.exchangeId]: false }));
     }, []);
 
     useEffect(() => {
@@ -180,29 +183,26 @@ const AnnouncementsPage: React.FC = () => {
         const service = allAnnouncementServices.find(s => s.id === activeExchange);
         if (!service) return;
 
-        // Do not fetch if data already exists
-        if (announcements[activeExchange]) {
-            return;
+        if (!loadedExchangesRef.current[activeExchange]) {
+            setIsLoading(prev => ({ ...prev, [activeExchange]: true }));
         }
 
-        setIsLoading(prev => ({ ...prev, [activeExchange]: true }));
-        
-        // Clear previous announcements for this exchange before fetching
-        setAnnouncements(prev => ({...prev, [activeExchange]: []}));
-
         const disconnect = service.connect(handleNewAnnouncement);
-        
-        // This is a rough way to detect end of initial load since our mock service doesn't signal it.
-        // In a real scenario, an API call would resolve a promise.
-        setTimeout(() => {
-             setIsLoading(prev => ({ ...prev, [activeExchange]: false }));
-        }, 1000); // Assume fetch takes about 1s max for all items to stream in
+        const failSafeTimeout: ReturnType<typeof setTimeout> = setTimeout(() => {
+            if (!loadedExchangesRef.current[activeExchange]) {
+                setIsLoading(prev => ({ ...prev, [activeExchange]: false }));
+            }
+        }, 5000);
 
-        // Return the disconnect function for cleanup
         return () => {
-            disconnect();
+            clearTimeout(failSafeTimeout);
+            if (typeof disconnect === 'function') {
+                disconnect();
+            } else {
+                service.disconnect?.();
+            }
         };
-    }, [activeExchange, handleNewAnnouncement, announcements]);
+    }, [activeExchange, handleNewAnnouncement]);
 
 
     return (

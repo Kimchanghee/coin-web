@@ -669,6 +669,8 @@ useEffect(() => {
     };
 
     const processedCoinData = useMemo(() => {
+        const noVolumeLabel = t('table.no_data');
+
         const parseVolume = (volumeStr: string): number => {
             const valueStr = String(volumeStr).replace(/,/g, '');
             let multiplier = 1;
@@ -744,61 +746,17 @@ useEffect(() => {
                     console.log(`🎲 Using simulated change24h for ${baseCoin.symbol}: ${change24h}%`);
                 }
                 
-                // 거래대금 계산 개선
-                let baseVolume: string;
-                let comparisonVolume: string;
-                
-                // ✅ 기준 거래소 거래대금 - 실시간 데이터 우선 사용
-                if (baseExtData.volume24h !== undefined && baseExtData.volume24h > 0) {
-                    console.log(`💰 Using real volume24h for base ${baseCoin.symbol}: ${baseExtData.volume24h}`);
-                    const volumeInOriginalCurrency = baseExtData.volume24h;
-                    const convertedVolume = convertCurrency(volumeInOriginalCurrency, baseCurrencyType, currentCurrency, usdKrw);
-                    baseVolume = formatVolume(convertedVolume, currentCurrency, t);
-                } else {
-                    console.log(`🎲 Using simulated volume for base ${baseCoin.symbol}`);
-                    // Mock 데이터 기반 시뮬레이션
-                    const mockVolumeKrw = parseVolume(baseCoin.volume);
-                    const convertedVolume = convertCurrency(mockVolumeKrw, 'KRW', currentCurrency, usdKrw);
-                    
-                    // 거래소별 거래량 특성 반영
-                    let volumeMultiplier = 1;
-                    if (selectedBase.id.includes('upbit')) volumeMultiplier = 1.0;
-                    else if (selectedBase.id.includes('bithumb')) volumeMultiplier = 0.7;
-                    else if (selectedBase.id.includes('coinone')) volumeMultiplier = 0.4;
-                    else if (selectedBase.id.includes('binance')) volumeMultiplier = 3.5;
-                    else if (selectedBase.id.includes('bybit')) volumeMultiplier = 2.8;
-                    else if (selectedBase.id.includes('okx')) volumeMultiplier = 2.2;
-                    else if (selectedBase.id.includes('gateio')) volumeMultiplier = 1.5;
-                    
-                    const adjustedVolume = convertedVolume * volumeMultiplier * (0.9 + Math.random() * 0.2);
-                    baseVolume = formatVolume(adjustedVolume, currentCurrency, t);
-                }
-                
-                // ✅ 비교 거래소 거래대금 - 실시간 데이터 우선 사용
-                if (comparisonExtData.volume24h !== undefined && comparisonExtData.volume24h > 0) {
-                    console.log(`💰 Using real volume24h for comparison ${baseCoin.symbol}: ${comparisonExtData.volume24h}`);
-                    const volumeInOriginalCurrency = comparisonExtData.volume24h;
-                    const convertedVolume = convertCurrency(volumeInOriginalCurrency, comparisonCurrencyType, currentCurrency, usdKrw);
-                    comparisonVolume = formatVolume(convertedVolume, currentCurrency, t);
-                } else {
-                    console.log(`🎲 Using simulated volume for comparison ${baseCoin.symbol}`);
-                    // Mock 데이터 기반 시뮬레이션
-                    const mockVolumeKrw = parseVolume(baseCoin.volume);
-                    const convertedVolume = convertCurrency(mockVolumeKrw, 'KRW', currentCurrency, usdKrw);
-                    
-                    // 거래소별 거래량 특성 반영
-                    let volumeMultiplier = 1;
-                    if (selectedComparison.id.includes('upbit')) volumeMultiplier = 1.0;
-                    else if (selectedComparison.id.includes('bithumb')) volumeMultiplier = 0.7;
-                    else if (selectedComparison.id.includes('coinone')) volumeMultiplier = 0.4;
-                    else if (selectedComparison.id.includes('binance')) volumeMultiplier = 3.5;
-                    else if (selectedComparison.id.includes('bybit')) volumeMultiplier = 2.8;
-                    else if (selectedComparison.id.includes('okx')) volumeMultiplier = 2.2;
-                    else if (selectedComparison.id.includes('gateio')) volumeMultiplier = 1.5;
-                    
-                    const adjustedVolume = convertedVolume * volumeMultiplier * (0.9 + Math.random() * 0.2);
-                    comparisonVolume = formatVolume(adjustedVolume, currentCurrency, t);
-                }
+                // 거래대금 계산 - 실시간 데이터만 사용
+                const baseVolumeValue = baseExtData.volume24h;
+                const comparisonVolumeValue = comparisonExtData.volume24h;
+
+                const baseVolume = (typeof baseVolumeValue === 'number' && baseVolumeValue > 0)
+                    ? formatVolume(convertCurrency(baseVolumeValue, baseCurrencyType, currentCurrency, usdKrw), currentCurrency, t)
+                    : noVolumeLabel;
+
+                const comparisonVolume = (typeof comparisonVolumeValue === 'number' && comparisonVolumeValue > 0)
+                    ? formatVolume(convertCurrency(comparisonVolumeValue, comparisonCurrencyType, currentCurrency, usdKrw), currentCurrency, t)
+                    : noVolumeLabel;
 
                 return {
                     ...baseCoin,
@@ -858,6 +816,10 @@ useEffect(() => {
 
         return liveData;
     }, [allPrices, allExtendedData, selectedBase, selectedComparison, sortConfig, i18n.language, usdKrw, currentCurrency, t]);
+
+    const visibleCoinData = useMemo(() => (
+        user ? processedCoinData : processedCoinData.slice(0, COIN_DISPLAY_LIMIT)
+    ), [processedCoinData, user]);
     return (
         <div className="bg-gray-50 dark:bg-black min-h-screen text-gray-600 dark:text-gray-300 font-sans">
             <div className="flex">
@@ -882,24 +844,29 @@ useEffect(() => {
                         </div>
                         
                         <div className="relative">
-                            <CryptoPriceComparisonTable 
-                                data={processedCoinData.slice(0, COIN_DISPLAY_LIMIT)} 
+                            <CryptoPriceComparisonTable
+                                data={visibleCoinData}
                                 onSort={handleSort}
                                 sortConfig={sortConfig}
                                 baseExchangeName={selectedBase.name}
                                 comparisonExchangeName={selectedComparison.name}
                                 currency={currentCurrency}
                             />
-                            
-                            {processedCoinData.length > COIN_DISPLAY_LIMIT && (
-                                <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-gray-50 dark:from-black via-gray-50/90 dark:via-black/90 to-transparent flex justify-center items-end pb-8">
-                                    <Link 
-                                        to="/subscribe"
-                                        className="bg-yellow-400 text-black font-bold px-8 py-3 rounded-lg hover:bg-yellow-500 transition-colors shadow-lg shadow-yellow-400/20 transform hover:scale-105"
-                                    >
-                                        <i className="fas fa-unlock-alt mr-2"></i>
-                                        {t('home.unlock_button')}
-                                    </Link>
+
+                            {!user && processedCoinData.length > COIN_DISPLAY_LIMIT && (
+                                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-gray-50 dark:from-black via-gray-50/95 dark:via-black/95 to-transparent flex items-end justify-center pb-8">
+                                    <div className="pointer-events-auto flex flex-col items-center gap-3 text-center">
+                                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                            {t('home.login_to_view_more')}
+                                        </p>
+                                        <Link
+                                            to="/login"
+                                            className="inline-flex items-center gap-2 rounded-lg bg-yellow-400 px-6 py-2 text-sm font-bold text-black shadow-lg shadow-yellow-400/20 transition-transform hover:scale-105 hover:bg-yellow-500"
+                                        >
+                                            <i className="fas fa-sign-in-alt"></i>
+                                            {t('auth.login')}
+                                        </Link>
+                                    </div>
                                 </div>
                             )}
                         </div>

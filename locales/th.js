@@ -36,7 +36,8 @@ export default {
     "subtitle": "ตรวจสอบความแตกต่างของราคาระหว่างตลาดแลกเปลี่ยนในประเทศและต่างประเทศ",
     "base_exchange": "ตลาดอ้างอิง",
     "comparison_exchange": "ตลาดเปรียบเทียบ",
-    "unlock_button": "ปลดล็อกเหรียญทั้งหมด"
+    "unlock_button": "ปลดล็อกเหรียญทั้งหมด",
+    "login_to_view_more": "เข้าสู่ระบบเพื่อดูเหรียญเพิ่มเติม"
   },
   "table": {
     "name": "ชื่อ",
@@ -44,8 +45,9 @@ export default {
     "price_difference": "ส่วนต่าง (พรีเมียม)",
     "daily_change": "เปลี่ยนแปลง 24 ชม.",
     "trading_volume_24h": "ปริมาณการซื้อขาย 24 ชม.",
+    "no_data": "ไม่มีข้อมูล",
     "hundred_million": "ร้อยล้าน",
-    "trillion": "ล้านล้าน", 
+    "trillion": "ล้านล้าน",
     "billion": "B",
     "million": "M",
     "thousand": "K"

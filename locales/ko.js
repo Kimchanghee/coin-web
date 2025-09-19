@@ -36,7 +36,8 @@ export default {
     "subtitle": "국내와 해외 거래소의 가격차이를 확인하세요.",
     "base_exchange": "기준 거래소",
     "comparison_exchange": "비교 거래소",
-    "unlock_button": "모든 코인 보기"
+    "unlock_button": "모든 코인 보기",
+    "login_to_view_more": "더 많은 코인을 보려면 로그인 하세요"
   },
   "table": {
     "name": "이름",
@@ -44,6 +45,7 @@ export default {
     "price_difference": "차이(김프)",
     "daily_change": "전일대비",
     "trading_volume_24h": "24h 거래대금",
+    "no_data": "데이터 없음",
     "hundred_million": "억",
     "trillion": "조",
     "billion": "B",
