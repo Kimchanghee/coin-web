@@ -36,7 +36,8 @@ export default {
     "subtitle": "国内外の取引所の価格差を確認してください。",
     "base_exchange": "基準取引所",
     "comparison_exchange": "比較取引所",
-    "unlock_button": "すべてのコインを見る"
+    "unlock_button": "すべてのコインを見る",
+    "login_to_view_more": "ログインするとより多くのコインが表示されます"
   },
   "table": {
     "name": "名前",
@@ -44,10 +45,11 @@ export default {
     "price_difference": "差額(プレミアム)",
     "daily_change": "前日比",
     "trading_volume_24h": "24h 取引高",
+    "no_data": "データなし",
     "hundred_million": "億",
     "trillion": "兆",
     "billion": "B",
-    "million": "M", 
+    "million": "M",
     "thousand": "K"
   },
   "login": {
