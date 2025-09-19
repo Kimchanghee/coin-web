@@ -1,7 +1,7 @@
 // components/services/exchanges/bithumb.ts - 확장 데이터 개선
 
 import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-import { buildProxyUrl, safeParseNumber } from './utils';
+import { buildProxyUrl, safeParseNumber, safeMultiply } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -42,15 +42,17 @@ const createBithumbService = (): ExchangeService => {
         }
 
         const change24h = safeParseNumber(priceData['24H_fluctate_rate']);
-        const volume24h = safeParseNumber(priceData.acc_trade_value_24H);
+        const volume24h =
+          safeParseNumber(priceData.acc_trade_value_24H) ??
+          safeMultiply(priceData.units_traded_24H, price);
 
         const symbol = symbolKey.toUpperCase();
 
         callback({
           priceKey: `${id}-${symbol}`,
           price,
-          ...(change24h !== undefined ? { change24h } : {}),
-          ...(volume24h !== undefined ? { volume24h } : {}),
+          ...(change24h !== undefined && Number.isFinite(change24h) ? { change24h } : {}),
+          ...(volume24h !== undefined && Number.isFinite(volume24h) ? { volume24h } : {}),
         });
       });
     } catch (error) {
