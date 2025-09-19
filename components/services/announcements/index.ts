@@ -1,12 +1,12 @@
 // components/services/announcements/index.ts
-import { upbitAnnouncementService } from './upbit.js';
-import { bithumbAnnouncementService } from './bithumb.js';
-import { coinoneAnnouncementService } from './coinone.js';
-import { binanceAnnouncementService } from './binance.js';
-import { bybitAnnouncementService } from './bybit.js';
-import { okxAnnouncementService } from './okx.js';
-import { gateioAnnouncementService } from './gateio.js';
-import type { AnnouncementService } from '../../../types.js';
+import { upbitAnnouncementService } from './upbit';
+import { bithumbAnnouncementService } from './bithumb';
+import { coinoneAnnouncementService } from './coinone';
+import { binanceAnnouncementService } from './binance';
+import { bybitAnnouncementService } from './bybit';
+import { okxAnnouncementService } from './okx';
+import { gateioAnnouncementService } from './gateio';
+import type { AnnouncementService } from '../../../types';
 
 // All announcement services
 export const allAnnouncementServices: AnnouncementService[] = [
@@ -20,10 +20,10 @@ export const allAnnouncementServices: AnnouncementService[] = [
 ];
 
 // Export individual services for direct access
-export { upbitAnnouncementService } from './upbit.js';
-export { bithumbAnnouncementService } from './bithumb.js';
-export { coinoneAnnouncementService } from './coinone.js';
-export { binanceAnnouncementService } from './binance.js';
-export { bybitAnnouncementService } from './bybit.js';
-export { okxAnnouncementService } from './okx.js';
-export { gateioAnnouncementService } from './gateio.js';
+export { upbitAnnouncementService } from './upbit';
+export { bithumbAnnouncementService } from './bithumb';
+export { coinoneAnnouncementService } from './coinone';
+export { binanceAnnouncementService } from './binance';
+export { bybitAnnouncementService } from './bybit';
+export { okxAnnouncementService } from './okx';
+export { gateioAnnouncementService } from './gateio';

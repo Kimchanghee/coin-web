@@ -7,6 +7,7 @@
 require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
+const fsPromises = fs.promises;
 const axios = require('axios');
 const https = require('https');
 const path = require('path');
@@ -25,6 +26,8 @@ const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
 // ⚠️ dist는 프로젝트 루트에 생성되므로 server 기준으로 한 단계 위를 바라봐야 함
 const staticPath = path.resolve(__dirname, '..', 'dist');
 const publicPath = path.join(__dirname, 'public');
+const ANNOUNCEMENTS_DIR = path.resolve(__dirname, '..', 'api', 'announcements');
+const ANNOUNCEMENT_ID_REGEX = /^[a-z0-9_-]+$/i;
 
 if (!apiKey) {
   // 프록시 없이도 정적 파일은 서빙 가능하므로 종료하지 않음
@@ -190,80 +193,183 @@ const server = app.listen(port, HOST, () => {
 
 // WebSocket proxy
 const wss = new WebSocket.Server({ noServer: true });
+const announcementsWss = new WebSocket.Server({ noServer: true });
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const streamAnnouncements = async (clientWs, exchangeId) => {
+  try {
+    const filePath = path.join(ANNOUNCEMENTS_DIR, `${exchangeId}.json`);
+
+    try {
+      await fsPromises.access(filePath);
+    } catch (_error) {
+      throw new Error(`Announcements file not found for ${exchangeId}`);
+    }
+
+    const raw = await fsPromises.readFile(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+
+    if (!Array.isArray(parsed)) {
+      throw new Error(`Invalid announcements payload for ${exchangeId}`);
+    }
+
+    const sorted = parsed
+      .slice()
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 20);
+
+    for (const announcement of sorted) {
+      if (clientWs.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      clientWs.send(JSON.stringify({
+        type: 'announcement',
+        exchangeId,
+        announcement
+      }));
+
+      await delay(40);
+    }
+
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.send(JSON.stringify({ type: 'end', exchangeId }));
+    }
+  } catch (error) {
+    console.error(`Announcement stream error for ${exchangeId}:`, error);
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.send(JSON.stringify({
+        type: 'error',
+        exchangeId,
+        message: 'Failed to load announcements'
+      }));
+    }
+  }
+};
+
+announcementsWss.on('connection', (clientWs, _request, clientInfo = {}) => {
+  const exchangeId = clientInfo.exchangeId;
+
+  if (!exchangeId || !ANNOUNCEMENT_ID_REGEX.test(exchangeId)) {
+    clientWs.close(1008, 'Invalid exchange parameter');
+    return;
+  }
+
+  console.log(`Announcement WS client connected for ${exchangeId}`);
+
+  streamAnnouncements(clientWs, exchangeId);
+
+  const heartbeat = setInterval(() => {
+    if (clientWs.readyState === WebSocket.OPEN) {
+      clientWs.send(JSON.stringify({
+        type: 'heartbeat',
+        exchangeId,
+        timestamp: Date.now()
+      }));
+    } else {
+      clearInterval(heartbeat);
+    }
+  }, 30000);
+
+  clientWs.on('close', (code, reason) => {
+    clearInterval(heartbeat);
+    console.log(`Announcement WS for ${exchangeId} closed: ${code} ${reason}`);
+  });
+
+  clientWs.on('error', (error) => {
+    console.error(`Announcement WS error for ${exchangeId}:`, error);
+    clearInterval(heartbeat);
+  });
+});
 
 server.on('upgrade', (request, socket, head) => {
   const requestUrl = new URL(request.url, `http://${request.headers.host}`);
   const pathname = requestUrl.pathname;
 
-  if (!pathname.startsWith('/api-proxy/')) {
-    console.log(`WS upgrade for non-proxy path: ${pathname}. Closing.`);
-    socket.destroy();
+  if (pathname.startsWith('/api-proxy/')) {
+    if (!apiKey) {
+      console.error("WebSocket proxy: API key not configured. Closing connection.");
+      socket.destroy();
+      return;
+    }
+
+    wss.handleUpgrade(request, socket, head, (clientWs) => {
+      console.log('Client WS connected to proxy:', pathname);
+
+      const targetPathSegment = pathname.substring('/api-proxy'.length);
+      const clientQuery = new URLSearchParams(requestUrl.search);
+      clientQuery.set('key', apiKey);
+      const targetGeminiWsUrl = `${externalWsBaseUrl}${targetPathSegment}?${clientQuery.toString()}`;
+      console.log(`Connecting upstream WS: ${targetGeminiWsUrl}`);
+
+      const geminiWs = new WebSocket(targetGeminiWsUrl, {
+        protocol: request.headers['sec-websocket-protocol'],
+      });
+
+      const messageQueue = [];
+
+      geminiWs.on('open', () => {
+        console.log('Upstream Gemini WS connected');
+        while (messageQueue.length > 0 && geminiWs.readyState === WebSocket.OPEN) {
+          geminiWs.send(messageQueue.shift());
+        }
+      });
+
+      geminiWs.on('message', (message) => {
+        if (clientWs.readyState === WebSocket.OPEN) clientWs.send(message);
+      });
+
+      geminiWs.on('close', (code, reason) => {
+        console.log(`Upstream WS closed: ${code} ${reason.toString()}`);
+        if (clientWs.readyState === WebSocket.OPEN || clientWs.readyState === WebSocket.CONNECTING) {
+          clientWs.close(code, reason.toString());
+        }
+      });
+
+      geminiWs.on('error', (error) => {
+        console.error('Upstream WS error:', error);
+        if (clientWs.readyState === WebSocket.OPEN || clientWs.readyState === WebSocket.CONNECTING) {
+          clientWs.close(1011, 'Upstream WebSocket error');
+        }
+      });
+
+      clientWs.on('message', (message) => {
+        if (geminiWs.readyState === WebSocket.OPEN) geminiWs.send(message);
+        else if (geminiWs.readyState === WebSocket.CONNECTING) messageQueue.push(message);
+      });
+
+      clientWs.on('close', (code, reason) => {
+        console.log(`Client WS closed: ${code} ${reason.toString()}`);
+        if (geminiWs.readyState === WebSocket.OPEN || geminiWs.readyState === WebSocket.CONNECTING) {
+          geminiWs.close(code, reason.toString());
+        }
+      });
+
+      clientWs.on('error', (error) => {
+        console.error('Client WS error:', error);
+        if (geminiWs.readyState === WebSocket.OPEN || geminiWs.readyState === WebSocket.CONNECTING) {
+          geminiWs.close(1011, 'Client WebSocket error');
+        }
+      });
+    });
     return;
   }
 
-  if (!apiKey) {
-    console.error("WebSocket proxy: API key not configured. Closing connection.");
-    socket.destroy();
+  if (pathname.startsWith('/api/announcements-stream')) {
+    const exchangeId = requestUrl.searchParams.get('exchange');
+    if (!exchangeId || !ANNOUNCEMENT_ID_REGEX.test(exchangeId)) {
+      console.warn(`Invalid announcements stream request: ${request.url}`);
+      socket.destroy();
+      return;
+    }
+
+    announcementsWss.handleUpgrade(request, socket, head, (clientWs) => {
+      announcementsWss.emit('connection', clientWs, request, { exchangeId });
+    });
     return;
   }
 
-  wss.handleUpgrade(request, socket, head, (clientWs) => {
-    console.log('Client WS connected to proxy:', pathname);
-
-    const targetPathSegment = pathname.substring('/api-proxy'.length);
-    const clientQuery = new URLSearchParams(requestUrl.search);
-    clientQuery.set('key', apiKey);
-    const targetGeminiWsUrl = `${externalWsBaseUrl}${targetPathSegment}?${clientQuery.toString()}`;
-    console.log(`Connecting upstream WS: ${targetGeminiWsUrl}`);
-
-    const geminiWs = new WebSocket(targetGeminiWsUrl, {
-      protocol: request.headers['sec-websocket-protocol'],
-    });
-
-    const messageQueue = [];
-
-    geminiWs.on('open', () => {
-      console.log('Upstream Gemini WS connected');
-      while (messageQueue.length > 0 && geminiWs.readyState === WebSocket.OPEN) {
-        geminiWs.send(messageQueue.shift());
-      }
-    });
-
-    geminiWs.on('message', (message) => {
-      if (clientWs.readyState === WebSocket.OPEN) clientWs.send(message);
-    });
-
-    geminiWs.on('close', (code, reason) => {
-      console.log(`Upstream WS closed: ${code} ${reason.toString()}`);
-      if (clientWs.readyState === WebSocket.OPEN || clientWs.readyState === WebSocket.CONNECTING) {
-        clientWs.close(code, reason.toString());
-      }
-    });
-
-    geminiWs.on('error', (error) => {
-      console.error('Upstream WS error:', error);
-      if (clientWs.readyState === WebSocket.OPEN || clientWs.readyState === WebSocket.CONNECTING) {
-        clientWs.close(1011, 'Upstream WebSocket error');
-      }
-    });
-
-    clientWs.on('message', (message) => {
-      if (geminiWs.readyState === WebSocket.OPEN) geminiWs.send(message);
-      else if (geminiWs.readyState === WebSocket.CONNECTING) messageQueue.push(message);
-    });
-
-    clientWs.on('close', (code, reason) => {
-      console.log(`Client WS closed: ${code} ${reason.toString()}`);
-      if (geminiWs.readyState === WebSocket.OPEN || geminiWs.readyState === WebSocket.CONNECTING) {
-        geminiWs.close(code, reason.toString());
-      }
-    });
-
-    clientWs.on('error', (error) => {
-      console.error('Client WS error:', error);
-      if (geminiWs.readyState === WebSocket.OPEN || geminiWs.readyState === WebSocket.CONNECTING) {
-        geminiWs.close(1011, 'Client WebSocket error');
-      }
-    });
-  });
+  console.log(`WS upgrade for unsupported path: ${pathname}. Closing.`);
+  socket.destroy();
 });
