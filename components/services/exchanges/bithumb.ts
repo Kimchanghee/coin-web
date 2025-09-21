@@ -42,11 +42,21 @@ const createBithumbService = (): ExchangeService => {
         }
 
         const change24h = deriveChangePercent({
-          percent: priceData.fluctate_rate_24H ?? priceData['24H_fluctate_rate'],
+          priceChange: priceData.fluctate_24H ?? priceData['24H_fluctate'],
+          percent: priceData.fluctate_rate_24H
+            ? `${priceData.fluctate_rate_24H}%`
+            : priceData['24H_fluctate_rate']
+            ? `${priceData['24H_fluctate_rate']}%`
+            : undefined,
+          openPrice: priceData.opening_price ?? priceData.prev_closing_price,
+          lastPrice: price,
         });
+        const changePrice = safeParseNumber(
+          priceData.fluctate_24H ?? priceData['24H_fluctate']
+        );
         const volume24h = deriveQuoteVolume(
-          priceData.acc_trade_value_24H,
-          priceData.acc_trade_value_24H,
+          priceData.acc_trade_value_24H ?? priceData['24H_acc_trade_value'],
+          priceData.acc_trade_volume_24H ?? priceData['24H_acc_trade_volume'],
           price
         );
 
@@ -57,6 +67,7 @@ const createBithumbService = (): ExchangeService => {
           price,
           ...(change24h !== undefined ? { change24h } : {}),
           ...(volume24h !== undefined ? { volume24h } : {}),
+          ...(changePrice !== undefined ? { changePrice } : {}),
         });
       });
     } catch (error) {
