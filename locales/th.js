@@ -15,21 +15,18 @@ export default {
   },
   "sidebar": {
     "premium_header": "พรีเมียม",
-    "premium": "พรี미엄",
-    "arbitrage": "อาร์บิทราจ",
-    "live_status": "สถานะสด",
-    "exchange_rate": "คำนวณอัตราแลกเปลี่ยน",
-    "payback": "คืนเงิน",
-    "guide": "คู่มืออาร์บิทราจ",
+    "exchange_announcements": "ประกาศจากแต่ละตลาด",
+    "exchange_arbitrage": "อาร์บิทราจตามตลาด",
+    "tradingview_auto": "เทรดอัตโนมัติด้วย TradingView",
+    "listing_auto": "เทรดอัตโนมัติเมื่อมีการลิสต์",
     "logged_in_as": "เข้าสู่ระบบในฐานะ",
     "login_required": "ต้องเข้าสู่ระบบ"
   },
   "bottom_nav": {
-    "gimp": "พรีเมียม",
-    "exchange_announcements": "ประกาศ",
-    "trends": "เทรนด์",
-    "payback": "คืนเงิน",
-    "search": "ค้นหา"
+    "exchange_announcements": "ประกาศจากแต่ละตลาด",
+    "exchange_arbitrage": "อาร์บิทราจตามตลาด",
+    "tradingview_auto": "เทรดอัตโนมัติด้วย TradingView",
+    "listing_auto": "เทรดอัตโนมัติเมื่อมีการลิสต์"
   },
   "home": {
     "title": "กิมจิพรีเมียม",

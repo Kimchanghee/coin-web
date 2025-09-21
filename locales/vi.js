@@ -15,21 +15,18 @@ export default {
   },
   "sidebar": {
     "premium_header": "Chênh lệch giá",
-    "premium": "Chênh lệch giá",
-    "arbitrage": "Kinh doanh chênh lệch giá",
-    "live_status": "Trạng thái trực tiếp",
-    "exchange_rate": "Tính tỷ giá",
-    "payback": "Hoàn tiền",
-    "guide": "Hướng dẫn kinh doanh chênh lệch giá",
+    "exchange_announcements": "Thông báo theo sàn giao dịch",
+    "exchange_arbitrage": "Chênh lệch coin theo sàn (Arbitrage)",
+    "tradingview_auto": "Giao dịch tự động TradingView",
+    "listing_auto": "Giao dịch tự động khi niêm yết",
     "logged_in_as": "Đăng nhập với tên",
     "login_required": "Yêu cầu đăng nhập"
   },
   "bottom_nav": {
-    "gimp": "Chênh lệch",
-    "exchange_announcements": "Thông báo",
-    "trends": "Xu hướng",
-    "payback": "Hoàn tiền",
-    "search": "Tìm kiếm"
+    "exchange_announcements": "Thông báo theo sàn giao dịch",
+    "exchange_arbitrage": "Chênh lệch coin theo sàn (Arbitrage)",
+    "tradingview_auto": "Giao dịch tự động TradingView",
+    "listing_auto": "Giao dịch tự động khi niêm yết"
   },
   "home": {
     "title": "Chênh lệch giá Kimchi",

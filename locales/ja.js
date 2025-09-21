@@ -15,21 +15,18 @@ export default {
   },
   "sidebar": {
     "premium_header": "プレミアム",
-    "premium": "プレミアム",
-    "arbitrage": "アービトラージ",
-    "live_status": "リアルタイム状況",
-    "exchange_rate": "為替レート計算",
-    "payback": "ペイバック",
-    "guide": "裁定取引ガイド",
+    "exchange_announcements": "取引所別お知らせ",
+    "exchange_arbitrage": "取引所別アービトラージ",
+    "tradingview_auto": "TradingView自動取引",
+    "listing_auto": "上場通知自動取引",
     "logged_in_as": "ログインアカウント",
     "login_required": "ログインが必要です"
   },
   "bottom_nav": {
-    "gimp": "プレミアム",
-    "exchange_announcements": "取引所からのお知らせ",
-    "trends": "トレンド",
-    "payback": "ペイバック",
-    "search": "検索"
+    "exchange_announcements": "取引所別お知らせ",
+    "exchange_arbitrage": "取引所別アービトラージ",
+    "tradingview_auto": "TradingView自動取引",
+    "listing_auto": "上場通知自動取引"
   },
   "home": {
     "title": "キムチプレミアム",

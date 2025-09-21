@@ -57,6 +57,8 @@ const Header: React.FC<{ onMenuClick: () => void; user: User | null }> = ({ onMe
     );
 };
 
+type NavigationKey = 'exchange_announcements' | 'exchange_arbitrage' | 'tradingview_auto' | 'listing_auto';
+
 // Sidebar Component (copied from HomePage)
 const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const { user, logout } = useAuth();
@@ -68,13 +70,13 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
         navigate('/');
     }
 
-    const menuItems = [
-        { key: 'premium', icon: 'fa-star' },
-        { key: 'arbitrage', icon: 'fa-chart-pie' },
-        { key: 'live_status', icon: 'fa-fire' },
-        { key: 'exchange_rate', icon: 'fa-exchange-alt' },
-        { key: 'payback', icon: 'fa-gift' },
-        { key: 'guide', icon: 'fa-book' },
+    const location = useLocation();
+
+    const menuItems: { key: NavigationKey; icon: string; path?: string }[] = [
+        { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
+        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
+        { key: 'tradingview_auto', icon: 'fa-robot' },
+        { key: 'listing_auto', icon: 'fa-rocket' },
     ];
     return (
         <>
@@ -84,14 +86,40 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                          <h2 className="text-lg font-semibold text-black dark:text-white">{t('sidebar.premium_header')}</h2>
                     </div>
                     <ul className="space-y-4">
-                        {menuItems.map(item => (
-                             <li key={item.key}>
-                                <a href="#" className={`flex items-center gap-3 p-2 rounded-md transition-colors ${item.key === 'premium' ? 'bg-gray-200 dark:bg-gray-800 text-black dark:text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
-                                    <i className={`fas ${item.icon} w-5`}></i>
-                                    <span>{t(`sidebar.${item.key}`)}</span>
-                                </a>
-                            </li>
-                        ))}
+                        {menuItems.map(item => {
+                            const isActive = item.path ? location.pathname === item.path : false;
+                            const baseClasses = 'flex items-center gap-3 p-2 rounded-md transition-colors';
+                            const activeClasses = 'bg-gray-200 dark:bg-gray-800 text-black dark:text-white';
+                            const inactiveClasses = 'hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400';
+
+                            if (item.path) {
+                                return (
+                                    <li key={item.key}>
+                                        <Link
+                                            to={item.path}
+                                            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+                                            onClick={onClose}
+                                        >
+                                            <i className={`fas ${item.icon} w-5`}></i>
+                                            <span>{t(`sidebar.${item.key}`)}</span>
+                                        </Link>
+                                    </li>
+                                );
+                            }
+
+                            return (
+                                <li key={item.key}>
+                                    <button
+                                        type="button"
+                                        className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`}
+                                        disabled
+                                    >
+                                        <i className={`fas ${item.icon} w-5`}></i>
+                                        <span>{t(`sidebar.${item.key}`)}</span>
+                                    </button>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </nav>
                  <div className="mt-auto border-t border-gray-200 dark:border-gray-800 pt-4">
@@ -121,29 +149,45 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
 const BottomNav: React.FC = () => {
     const { t } = useTranslation();
     const location = useLocation();
-     const navItems = [
-        { key: 'gimp', icon: 'fa-star', path: '/' },
+    const navItems: { key: NavigationKey; icon: string; path?: string }[] = [
         { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-        { key: 'trends', icon: 'fa-fire', path: '#' },
-        { key: 'payback', icon: 'fa-gift', path: '#' },
-        { key: 'search', icon: 'fa-search', path: '#' },
+        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
+        { key: 'tradingview_auto', icon: 'fa-robot' },
+        { key: 'listing_auto', icon: 'fa-rocket' },
     ];
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#161616] border-t border-gray-200 dark:border-gray-800 flex justify-around p-2 lg:hidden z-20">
-            {navItems.map(item => (
-                <Link
-                    to={item.path}
-                    key={item.key}
-                    className={`flex flex-col items-center gap-1 w-16 text-xs transition-colors ${
-                        location.pathname === item.path
-                        ? 'text-yellow-400'
-                        : 'text-gray-500 hover:text-black dark:hover:text-white'
-                    }`}
-                >
-                    <i className={`fas ${item.icon} text-lg`}></i>
-                    <span>{t(`bottom_nav.${item.key}`)}</span>
-                </Link>
-            ))}
+            {navItems.map(item => {
+                const isActive = item.path ? location.pathname === item.path : false;
+                const baseClasses = 'flex flex-col items-center gap-1 flex-1 text-xs transition-colors';
+                const activeClasses = 'text-yellow-400';
+                const inactiveClasses = 'text-gray-500 hover:text-black dark:hover:text-white';
+
+                if (item.path) {
+                    return (
+                        <Link
+                            to={item.path}
+                            key={item.key}
+                            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+                        >
+                            <i className={`fas ${item.icon} text-lg`}></i>
+                            <span>{t(`bottom_nav.${item.key}`)}</span>
+                        </Link>
+                    );
+                }
+
+                return (
+                    <button
+                        type="button"
+                        key={item.key}
+                        className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`}
+                        disabled
+                    >
+                        <i className={`fas ${item.icon} text-lg`}></i>
+                        <span>{t(`bottom_nav.${item.key}`)}</span>
+                    </button>
+                );
+            })}
         </nav>
     );
 };

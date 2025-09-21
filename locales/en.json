@@ -14,21 +14,18 @@
   },
   "sidebar": {
     "premium_header": "Premium",
-    "premium": "Premium",
-    "arbitrage": "Arbitrage",
-    "live_status": "Live Status",
-    "exchange_rate": "Exchange Calc",
-    "payback": "Payback",
-    "guide": "Arbitrage Guide",
+    "exchange_announcements": "Exchange Announcements",
+    "exchange_arbitrage": "Exchange Arbitrage",
+    "tradingview_auto": "TradingView Auto Trading",
+    "listing_auto": "Listing Auto Trading",
     "logged_in_as": "Logged in as",
     "login_required": "Login required"
   },
   "bottom_nav": {
-    "gimp": "Gimp",
-    "arbitrage": "Arbitrage",
-    "trends": "Trends",
-    "payback": "Payback",
-    "search": "Search"
+    "exchange_announcements": "Exchange Announcements",
+    "exchange_arbitrage": "Exchange Arbitrage",
+    "tradingview_auto": "TradingView Auto Trading",
+    "listing_auto": "Listing Auto Trading"
   },
   "home": {
     "title": "Kimchi Premium",
