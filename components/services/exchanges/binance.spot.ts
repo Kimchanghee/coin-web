@@ -1,9 +1,11 @@
 // components/services/exchanges/binance.spot.ts - 확장 데이터 추가
 
-import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
 import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
 const SUPPORTED_SYMBOLS = [
   'btcusdt', 'ethusdt', 'solusdt', 'xrpusdt', 'adausdt',

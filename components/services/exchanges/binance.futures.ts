@@ -1,7 +1,9 @@
-import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
 import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
 const createBinanceFuturesService = (): ExchangeService => {
   const id = 'binance_usdt_futures';

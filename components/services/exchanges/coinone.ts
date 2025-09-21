@@ -1,8 +1,9 @@
 // components/services/exchanges/coinone.ts
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-
-// ExtendedPriceUpdate 타입을 사용
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
 
 const createCoinoneService = (): ExchangeService => {
   const id = 'coinone_krw';

@@ -1,8 +1,10 @@
 // components/services/exchanges/bybit.spot.ts
-import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
 import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
 const SYMBOLS = [
   'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT',

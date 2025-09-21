@@ -1,7 +1,9 @@
-import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
 import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
 const createGateioSpotService = (): ExchangeService => {
   const id = 'gateio_usdt_spot';

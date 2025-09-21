@@ -1,9 +1,11 @@
 // components/services/exchanges/upbit.ts
-import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import type {
+  ExchangeService,
+  ExtendedPriceUpdate,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
 import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
-
-// ExtendedPriceUpdate 타입을 사용 (types.ts에 정의됨)
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
 const createUpbitService = (): ExchangeService => {
   const id = 'upbit_krw';

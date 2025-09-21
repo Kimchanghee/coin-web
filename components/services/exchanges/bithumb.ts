@@ -1,9 +1,11 @@
 // components/services/exchanges/bithumb.ts - 확장 데이터 개선
 
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
 import { buildProxyUrl, deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
 const POLLING_INTERVAL_MS = 5000;
 
