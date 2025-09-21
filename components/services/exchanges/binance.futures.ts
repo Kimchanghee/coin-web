@@ -1,7 +1,9 @@
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-import { safeParseNumber } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 const createBinanceFuturesService = (): ExchangeService => {
   const id = 'binance_usdt_futures';
@@ -33,31 +35,40 @@ const createBinanceFuturesService = (): ExchangeService => {
           try {
             const message = JSON.parse(event.data);
             
-            if (message.stream && message.data) {
-              const data = message.data;
-              const symbol = data.s.replace('USDT', '');
-              const price = safeParseNumber(data.c);
-              const change24h = safeParseNumber(data.P);
-              const volume24h = safeParseNumber(data.q);
+            if (!message.stream || !message.data) {
+              return;
+            }
 
-              if (price === undefined) {
-                return;
-              }
+            const data = message.data;
+            const rawSymbol: string | undefined = data?.s;
+            if (!rawSymbol) {
+              return;
+            }
 
-              const update: ExtendedPriceUpdate = {
-                priceKey: `${id}-${symbol}`,
-                price,
-                ...(change24h !== undefined ? { change24h } : {}),
-                ...(volume24h !== undefined ? { volume24h } : {}),
-              };
+            const symbol = rawSymbol.replace('USDT', '');
+            const price = safeParseNumber(data.c);
+            if (price === undefined || price <= 0) {
+              return;
+            }
 
-              callback(update);
+            const change24h = deriveChangePercent({
+              priceChange: data.p,
+              openPrice: data.o,
+              lastPrice: price,
+            });
+            const volume24h = deriveQuoteVolume(data.q, data.v, price);
 
-              if (Math.random() < 0.01) {
-                const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
-                const volumeText = volume24h !== undefined ? `$${(volume24h / 1000000).toFixed(2)}M` : 'N/A';
-                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
-              }
+            callback({
+              priceKey: `${id}-${symbol}`,
+              price,
+              ...(change24h !== undefined ? { change24h } : {}),
+              ...(volume24h !== undefined ? { volume24h } : {}),
+            });
+
+            if (Math.random() < 0.01) {
+              const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+              const volumeLog = volume24h !== undefined ? (volume24h / 1_000_000).toFixed(2) : 'n/a';
+              console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeLog}%) Vol: $${volumeLog}M`);
             }
           } catch (error) {
             console.error(`❌ [${id}] Error parsing message:`, error);
