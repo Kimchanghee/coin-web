@@ -14,7 +14,14 @@ type CurrencyCode = 'KRW' | 'USD' | 'JPY' | 'CNY' | 'THB' | 'VND';
 
 type SortKey = 'name' | 'basePrice' | 'comparisonPrice' | 'priceDifference' | 'change24h' | 'baseVolume' | 'comparisonVolume';
 type SortDirection = 'asc' | 'desc';
-type NavigationKey = 'exchange_announcements' | 'exchange_arbitrage' | 'tradingview_auto' | 'listing_auto';
+const EXCHANGE_NAV_ITEMS = [
+    { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
+    { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
+    { key: 'tradingview_auto', icon: 'fa-robot' },
+    { key: 'listing_auto', icon: 'fa-rocket' },
+] as const;
+
+type NavigationKey = (typeof EXCHANGE_NAV_ITEMS)[number]['key'];
 
 // Currency conversion utility
 const convertCurrency = (amount: number, fromCurrency: string, toCurrency: CurrencyCode, usdKrw: number): number => {
@@ -172,12 +179,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
 
     const location = useLocation();
 
-    const menuItems: { key: NavigationKey; icon: string; path?: string }[] = [
-        { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
-        { key: 'tradingview_auto', icon: 'fa-robot' },
-        { key: 'listing_auto', icon: 'fa-rocket' },
-    ];
+    const menuItems = EXCHANGE_NAV_ITEMS;
     return (
         <>
             <aside className={`fixed z-40 inset-y-0 left-0 bg-gray-50 dark:bg-[#111111] w-64 p-4 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:w-56 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col`}>
@@ -249,12 +251,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
 const BottomNav: React.FC = () => {
     const { t } = useTranslation();
     const location = useLocation();
-    const navItems: { key: NavigationKey; icon: string; path?: string }[] = [
-        { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
-        { key: 'tradingview_auto', icon: 'fa-robot' },
-        { key: 'listing_auto', icon: 'fa-rocket' },
-    ];
+    const navItems = EXCHANGE_NAV_ITEMS;
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#161616] border-t border-gray-200 dark:border-gray-800 flex justify-around p-2 lg:hidden z-20">
             {navItems.map(item => {
