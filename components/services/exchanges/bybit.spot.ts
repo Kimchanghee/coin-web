@@ -1,6 +1,6 @@
 // components/services/exchanges/bybit.spot.ts
 import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
-import { safeMultiply, safeParseNumber } from './utils';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -82,12 +82,19 @@ const createBybitSpotService = (): ExchangeService => {
               }
 
               const symbol = rawSymbol.replace('USDT', '');
-              const changeRatio = safeParseNumber(payload.price24hPcnt);
-              const change24h = changeRatio !== undefined ? changeRatio * 100 : undefined;
+              const change24h = deriveChangePercent({
+                ratio: payload.price24hPcnt,
+                percent: payload.price24hPcnt,
+                priceChange: payload.change24h ?? payload.price24hPcntValue,
+                openPrice: payload.prevPrice24h ?? payload.prevPrice1h ?? payload.prevPrice,
+                lastPrice: price,
+              });
 
-              const turnover24h = safeParseNumber(payload.turnover24h);
-              const baseVolume = safeParseNumber(payload.volume24h);
-              const volume24h = turnover24h ?? (baseVolume !== undefined ? safeMultiply(baseVolume, price) : undefined);
+              const volume24h = deriveQuoteVolume(
+                payload.turnover24h,
+                payload.volume24h,
+                price
+              );
 
               callback({
                 priceKey: `${id}-${symbol}`,

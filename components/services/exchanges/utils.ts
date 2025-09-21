@@ -56,3 +56,78 @@ export const safeMultiply = (
   const product = a * b;
   return Number.isFinite(product) ? product : undefined;
 };
+
+export interface ChangePercentInput {
+  percent?: unknown;
+  ratio?: unknown;
+  priceChange?: unknown;
+  openPrice?: unknown;
+  lastPrice?: unknown;
+}
+
+export const deriveChangePercent = (
+  input: ChangePercentInput
+): number | undefined => {
+  const { percent, ratio, priceChange, openPrice, lastPrice } = input;
+
+  const last = safeParseNumber(lastPrice);
+  const open = safeParseNumber(openPrice);
+  if (last !== undefined && open !== undefined && Math.abs(open) > 1e-12) {
+    return ((last - open) / open) * 100;
+  }
+
+  const change = safeParseNumber(priceChange);
+  if (change !== undefined && last !== undefined) {
+    const base = last - change;
+    if (Math.abs(base) > 1e-12) {
+      return (change / base) * 100;
+    }
+  }
+
+  const percentValue = safeParseNumber(percent);
+  if (percentValue !== undefined) {
+    const percentText = typeof percent === 'string' ? percent : undefined;
+    const hasPercentSymbol = percentText ? percentText.includes('%') : false;
+
+    if (hasPercentSymbol) {
+      return percentValue;
+    }
+
+    if (Math.abs(percentValue) >= 1) {
+      return percentValue;
+    }
+
+    return percentValue * 100;
+  }
+
+  const ratioValue = safeParseNumber(ratio);
+  if (ratioValue !== undefined) {
+    if (Math.abs(ratioValue) <= 1) {
+      return ratioValue * 100;
+    }
+    return ratioValue;
+  }
+
+  return undefined;
+};
+
+export const deriveQuoteVolume = (
+  quoteVolume: unknown,
+  baseVolume: unknown,
+  lastPrice: unknown
+): number | undefined => {
+  const direct = safeParseNumber(quoteVolume);
+  if (direct !== undefined) {
+    return direct;
+  }
+
+  const base = safeParseNumber(baseVolume);
+  const price = safeParseNumber(lastPrice);
+
+  if (base !== undefined && price !== undefined) {
+    const derived = base * price;
+    return Number.isFinite(derived) ? derived : undefined;
+  }
+
+  return undefined;
+};

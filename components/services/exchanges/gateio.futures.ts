@@ -1,5 +1,5 @@
 import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
-import { safeParseNumber } from './utils';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -63,8 +63,18 @@ const createGateioFuturesService = (): ExchangeService => {
                 return;
               }
 
-              const change24h = safeParseNumber(ticker.change_percentage);
-              const volume24h = safeParseNumber(ticker.volume_24h_quote);
+              const change24h = deriveChangePercent({
+                percent: ticker.change_percentage ?? ticker.changePercent,
+                ratio: ticker.changeRatio,
+                priceChange: ticker.change,
+                openPrice: ticker.open,
+                lastPrice: price,
+              });
+              const volume24h = deriveQuoteVolume(
+                ticker.volume_24h_quote ?? ticker.volume24hQuote,
+                ticker.volume_24h ?? ticker.volume24h,
+                price
+              );
 
               callback({
                 priceKey: `${id}-${symbol}`,

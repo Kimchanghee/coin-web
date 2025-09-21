@@ -1,7 +1,7 @@
 // components/services/exchanges/bithumb.ts - 확장 데이터 개선
 
 import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-import { buildProxyUrl, safeParseNumber } from './utils';
+import { buildProxyUrl, deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -41,10 +41,14 @@ const createBithumbService = (): ExchangeService => {
           return;
         }
 
-        const change24h = safeParseNumber(
-          priceData.fluctate_rate_24H ?? priceData['24H_fluctate_rate']
+        const change24h = deriveChangePercent({
+          percent: priceData.fluctate_rate_24H ?? priceData['24H_fluctate_rate'],
+        });
+        const volume24h = deriveQuoteVolume(
+          priceData.acc_trade_value_24H,
+          priceData.acc_trade_value_24H,
+          price
         );
-        const volume24h = safeParseNumber(priceData.acc_trade_value_24H);
 
         const symbol = symbolKey.toUpperCase();
 

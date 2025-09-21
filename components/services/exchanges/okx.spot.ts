@@ -1,5 +1,5 @@
 import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
-import { safeMultiply, safeParseNumber } from './utils';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -65,19 +65,23 @@ const createOKXSpotService = (): ExchangeService => {
 
               const symbol = instId.split('-')[0];
               const lastPrice = safeParseNumber(ticker.last);
-              const open24h = safeParseNumber(ticker.open24h);
               if (lastPrice === undefined || lastPrice <= 0) {
                 return;
               }
 
-              let change24h: number | undefined;
-              if (open24h !== undefined && open24h > 0) {
-                change24h = ((lastPrice - open24h) / open24h) * 100;
-              }
+              const change24h = deriveChangePercent({
+                percent: ticker.sodUtc0ChangePercent ?? ticker.changePercent,
+                ratio: ticker.sodUtc0ChangePercent ?? ticker.changeRatio,
+                priceChange: ticker.sodUtc0Change ?? ticker.change24h,
+                openPrice: ticker.open24h ?? ticker.open,
+                lastPrice,
+              });
 
-              const quoteVolume = safeParseNumber(ticker.volCcy24h);
-              const baseVolume = safeParseNumber(ticker.vol24h);
-              const volume24h = quoteVolume ?? (baseVolume !== undefined ? safeMultiply(baseVolume, lastPrice) : undefined);
+              const volume24h = deriveQuoteVolume(
+                ticker.volCcy24h,
+                ticker.vol24h,
+                lastPrice
+              );
 
               callback({
                 priceKey: `${id}-${symbol}`,

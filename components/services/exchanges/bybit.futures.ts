@@ -1,5 +1,5 @@
 import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
-import { safeMultiply, safeParseNumber } from './utils';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -60,12 +60,19 @@ const createBybitFuturesService = (): ExchangeService => {
             }
 
             const symbol = rawSymbol.replace('USDT', '');
-            const changeRatio = safeParseNumber(tickerData?.price24hPcnt);
-            const change24h = changeRatio !== undefined ? changeRatio * 100 : undefined;
+            const change24h = deriveChangePercent({
+              ratio: tickerData?.price24hPcnt,
+              percent: tickerData?.price24hPcnt,
+              priceChange: tickerData?.change24h ?? tickerData?.lastPrice24h,
+              openPrice: tickerData?.prevPrice24h ?? tickerData?.prevPrice1h ?? tickerData?.prevPrice,
+              lastPrice: price,
+            });
 
-            const turnover24h = safeParseNumber(tickerData?.turnover24h);
-            const baseVolume = safeParseNumber(tickerData?.volume24h);
-            const volume24h = turnover24h ?? (baseVolume !== undefined ? safeMultiply(baseVolume, price) : undefined);
+            const volume24h = deriveQuoteVolume(
+              tickerData?.turnover24h,
+              tickerData?.volume24h,
+              price
+            );
 
             callback({
               priceKey: `${id}-${symbol}`,

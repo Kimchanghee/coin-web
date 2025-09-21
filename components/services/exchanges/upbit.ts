@@ -1,6 +1,6 @@
 // components/services/exchanges/upbit.ts
 import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
-import { safeParseNumber } from './utils';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 // ExtendedPriceUpdate 타입을 사용 (types.ts에 정의됨)
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
@@ -72,15 +72,24 @@ const createUpbitService = (): ExchangeService => {
             if (data.type === 'ticker') {
               const symbol = typeof data.code === 'string' ? data.code.replace('KRW-', '') : undefined;
               const price = safeParseNumber(data.trade_price);
-              const changeRate = safeParseNumber(data.signed_change_rate);
-              const volume24h = safeParseNumber(data.acc_trade_price_24h);
+              const volume24h = deriveQuoteVolume(
+                data.acc_trade_price_24h,
+                data.acc_trade_volume_24h,
+                price
+              );
               const changePrice = safeParseNumber(data.signed_change_price);
 
               if (!symbol || price === undefined || price <= 0) {
                 return;
               }
 
-              const change24h = changeRate !== undefined ? changeRate * 100 : undefined;
+              const change24h = deriveChangePercent({
+                ratio: data.signed_change_rate,
+                percent: data.signed_change_rate,
+                priceChange: data.signed_change_price,
+                openPrice: data.prev_closing_price,
+                lastPrice: price,
+              });
 
               const priceKey = `${id}-${symbol}`;
               extendedData.set(priceKey, {

@@ -1,5 +1,5 @@
 import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
-import { safeMultiply, safeParseNumber } from './utils';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -67,12 +67,19 @@ const createBitgetSpotService = (): ExchangeService => {
                 return;
               }
 
-              const changeRatio = safeParseNumber(ticker.changeUtc24h);
-              const change24h = changeRatio !== undefined ? changeRatio * 100 : undefined;
+              const change24h = deriveChangePercent({
+                percent: ticker.changeUtc24h ?? ticker.changeRatio ?? ticker.changePercentage,
+                ratio: ticker.changeRatio ?? ticker.changeUtc24h,
+                priceChange: ticker.change24h ?? ticker.change,
+                openPrice: ticker.openUtc24h ?? ticker.openUtc ?? ticker.open24h ?? ticker.open,
+                lastPrice: price,
+              });
 
-              const usdtVolume = safeParseNumber(ticker.usdtVolume);
-              const baseVolume = safeParseNumber(ticker.baseVolume);
-              const volume24h = usdtVolume ?? (baseVolume !== undefined ? safeMultiply(baseVolume, price) : undefined);
+              const volume24h = deriveQuoteVolume(
+                ticker.usdtVolume ?? ticker.quoteVolume,
+                ticker.baseVolume ?? ticker.volume,
+                price
+              );
 
               callback({
                 priceKey: `${id}-${symbol}`,

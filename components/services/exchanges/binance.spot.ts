@@ -1,7 +1,7 @@
 // components/services/exchanges/binance.spot.ts - 확장 데이터 추가
 
 import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
-import { safeMultiply, safeParseNumber } from './utils';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -46,21 +46,23 @@ const createBinanceSpotService = (): ExchangeService => {
               return;
             }
 
-            const change24h = safeParseNumber(data.P);
-            const quoteVolume = safeParseNumber(data.q);
-            const baseVolume = safeParseNumber(data.v);
-            const derivedVolume = quoteVolume ?? (baseVolume !== undefined ? safeMultiply(baseVolume, price) : undefined);
+            const change24h = deriveChangePercent({
+              priceChange: data.p,
+              openPrice: data.o,
+              lastPrice: price,
+            });
+            const volume24h = deriveQuoteVolume(data.q, data.v, price);
 
             callback({
               priceKey: `${id}-${symbol}`,
               price,
               ...(change24h !== undefined ? { change24h } : {}),
-              ...(derivedVolume !== undefined ? { volume24h: derivedVolume } : {}),
+              ...(volume24h !== undefined ? { volume24h } : {}),
             });
 
             if ((symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') && Math.random() < 0.05) {
               const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
-              const volumeLog = derivedVolume !== undefined ? derivedVolume.toFixed(0) : 'n/a';
+              const volumeLog = volume24h !== undefined ? volume24h.toFixed(0) : 'n/a';
               console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeLog}%) Vol: ${volumeLog}`);
             }
           } catch (error) {
