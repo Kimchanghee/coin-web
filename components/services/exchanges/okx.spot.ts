@@ -1,4 +1,5 @@
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import { safeMultiply, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -52,25 +53,45 @@ const createOKXSpotService = (): ExchangeService => {
             
             const data = JSON.parse(event.data);
             
-            if (data.arg && data.arg.channel === 'tickers' && data.data) {
-              data.data.forEach((ticker: any) => {
-                const symbol = ticker.instId.split('-')[0];
-                const price = parseFloat(ticker.last);
-                const change24h = ((parseFloat(ticker.last) - parseFloat(ticker.open24h)) / parseFloat(ticker.open24h)) * 100;
-                const volume24h = parseFloat(ticker.volCcy24h);
-                
-                callback({
-                  priceKey: `${id}-${symbol}`,
-                  price: price,
-                  change24h: change24h,
-                  volume24h: volume24h
-                });
-                
-                if (Math.random() < 0.05) {
-                  console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${change24h.toFixed(2)}%) Vol: $${(volume24h/1000000).toFixed(2)}M`);
-                }
-              });
+            if (!data.arg || data.arg.channel !== 'tickers' || !Array.isArray(data.data)) {
+              return;
             }
+
+            data.data.forEach((ticker: any) => {
+              const instId: string | undefined = ticker?.instId;
+              if (!instId) {
+                return;
+              }
+
+              const symbol = instId.split('-')[0];
+              const lastPrice = safeParseNumber(ticker.last);
+              const open24h = safeParseNumber(ticker.open24h);
+              if (lastPrice === undefined || lastPrice <= 0) {
+                return;
+              }
+
+              let change24h: number | undefined;
+              if (open24h !== undefined && open24h > 0) {
+                change24h = ((lastPrice - open24h) / open24h) * 100;
+              }
+
+              const quoteVolume = safeParseNumber(ticker.volCcy24h);
+              const baseVolume = safeParseNumber(ticker.vol24h);
+              const volume24h = quoteVolume ?? (baseVolume !== undefined ? safeMultiply(baseVolume, lastPrice) : undefined);
+
+              callback({
+                priceKey: `${id}-${symbol}`,
+                price: lastPrice,
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+              });
+
+              if (Math.random() < 0.05) {
+                const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+                const volumeLog = volume24h !== undefined ? (volume24h / 1_000_000).toFixed(2) : 'n/a';
+                console.log(`📊 [${id}] ${symbol}: $${lastPrice.toFixed(2)} (${changeLog}%) Vol: $${volumeLog}M`);
+              }
+            });
           } catch (error) {
             console.error(`❌ [${id}] Error parsing message:`, error);
           }

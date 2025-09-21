@@ -1,4 +1,5 @@
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import { safeMultiply, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -46,25 +47,37 @@ const createBybitFuturesService = (): ExchangeService => {
               return;
             }
             
-            if (data.topic && data.topic.startsWith('tickers.')) {
-              if (data.data) {
-                const tickerData = data.data;
-                const symbol = tickerData.symbol.replace('USDT', '');
-                const price = parseFloat(tickerData.lastPrice);
-                const change24h = parseFloat(tickerData.price24hPcnt) * 100;
-                const volume24h = parseFloat(tickerData.turnover24h);
-                
-                callback({
-                  priceKey: `${id}-${symbol}`,
-                  price: price,
-                  change24h: change24h,
-                  volume24h: volume24h
-                });
-                
-                if (Math.random() < 0.05) {
-                  console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${change24h.toFixed(2)}%) Vol: $${(volume24h/1000000).toFixed(2)}M`);
-                }
-              }
+            if (!data.topic || !data.topic.startsWith('tickers.') || !data.data) {
+              return;
+            }
+
+            const tickerData = data.data;
+            const rawSymbol: string | undefined = tickerData?.symbol;
+            const price = safeParseNumber(tickerData?.lastPrice);
+
+            if (!rawSymbol || price === undefined || price <= 0) {
+              return;
+            }
+
+            const symbol = rawSymbol.replace('USDT', '');
+            const changeRatio = safeParseNumber(tickerData?.price24hPcnt);
+            const change24h = changeRatio !== undefined ? changeRatio * 100 : undefined;
+
+            const turnover24h = safeParseNumber(tickerData?.turnover24h);
+            const baseVolume = safeParseNumber(tickerData?.volume24h);
+            const volume24h = turnover24h ?? (baseVolume !== undefined ? safeMultiply(baseVolume, price) : undefined);
+
+            callback({
+              priceKey: `${id}-${symbol}`,
+              price,
+              ...(change24h !== undefined ? { change24h } : {}),
+              ...(volume24h !== undefined ? { volume24h } : {}),
+            });
+
+            if (Math.random() < 0.05) {
+              const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+              const volumeLog = volume24h !== undefined ? (volume24h / 1_000_000).toFixed(2) : 'n/a';
+              console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeLog}%) Vol: $${volumeLog}M`);
             }
           } catch (error) {
             console.error(`❌ [${id}] Error parsing message:`, error);

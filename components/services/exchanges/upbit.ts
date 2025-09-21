@@ -1,5 +1,6 @@
 // components/services/exchanges/upbit.ts
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import { safeParseNumber } from './utils';
 
 // ExtendedPriceUpdate 타입을 사용 (types.ts에 정의됨)
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
@@ -69,38 +70,42 @@ const createUpbitService = (): ExchangeService => {
             
             // ticker 데이터 처리
             if (data.type === 'ticker') {
-              const symbol = data.code.replace('KRW-', '');
-              const price = data.trade_price;
-              const change24h = data.signed_change_rate * 100; // 변동률 (%)
-              const volume24h = data.acc_trade_price_24h; // 24시간 거래대금 (KRW)
-              const changePrice = data.signed_change_price; // 변동 금액
-              
-              // 확장 데이터 저장
+              const symbol = typeof data.code === 'string' ? data.code.replace('KRW-', '') : undefined;
+              const price = safeParseNumber(data.trade_price);
+              const changeRate = safeParseNumber(data.signed_change_rate);
+              const volume24h = safeParseNumber(data.acc_trade_price_24h);
+              const changePrice = safeParseNumber(data.signed_change_price);
+
+              if (!symbol || price === undefined || price <= 0) {
+                return;
+              }
+
+              const change24h = changeRate !== undefined ? changeRate * 100 : undefined;
+
               const priceKey = `${id}-${symbol}`;
               extendedData.set(priceKey, {
                 priceKey,
                 price,
-                change24h,
-                volume24h,
-                changePrice
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+                ...(changePrice !== undefined ? { changePrice } : {}),
               });
-              
-              // 확장 데이터로 콜백 호출
+
               callback({
-                priceKey: priceKey,
-                price: price,
-                change24h: change24h,
-                volume24h: volume24h,
-                changePrice: changePrice
+                priceKey,
+                price,
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+                ...(changePrice !== undefined ? { changePrice } : {}),
               });
-              
+
               // 디버깅용 상세 로그
               if (symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') {
-                const volumeInBillion = (volume24h / 100000000).toFixed(0);
+                const volumeInBillion = volume24h !== undefined ? (volume24h / 100000000).toFixed(0) : 'n/a';
                 console.log(`[${id}] Extended Data Sent:`, {
                   symbol,
                   price,
-                  change24h: `${change24h.toFixed(2)}%`,
+                  change24h: change24h !== undefined ? `${change24h.toFixed(2)}%` : 'n/a',
                   volume24h,
                   volumeFormatted: `₩${volumeInBillion}억`
                 });

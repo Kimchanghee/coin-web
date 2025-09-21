@@ -1,4 +1,5 @@
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import { safeMultiply, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -32,23 +33,38 @@ const createBinanceFuturesService = (): ExchangeService => {
           try {
             const message = JSON.parse(event.data);
             
-            if (message.stream && message.data) {
-              const data = message.data;
-              const symbol = data.s.replace('USDT', '');
-              const price = parseFloat(data.c); // Current price
-              const change24h = parseFloat(data.P); // 24hr percent change
-              const volume24h = parseFloat(data.q); // 24hr quote volume (USDT)
-              
-              callback({
-                priceKey: `${id}-${symbol}`,
-                price: price,
-                change24h: change24h,
-                volume24h: volume24h
-              });
-              
-              if (Math.random() < 0.01) {
-                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${change24h.toFixed(2)}%) Vol: $${(volume24h/1000000).toFixed(2)}M`);
-              }
+            if (!message.stream || !message.data) {
+              return;
+            }
+
+            const data = message.data;
+            const rawSymbol: string | undefined = data?.s;
+            if (!rawSymbol) {
+              return;
+            }
+
+            const symbol = rawSymbol.replace('USDT', '');
+            const price = safeParseNumber(data.c);
+            if (price === undefined || price <= 0) {
+              return;
+            }
+
+            const change24h = safeParseNumber(data.P);
+            const quoteVolume = safeParseNumber(data.q);
+            const baseVolume = safeParseNumber(data.v);
+            const derivedVolume = quoteVolume ?? (baseVolume !== undefined ? safeMultiply(baseVolume, price) : undefined);
+
+            callback({
+              priceKey: `${id}-${symbol}`,
+              price,
+              ...(change24h !== undefined ? { change24h } : {}),
+              ...(derivedVolume !== undefined ? { volume24h: derivedVolume } : {}),
+            });
+
+            if (Math.random() < 0.01) {
+              const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+              const volumeLog = derivedVolume !== undefined ? (derivedVolume / 1_000_000).toFixed(2) : 'n/a';
+              console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeLog}%) Vol: $${volumeLog}M`);
             }
           } catch (error) {
             console.error(`❌ [${id}] Error parsing message:`, error);

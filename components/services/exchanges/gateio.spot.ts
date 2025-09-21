@@ -1,4 +1,5 @@
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import { safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -47,23 +48,36 @@ const createGateioSpotService = (): ExchangeService => {
           try {
             const data = JSON.parse(event.data);
             
-            if (data.channel === 'spot.tickers' && data.event === 'update' && data.result) {
-              const ticker = data.result;
-              const symbol = ticker.currency_pair.split('_')[0];
-              const price = parseFloat(ticker.last);
-              const change24h = parseFloat(ticker.change_percentage);
-              const volume24h = parseFloat(ticker.quote_volume);
-              
-              callback({
-                priceKey: `${id}-${symbol}`,
-                price: price,
-                change24h: change24h,
-                volume24h: volume24h
-              });
-              
-              if (Math.random() < 0.05) {
-                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${change24h.toFixed(2)}%) Vol: $${(volume24h/1000000).toFixed(2)}M`);
-              }
+            if (data.channel !== 'spot.tickers' || data.event !== 'update' || !data.result) {
+              return;
+            }
+
+            const ticker = data.result;
+            const pair: string | undefined = ticker?.currency_pair;
+            if (!pair) {
+              return;
+            }
+
+            const symbol = pair.split('_')[0];
+            const price = safeParseNumber(ticker.last);
+            if (price === undefined || price <= 0) {
+              return;
+            }
+
+            const change24h = safeParseNumber(ticker.change_percentage);
+            const volume24h = safeParseNumber(ticker.quote_volume);
+
+            callback({
+              priceKey: `${id}-${symbol}`,
+              price,
+              ...(change24h !== undefined ? { change24h } : {}),
+              ...(volume24h !== undefined ? { volume24h } : {}),
+            });
+
+            if (Math.random() < 0.05) {
+              const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+              const volumeLog = volume24h !== undefined ? (volume24h / 1_000_000).toFixed(2) : 'n/a';
+              console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeLog}%) Vol: $${volumeLog}M`);
             }
           } catch (error) {
             console.error(`❌ [${id}] Error parsing message:`, error);

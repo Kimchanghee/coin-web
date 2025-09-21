@@ -1,5 +1,6 @@
 // components/services/exchanges/bybit.spot.ts
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import type { ExchangeService, ExtendedPriceUpdate, PriceUpdateCallback } from '../../../types';
+import { safeMultiply, safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -73,39 +74,31 @@ const createBybitSpotService = (): ExchangeService => {
               const payload = Array.isArray(message.data) ? message.data[0] : message.data;
               if (!payload) return;
 
-              const symbol = typeof payload.symbol === 'string'
-                ? payload.symbol.replace('USDT', '')
-                : undefined;
-              const price = payload.lastPrice ? parseFloat(payload.lastPrice) : undefined;
+              const rawSymbol = typeof payload.symbol === 'string' ? payload.symbol : undefined;
+              const price = safeParseNumber(payload.lastPrice);
 
-              if (!symbol || !price || !Number.isFinite(price)) {
+              if (!rawSymbol || price === undefined || price <= 0) {
                 return;
               }
 
-              const change24hRaw = payload.price24hPcnt ? parseFloat(payload.price24hPcnt) * 100 : undefined;
-              const turnover24h = payload.turnover24h ? parseFloat(payload.turnover24h) : undefined;
-              const volume24hBase = payload.volume24h ? parseFloat(payload.volume24h) : undefined;
+              const symbol = rawSymbol.replace('USDT', '');
+              const changeRatio = safeParseNumber(payload.price24hPcnt);
+              const change24h = changeRatio !== undefined ? changeRatio * 100 : undefined;
 
-              let volume24h: number | undefined = undefined;
-              if (Number.isFinite(turnover24h)) {
-                volume24h = turnover24h as number;
-              } else if (Number.isFinite(volume24hBase)) {
-                volume24h = (volume24hBase as number) * price;
-              }
-
-              const change24h = Number.isFinite(change24hRaw) ? (change24hRaw as number) : undefined;
-              const normalizedVolume = Number.isFinite(volume24h) ? (volume24h as number) : undefined;
+              const turnover24h = safeParseNumber(payload.turnover24h);
+              const baseVolume = safeParseNumber(payload.volume24h);
+              const volume24h = turnover24h ?? (baseVolume !== undefined ? safeMultiply(baseVolume, price) : undefined);
 
               callback({
                 priceKey: `${id}-${symbol}`,
                 price,
-                change24h,
-                volume24h: normalizedVolume
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
               });
 
               if ((symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') && Math.random() < 0.05) {
-                const changeText = change24h !== undefined ? change24h.toFixed(2) : '0.00';
-                const volumeText = normalizedVolume !== undefined ? normalizedVolume.toFixed(0) : 'N/A';
+                const changeText = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+                const volumeText = volume24h !== undefined ? volume24h.toFixed(0) : 'N/A';
                 console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
               }
             }
