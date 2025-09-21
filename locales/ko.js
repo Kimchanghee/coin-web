@@ -15,21 +15,18 @@ export default {
   },
   "sidebar": {
     "premium_header": "프리미엄",
-    "premium": "프리미엄",
-    "arbitrage": "아비트라지",
-    "live_status": "실시간 현황",
-    "exchange_rate": "환율 계산",
-    "payback": "페이백",
-    "guide": "재정거래 가이드",
+    "exchange_announcements": "거래소별 공지사항",
+    "exchange_arbitrage": "거래소별 코인 차익(아비트리지)",
+    "tradingview_auto": "트레이딩뷰 자동 거래",
+    "listing_auto": "상장 공지 자동 거래",
     "logged_in_as": "로그인 계정",
     "login_required": "로그인이 필요합니다"
   },
   "bottom_nav": {
-    "gimp": "김프",
-    "exchange_announcements": "거래소 공지",
-    "trends": "트랜드",
-    "payback": "페이백",
-    "search": "코인검색"
+    "exchange_announcements": "거래소별 공지사항",
+    "exchange_arbitrage": "거래소별 코인 차익(아비트리지)",
+    "tradingview_auto": "트레이딩뷰 자동 거래",
+    "listing_auto": "상장 공지 자동 거래"
   },
   "home": {
     "title": "김치 프리미엄",

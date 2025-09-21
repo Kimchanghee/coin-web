@@ -15,21 +15,18 @@ export default {
   },
   "sidebar": {
     "premium_header": "溢价",
-    "premium": "溢价",
-    "arbitrage": "套利",
-    "live_status": "实时状态",
-    "exchange_rate": "汇率计算",
-    "payback": "返现",
-    "guide": "套利指南",
+    "exchange_announcements": "交易所公告",
+    "exchange_arbitrage": "交易所币种价差（套利）",
+    "tradingview_auto": "TradingView 自动交易",
+    "listing_auto": "上币公告自动交易",
     "logged_in_as": "登录为",
     "login_required": "需要登录"
   },
   "bottom_nav": {
-    "gimp": "溢价",
     "exchange_announcements": "交易所公告",
-    "trends": "趋势",
-    "payback": "返现",
-    "search": "搜索"
+    "exchange_arbitrage": "交易所币种价差（套利）",
+    "tradingview_auto": "TradingView 自动交易",
+    "listing_auto": "上币公告自动交易"
   },
   "home": {
     "title": "泡菜溢价",
