@@ -1,7 +1,9 @@
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-import { safeParseNumber } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 const createGateioSpotService = (): ExchangeService => {
   const id = 'gateio_usdt_spot';
@@ -48,31 +50,46 @@ const createGateioSpotService = (): ExchangeService => {
           try {
             const data = JSON.parse(event.data);
             
-            if (data.channel === 'spot.tickers' && data.event === 'update' && data.result) {
-              const ticker = data.result;
-              const symbol = ticker.currency_pair.split('_')[0];
-              const price = safeParseNumber(ticker.last);
-              const change24h = safeParseNumber(ticker.change_percentage);
-              const volume24h = safeParseNumber(ticker.quote_volume);
+            if (data.channel !== 'spot.tickers' || data.event !== 'update' || !data.result) {
+              return;
+            }
 
-              if (price === undefined) {
-                return;
-              }
+            const ticker = data.result;
+            const pair: string | undefined = ticker?.currency_pair;
+            if (!pair) {
+              return;
+            }
 
-              const update: ExtendedPriceUpdate = {
-                priceKey: `${id}-${symbol}`,
-                price,
-                ...(change24h !== undefined ? { change24h } : {}),
-                ...(volume24h !== undefined ? { volume24h } : {}),
-              };
+            const symbol = pair.split('_')[0];
+            const price = safeParseNumber(ticker.last);
+            if (price === undefined || price <= 0) {
+              return;
+            }
 
-              callback(update);
+            const change24h = deriveChangePercent({
+              percent: ticker.change_percentage ?? ticker.changePercent,
+              ratio: ticker.changeRatio,
+              priceChange: ticker.change,
+              openPrice: ticker.open,
+              lastPrice: price,
+            });
+            const volume24h = deriveQuoteVolume(
+              ticker.quote_volume,
+              ticker.base_volume,
+              price
+            );
 
-              if (Math.random() < 0.05) {
-                const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
-                const volumeText = volume24h !== undefined ? `$${(volume24h / 1000000).toFixed(2)}M` : 'N/A';
-                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
-              }
+            callback({
+              priceKey: `${id}-${symbol}`,
+              price,
+              ...(change24h !== undefined ? { change24h } : {}),
+              ...(volume24h !== undefined ? { volume24h } : {}),
+            });
+
+            if (Math.random() < 0.05) {
+              const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+              const volumeLog = volume24h !== undefined ? (volume24h / 1_000_000).toFixed(2) : 'n/a';
+              console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeLog}%) Vol: $${volumeLog}M`);
             }
           } catch (error) {
             console.error(`❌ [${id}] Error parsing message:`, error);
