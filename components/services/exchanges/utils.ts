@@ -56,3 +56,86 @@ export const safeMultiply = (
   const product = a * b;
   return Number.isFinite(product) ? product : undefined;
 };
+
+const normalizePercentValue = (value: number): number => {
+  if (!Number.isFinite(value)) {
+    return value;
+  }
+
+  const absolute = Math.abs(value);
+
+  if (absolute === 0) {
+    return value;
+  }
+
+  if (absolute <= 1) {
+    return value * 100;
+  }
+
+  return value;
+};
+
+type ChangePercentArgs = {
+  percent?: unknown;
+  ratio?: unknown;
+  priceChange?: unknown;
+  openPrice?: unknown;
+  lastPrice?: unknown;
+};
+
+export const deriveChangePercent = ({
+  percent,
+  ratio,
+  priceChange,
+  openPrice,
+  lastPrice,
+}: ChangePercentArgs): number | undefined => {
+  const open = safeParseNumber(openPrice);
+  const last = safeParseNumber(lastPrice);
+  if (open !== undefined && last !== undefined && open !== 0) {
+    const derived = ((last - open) / open) * 100;
+    if (Number.isFinite(derived)) {
+      return derived;
+    }
+  }
+
+  const delta = safeParseNumber(priceChange);
+  if (delta !== undefined && open !== undefined && open !== 0) {
+    const derived = (delta / open) * 100;
+    if (Number.isFinite(derived)) {
+      return derived;
+    }
+  }
+
+  const percentValue = safeParseNumber(percent);
+  if (percentValue !== undefined) {
+    const normalized = normalizePercentValue(percentValue);
+    return Number.isFinite(normalized) ? normalized : undefined;
+  }
+
+  const ratioValue = safeParseNumber(ratio);
+  if (ratioValue !== undefined) {
+    const normalized = normalizePercentValue(ratioValue);
+    return Number.isFinite(normalized) ? normalized : undefined;
+  }
+
+  return undefined;
+};
+
+export const deriveQuoteVolume = (
+  quoteVolumeInput: unknown,
+  baseVolumeInput: unknown,
+  price: unknown
+): number | undefined => {
+  const quoteVolume = safeParseNumber(quoteVolumeInput);
+  if (quoteVolume !== undefined && Number.isFinite(quoteVolume) && quoteVolume > 0) {
+    return quoteVolume;
+  }
+
+  const volumeFromBase = safeMultiply(baseVolumeInput, price);
+  if (volumeFromBase !== undefined && Number.isFinite(volumeFromBase) && volumeFromBase > 0) {
+    return volumeFromBase;
+  }
+
+  return undefined;
+};

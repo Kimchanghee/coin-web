@@ -123,7 +123,6 @@ const createUpbitService = (): ExchangeService => {
         };
 
         ws.onerror = (error) => {
-          console.error(`[${id}] WebSocket error:`,ws.onerror = (error) => {
           console.error(`[${id}] WebSocket error:`, error);
         };
 
