@@ -1,4 +1,5 @@
 import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import { safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -50,19 +51,27 @@ const createGateioSpotService = (): ExchangeService => {
             if (data.channel === 'spot.tickers' && data.event === 'update' && data.result) {
               const ticker = data.result;
               const symbol = ticker.currency_pair.split('_')[0];
-              const price = parseFloat(ticker.last);
-              const change24h = parseFloat(ticker.change_percentage);
-              const volume24h = parseFloat(ticker.quote_volume);
-              
-              callback({
+              const price = safeParseNumber(ticker.last);
+              const change24h = safeParseNumber(ticker.change_percentage);
+              const volume24h = safeParseNumber(ticker.quote_volume);
+
+              if (price === undefined) {
+                return;
+              }
+
+              const update: ExtendedPriceUpdate = {
                 priceKey: `${id}-${symbol}`,
-                price: price,
-                change24h: change24h,
-                volume24h: volume24h
-              });
-              
+                price,
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+              };
+
+              callback(update);
+
               if (Math.random() < 0.05) {
-                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${change24h.toFixed(2)}%) Vol: $${(volume24h/1000000).toFixed(2)}M`);
+                const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
+                const volumeText = volume24h !== undefined ? `$${(volume24h / 1000000).toFixed(2)}M` : 'N/A';
+                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
               }
             }
           } catch (error) {

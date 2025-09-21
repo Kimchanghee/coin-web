@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP } from '../constants';
-import type { CoinData, User } from '../types';
+import type { CoinData, User, ExtendedPriceUpdate } from '../types';
 import { allServices } from '../components/services/exchanges';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -14,6 +14,7 @@ type CurrencyCode = 'KRW' | 'USD' | 'JPY' | 'CNY' | 'THB' | 'VND';
 
 type SortKey = 'name' | 'basePrice' | 'comparisonPrice' | 'priceDifference' | 'change24h' | 'baseVolume' | 'comparisonVolume';
 type SortDirection = 'asc' | 'desc';
+type MenuItemKey = 'exchange_announcements' | 'exchange_arbitrage' | 'tradingview_auto' | 'listing_auto';
 
 // Currency conversion utility
 const convertCurrency = (amount: number, fromCurrency: string, toCurrency: CurrencyCode, usdKrw: number): number => {
@@ -162,6 +163,7 @@ const Header: React.FC<{ onMenuClick: () => void; user: User | null, usdKrw: num
 const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const { t } = useTranslation();
 
     const handleLogout = () => {
@@ -169,13 +171,11 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
         navigate('/');
     }
 
-    const menuItems = [
-        { key: 'premium', icon: 'fa-star' },
-        { key: 'arbitrage', icon: 'fa-chart-pie' },
-        { key: 'live_status', icon: 'fa-fire' },
-        { key: 'exchange_rate', icon: 'fa-exchange-alt' },
-        { key: 'payback', icon: 'fa-gift' },
-        { key: 'guide', icon: 'fa-book' },
+    const menuItems: { key: MenuItemKey; icon: string; path?: string }[] = [
+        { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
+        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
+        { key: 'tradingview_auto', icon: 'fa-robot' },
+        { key: 'listing_auto', icon: 'fa-rocket' },
     ];
     return (
         <>
@@ -185,14 +185,40 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                          <h2 className="text-lg font-semibold text-black dark:text-white">{t('sidebar.premium_header')}</h2>
                     </div>
                     <ul className="space-y-4">
-                        {menuItems.map(item => (
-                             <li key={item.key}>
-                                <a href="#" className={`flex items-center gap-3 p-2 rounded-md transition-colors ${item.key === 'premium' ? 'bg-gray-200 dark:bg-gray-800 text-black dark:text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
-                                    <i className={`fas ${item.icon} w-5`}></i>
-                                    <span>{t(`sidebar.${item.key}`)}</span>
-                                </a>
-                            </li>
-                        ))}
+                        {menuItems.map(item => {
+                            const isActive = item.path ? location.pathname === item.path : false;
+                            const baseClasses = 'flex items-center gap-3 p-2 rounded-md transition-colors';
+                            const activeClasses = 'bg-gray-200 dark:bg-gray-800 text-black dark:text-white';
+                            const inactiveClasses = 'hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400';
+
+                            if (item.path) {
+                                return (
+                                    <li key={item.key}>
+                                        <Link
+                                            to={item.path}
+                                            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+                                            onClick={onClose}
+                                        >
+                                            <i className={`fas ${item.icon} w-5`}></i>
+                                            <span>{t(`sidebar.${item.key}`)}</span>
+                                        </Link>
+                                    </li>
+                                );
+                            }
+
+                            return (
+                                <li key={item.key}>
+                                    <button
+                                        type="button"
+                                        className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`}
+                                        disabled
+                                    >
+                                        <i className={`fas ${item.icon} w-5`}></i>
+                                        <span>{t(`sidebar.${item.key}`)}</span>
+                                    </button>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </nav>
                  <div className="mt-auto border-t border-gray-200 dark:border-gray-800 pt-4">
@@ -222,29 +248,45 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
 const BottomNav: React.FC = () => {
     const { t } = useTranslation();
     const location = useLocation();
-     const navItems = [
-        { key: 'gimp', icon: 'fa-star', path: '/' },
+    const navItems: { key: MenuItemKey; icon: string; path?: string }[] = [
         { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-        { key: 'trends', icon: 'fa-fire', path: '#' },
-        { key: 'payback', icon: 'fa-gift', path: '#' },
-        { key: 'search', icon: 'fa-search', path: '#' },
+        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
+        { key: 'tradingview_auto', icon: 'fa-robot' },
+        { key: 'listing_auto', icon: 'fa-rocket' },
     ];
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#161616] border-t border-gray-200 dark:border-gray-800 flex justify-around p-2 lg:hidden z-20">
-            {navItems.map(item => (
-                 <Link
-                    to={item.path}
-                    key={item.key}
-                    className={`flex flex-col items-center gap-1 w-16 text-xs transition-colors ${
-                        location.pathname === item.path
-                        ? 'text-yellow-400'
-                        : 'text-gray-500 hover:text-black dark:hover:text-white'
-                    }`}
-                >
-                    <i className={`fas ${item.icon} text-lg`}></i>
-                    <span>{t(`bottom_nav.${item.key}`)}</span>
-                </Link>
-            ))}
+            {navItems.map(item => {
+                const isActive = item.path ? location.pathname === item.path : false;
+                const baseClasses = 'flex flex-col items-center gap-1 flex-1 text-xs transition-colors';
+                const activeClasses = 'text-yellow-400';
+                const inactiveClasses = 'text-gray-500 hover:text-black dark:hover:text-white';
+
+                if (item.path) {
+                    return (
+                        <Link
+                            to={item.path}
+                            key={item.key}
+                            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+                        >
+                            <i className={`fas ${item.icon} text-lg`}></i>
+                            <span>{t(`bottom_nav.${item.key}`)}</span>
+                        </Link>
+                    );
+                }
+
+                return (
+                    <button
+                        type="button"
+                        key={item.key}
+                        className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`}
+                        disabled
+                    >
+                        <i className={`fas ${item.icon} text-lg`}></i>
+                        <span>{t(`bottom_nav.${item.key}`)}</span>
+                    </button>
+                );
+            })}
         </nav>
     );
 };
@@ -605,26 +647,45 @@ const HomePage: React.FC = () => {
 
 useEffect(() => {
     console.log('🔧 Starting exchange services...');
-    
+
     // Collects all incoming updates into a buffer.
-    const handleUpdate = (update: any) => {
+    const handleUpdate = (update: ExtendedPriceUpdate) => {
         console.log('📊 Price update received:', update);
-        updatesBuffer.current.prices[update.priceKey] = update.price;
-        
-        if (update.change24h !== undefined || update.volume24h !== undefined) {
+
+        if (typeof update.price === 'number' && !Number.isNaN(update.price)) {
+            updatesBuffer.current.prices[update.priceKey] = update.price;
+        }
+
+        const hasExtendedFields =
+            update.change24h !== undefined ||
+            update.volume24h !== undefined ||
+            update.changePrice !== undefined;
+
+        if (hasExtendedFields) {
             console.log('📈 Extended data received:', {
                 priceKey: update.priceKey,
                 change24h: update.change24h,
                 volume24h: update.volume24h,
                 changePrice: update.changePrice
             });
-            updatesBuffer.current.extended[update.priceKey] = {
-                change24h: update.change24h,
-                volume24h: update.volume24h,
-                ...(update.changePrice !== undefined && { changePrice: update.changePrice })
-            };
+
+            const nextExtended: { change24h?: number; volume24h?: number; changePrice?: number } = {};
+
+            if (update.change24h !== undefined && !Number.isNaN(update.change24h)) {
+                nextExtended.change24h = update.change24h;
+            }
+            if (update.volume24h !== undefined && !Number.isNaN(update.volume24h)) {
+                nextExtended.volume24h = update.volume24h;
+            }
+            if (update.changePrice !== undefined && !Number.isNaN(update.changePrice)) {
+                nextExtended.changePrice = update.changePrice;
+            }
+
+            if (Object.keys(nextExtended).length > 0) {
+                updatesBuffer.current.extended[update.priceKey] = nextExtended;
+            }
         }
-    }; // Fixed: Added missing closing brace
+    };
 
     // 각 서비스별로 확장 데이터 지원 여부 확인하고 연결
     allServices.forEach(service => {
@@ -647,8 +708,18 @@ useEffect(() => {
         
         if (priceUpdates > 0 || extendedUpdates > 0) {
             console.log(`🔄 Applying ${priceUpdates} price updates, ${extendedUpdates} extended updates`);
-            setAllPrices(prev => ({ ...prev, ...updatesBuffer.current.prices }));
-            setAllExtendedData(prev => ({ ...prev, ...updatesBuffer.current.extended }));
+            const bufferedPrices = updatesBuffer.current.prices;
+            const bufferedExtended = updatesBuffer.current.extended;
+
+            setAllPrices(prev => ({ ...prev, ...bufferedPrices }));
+            setAllExtendedData(prev => {
+                const next = { ...prev };
+                Object.entries(bufferedExtended).forEach(([key, data]) => {
+                    next[key] = { ...next[key], ...data };
+                });
+                return next;
+            });
+
             updatesBuffer.current = { prices: {}, extended: {} };
         }
     }, 1000);

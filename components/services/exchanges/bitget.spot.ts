@@ -1,4 +1,5 @@
 import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import { safeParseNumber, safeMultiply } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -53,19 +54,30 @@ const createBitgetSpotService = (): ExchangeService => {
             if (data.arg && data.arg.channel === 'ticker' && data.data) {
               data.data.forEach((ticker: any) => {
                 const symbol = ticker.instId.split('_')[0].replace('USDT', '');
-                const price = parseFloat(ticker.last);
-                const change24h = parseFloat(ticker.changeUtc24h) * 100; // Convert to percentage
-                const volume24h = parseFloat(ticker.usdtVolume) || parseFloat(ticker.baseVolume) * price;
-                
-                callback({
+                const price = safeParseNumber(ticker.last);
+                const changeRaw = safeParseNumber(ticker.changeUtc24h ?? ticker.change24h ?? ticker.chgUTC);
+                const change24h = changeRaw !== undefined ? changeRaw * 100 : undefined;
+                const quoteVolume = safeParseNumber(ticker.usdtVolume ?? ticker.quoteVolume);
+                const baseVolume = safeParseNumber(ticker.baseVolume);
+                const volume24h = quoteVolume ?? (baseVolume !== undefined && price !== undefined ? safeMultiply(baseVolume, price) : undefined);
+
+                if (price === undefined) {
+                  return;
+                }
+
+                const update: ExtendedPriceUpdate = {
                   priceKey: `${id}-${symbol}`,
-                  price: price,
-                  change24h: change24h,
-                  volume24h: volume24h
-                });
-                
+                  price,
+                  ...(change24h !== undefined ? { change24h } : {}),
+                  ...(volume24h !== undefined ? { volume24h } : {}),
+                };
+
+                callback(update);
+
                 if (Math.random() < 0.05) {
-                  console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${change24h.toFixed(2)}%) Vol: $${(volume24h/1000000).toFixed(2)}M`);
+                  const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
+                  const volumeText = volume24h !== undefined ? `$${(volume24h / 1000000).toFixed(2)}M` : 'N/A';
+                  console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
                 }
               });
             }
