@@ -287,6 +287,7 @@ interface ProcessedCoinData extends CoinData {
     priceDifferencePercentage: number;
     baseVolume: string;
     comparisonVolume: string;
+    change24h: number | null;
 }
 
 // Format volume with proper localization
@@ -335,8 +336,24 @@ const CryptoPriceComparisonTable: React.FC<{
     currency: CurrencyCode;
 }> = ({ data, onSort, sortConfig, baseExchangeName, comparisonExchangeName, currency }) => {
     const { t, i18n } = useTranslation();
-    const formatPercentage = (num: number) => `${num.toFixed(2)}%`;
-    const getTextColor = (num: number) => num > 0 ? 'text-green-500' : num < 0 ? 'text-red-500' : 'text-gray-800 dark:text-gray-300';
+    const formatPercentage = (num: number | null) => {
+        if (typeof num !== 'number' || Number.isNaN(num)) {
+            return '—';
+        }
+        return `${num.toFixed(2)}%`;
+    };
+    const getTextColor = (num: number | null) => {
+        if (typeof num !== 'number' || Number.isNaN(num)) {
+            return 'text-gray-400 dark:text-gray-500';
+        }
+        if (num > 0) {
+            return 'text-green-500';
+        }
+        if (num < 0) {
+            return 'text-red-500';
+        }
+        return 'text-gray-800 dark:text-gray-300';
+    };
 
     const getSortIcon = (key: SortKey) => {
         if (sortConfig.key !== key) {
@@ -748,8 +765,8 @@ const HomePage: React.FC = () => {
                     ? (priceDifference / comparisonPrice) * 100
                     : 0;
                 
-                let change24h = baseCoin.change24h ?? 0;
-                if (baseExtData.change24h !== undefined) {
+                let change24h: number | null = null;
+                if (typeof baseExtData.change24h === 'number' && !Number.isNaN(baseExtData.change24h)) {
                     change24h = baseExtData.change24h;
                     console.log(`📈 Using real change24h for ${baseCoin.symbol}: ${change24h}%`);
                 }
@@ -788,28 +805,53 @@ const HomePage: React.FC = () => {
 
         liveData.sort((a, b) => {
             const { key, direction } = sortConfig;
-            let aValue: string | number;
-            let bValue: string | number;
-
-            if (key === 'baseVolume') {
-                aValue = parseVolume(a.baseVolume);
-                bValue = parseVolume(b.baseVolume);
-            } else if (key === 'comparisonVolume') {
-                aValue = parseVolume(a.comparisonVolume);
-                bValue = parseVolume(b.comparisonVolume);
-            } else if (key === 'name') {
-                aValue = a.names[i18n.language] || a.names['en'];
-                bValue = b.names[i18n.language] || b.names['en'];
-            } else {
-                aValue = a[key as keyof ProcessedCoinData] as number;
-                bValue = b[key as keyof ProcessedCoinData] as number;
-            }
-            
             const dir = direction === 'asc' ? 1 : -1;
 
-            if (typeof aValue === 'string' && typeof bValue === 'string') {
+            if (key === 'baseVolume') {
+                const aValue = parseVolume(a.baseVolume);
+                const bValue = parseVolume(b.baseVolume);
+                if (aValue < bValue) {
+                    return -1 * dir;
+                }
+                if (aValue > bValue) {
+                    return 1 * dir;
+                }
+                return 0;
+            }
+
+            if (key === 'comparisonVolume') {
+                const aValue = parseVolume(a.comparisonVolume);
+                const bValue = parseVolume(b.comparisonVolume);
+                if (aValue < bValue) {
+                    return -1 * dir;
+                }
+                if (aValue > bValue) {
+                    return 1 * dir;
+                }
+                return 0;
+            }
+
+            if (key === 'name') {
+                const aValue = a.names[i18n.language] || a.names['en'];
+                const bValue = b.names[i18n.language] || b.names['en'];
                 return aValue.localeCompare(bValue) * dir;
             }
+
+            if (key === 'change24h') {
+                const fallback = direction === 'asc' ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+                const aValue = (typeof a.change24h === 'number' && Number.isFinite(a.change24h)) ? a.change24h : fallback;
+                const bValue = (typeof b.change24h === 'number' && Number.isFinite(b.change24h)) ? b.change24h : fallback;
+                if (aValue < bValue) {
+                    return -1 * dir;
+                }
+                if (aValue > bValue) {
+                    return 1 * dir;
+                }
+                return 0;
+            }
+
+            const aValue = a[key as keyof ProcessedCoinData] as number;
+            const bValue = b[key as keyof ProcessedCoinData] as number;
             if (aValue < bValue) {
                 return -1 * dir;
             }
