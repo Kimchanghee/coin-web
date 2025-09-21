@@ -1,9 +1,10 @@
-// components/services/exchanges/upbit.ts
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-import { safeParseNumber } from './utils';
-
-// ExtendedPriceUpdate 타입을 사용 (types.ts에 정의됨)
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
+import type {
+  ExchangeService,
+  ExtendedPriceUpdate,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 const createUpbitService = (): ExchangeService => {
   const id = 'upbit_krw';
@@ -11,10 +12,8 @@ const createUpbitService = (): ExchangeService => {
   let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   let pingInterval: ReturnType<typeof setInterval> | undefined;
   
-  // 거래대금과 전일대비 데이터를 저장
   const extendedData: Map<string, ExtendedPriceUpdate> = new Map();
   
-  // 확장된 콜백 지원
   const connectExtended = (callback: ExtendedPriceUpdateCallback) => {
     const connectWebSocket = () => {
       try {
@@ -25,7 +24,6 @@ const createUpbitService = (): ExchangeService => {
         ws.onopen = () => {
           console.log(`[${id}] WebSocket connected successfully!`);
           
-          // Upbit 실시간 ticker 구독
           const subscribeMessage = [
             { ticket: "uniqueTicket" },
             { 
@@ -47,7 +45,6 @@ const createUpbitService = (): ExchangeService => {
           ws?.send(JSON.stringify(subscribeMessage));
           console.log(`[${id}] Subscription sent`);
           
-          // Ping 전송 (60초마다) - Upbit은 120초 타임아웃
           pingInterval = setInterval(() => {
             if (ws?.readyState === WebSocket.OPEN) {
               ws.send('PING');
@@ -70,20 +67,28 @@ const createUpbitService = (): ExchangeService => {
               data = JSON.parse(event.data);
             }
             
-            // ticker 데이터 처리
             if (data.type === 'ticker') {
-              const symbol = data.code.replace('KRW-', '');
+              const symbol = typeof data.code === 'string' ? data.code.replace('KRW-', '') : undefined;
               const price = safeParseNumber(data.trade_price);
-              const changeRate = safeParseNumber(data.signed_change_rate);
-              const change24h = changeRate !== undefined ? changeRate * 100 : undefined; // 변동률 (%)
-              const volume24h = safeParseNumber(data.acc_trade_price_24h); // 24시간 거래대금 (KRW)
-              const changePrice = safeParseNumber(data.signed_change_price); // 변동 금액
+              const volume24h = deriveQuoteVolume(
+                data.acc_trade_price_24h,
+                data.acc_trade_volume_24h,
+                price
+              );
+              const changePrice = safeParseNumber(data.signed_change_price);
 
-              if (price === undefined) {
+              if (!symbol || price === undefined || price <= 0) {
                 return;
               }
-              
-              // 확장 데이터 저장
+
+              const change24h = deriveChangePercent({
+                ratio: data.signed_change_rate,
+                percent: data.signed_change_rate,
+                priceChange: data.signed_change_price,
+                openPrice: data.prev_closing_price,
+                lastPrice: price,
+              });
+
               const priceKey = `${id}-${symbol}`;
               extendedData.set(priceKey, {
                 priceKey,
@@ -93,24 +98,20 @@ const createUpbitService = (): ExchangeService => {
                 ...(changePrice !== undefined ? { changePrice } : {}),
               });
 
-              // 확장 데이터로 콜백 호출
               callback({
-                priceKey: priceKey,
-                price: price,
+                priceKey,
+                price,
                 ...(change24h !== undefined ? { change24h } : {}),
                 ...(volume24h !== undefined ? { volume24h } : {}),
                 ...(changePrice !== undefined ? { changePrice } : {}),
               });
 
-              // 디버깅용 상세 로그
               if (symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') {
-                const volumeInBillion = volume24h !== undefined
-                  ? (volume24h / 100000000).toFixed(0)
-                  : '0';
+                const volumeInBillion = volume24h !== undefined ? (volume24h / 100000000).toFixed(0) : 'n/a';
                 console.log(`[${id}] Extended Data Sent:`, {
                   symbol,
                   price,
-                  change24h: change24h !== undefined ? `${change24h.toFixed(2)}%` : 'N/A',
+                  change24h: change24h !== undefined ? `${change24h.toFixed(2)}%` : 'n/a',
                   volume24h,
                   volumeFormatted: `₩${volumeInBillion}억`
                 });
@@ -122,13 +123,13 @@ const createUpbitService = (): ExchangeService => {
         };
 
         ws.onerror = (error) => {
+          console.error(`[${id}] WebSocket error:`,ws.onerror = (error) => {
           console.error(`[${id}] WebSocket error:`, error);
         };
 
         ws.onclose = (event) => {
           console.log(`[${id}] WebSocket disconnected. Code: ${event.code}, Reason: ${event.reason}`);
           
-          // Cleanup
           if (pingInterval) {
             clearInterval(pingInterval);
             pingInterval = undefined;
@@ -136,7 +137,6 @@ const createUpbitService = (): ExchangeService => {
           
           ws = null;
           
-          // 5초 후 재연결
           reconnectTimeout = setTimeout(() => {
             console.log(`[${id}] Attempting to reconnect...`);
             connectWebSocket();
@@ -149,13 +149,10 @@ const createUpbitService = (): ExchangeService => {
       }
     };
 
-    // 연결 시작
     connectWebSocket();
   };
   
-  // 기본 connect (하위 호환성)
   const connect = (callback: PriceUpdateCallback) => {
-    // ExtendedPriceUpdate를 PriceUpdate로 변환
     connectExtended((update) => {
       callback({
         priceKey: update.priceKey,
@@ -185,7 +182,6 @@ const createUpbitService = (): ExchangeService => {
     extendedData.clear();
   };
 
-  // 확장 데이터 가져오기 (필요시 사용)
   const getExtendedData = (symbol: string): ExtendedPriceUpdate | undefined => {
     return extendedData.get(`${id}-${symbol}`);
   };
@@ -193,9 +189,8 @@ const createUpbitService = (): ExchangeService => {
   return { 
     id, 
     connect,
-    connectExtended, // 확장 연결 메서드 추가
+    connectExtended,
     disconnect,
-    // 확장 기능 (선택적)
     getExtendedData
   };
 };
