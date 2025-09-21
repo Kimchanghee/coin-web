@@ -1,7 +1,9 @@
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-import { safeParseNumber } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 const createOKXSpotService = (): ExchangeService => {
   const id = 'okx_usdt_spot';
@@ -53,38 +55,49 @@ const createOKXSpotService = (): ExchangeService => {
             
             const data = JSON.parse(event.data);
             
-            if (data.arg && data.arg.channel === 'tickers' && data.data) {
-              data.data.forEach((ticker: any) => {
-                const symbol = ticker.instId.split('-')[0];
-                const price = safeParseNumber(ticker.last);
-                const open24h = safeParseNumber(ticker.open24h);
-                const volume24h = safeParseNumber(ticker.volCcy24h);
-
-                if (price === undefined) {
-                  return;
-                }
-
-                let change24h: number | undefined;
-                if (open24h !== undefined && open24h !== 0) {
-                  change24h = ((price - open24h) / open24h) * 100;
-                }
-
-                const update: ExtendedPriceUpdate = {
-                  priceKey: `${id}-${symbol}`,
-                  price,
-                  ...(change24h !== undefined ? { change24h } : {}),
-                  ...(volume24h !== undefined ? { volume24h } : {}),
-                };
-
-                callback(update);
-
-                if (Math.random() < 0.05) {
-                  const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
-                  const volumeText = volume24h !== undefined ? `$${(volume24h / 1000000).toFixed(2)}M` : 'N/A';
-                  console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
-                }
-              });
+            if (!data.arg || data.arg.channel !== 'tickers' || !Array.isArray(data.data)) {
+              return;
             }
+
+            data.data.forEach((ticker: any) => {
+              const instId: string | undefined = ticker?.instId;
+              if (!instId) {
+                return;
+              }
+
+              const symbol = instId.split('-')[0];
+              const lastPrice = safeParseNumber(ticker.last);
+              if (lastPrice === undefined || lastPrice <= 0) {
+                return;
+              }
+
+              const change24h = deriveChangePercent({
+                percent: ticker.sodUtc0ChangePercent ?? ticker.changePercent,
+                ratio: ticker.sodUtc0ChangePercent ?? ticker.changeRatio,
+                priceChange: ticker.sodUtc0Change ?? ticker.change24h,
+                openPrice: ticker.open24h ?? ticker.open,
+                lastPrice,
+              });
+
+              const volume24h = deriveQuoteVolume(
+                ticker.volCcy24h,
+                ticker.vol24h,
+                lastPrice
+              );
+
+              callback({
+                priceKey: `${id}-${symbol}`,
+                price: lastPrice,
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+              });
+
+              if (Math.random() < 0.05) {
+                const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+                const volumeLog = volume24h !== undefined ? (volume24h / 1_000_000).toFixed(2) : 'n/a';
+                console.log(`📊 [${id}] ${symbol}: $${lastPrice.toFixed(2)} (${changeLog}%) Vol: $${volumeLog}M`);
+              }
+            });
           } catch (error) {
             console.error(`❌ [${id}] Error parsing message:`, error);
           }
