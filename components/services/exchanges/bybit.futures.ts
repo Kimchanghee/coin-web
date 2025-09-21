@@ -1,7 +1,9 @@
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-import { safeParseNumber } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 const createBybitFuturesService = (): ExchangeService => {
   const id = 'bybit_usdt_futures';
@@ -47,34 +49,44 @@ const createBybitFuturesService = (): ExchangeService => {
               return;
             }
             
-            if (data.topic && data.topic.startsWith('tickers.')) {
-              if (data.data) {
-                const tickerData = data.data;
-                const symbol = tickerData.symbol.replace('USDT', '');
-                const price = safeParseNumber(tickerData.lastPrice);
-                const change24hRatio = safeParseNumber(tickerData.price24hPcnt);
-                const change24h = change24hRatio !== undefined ? change24hRatio * 100 : undefined;
-                const volume24h = safeParseNumber(tickerData.turnover24h);
+            if (!data.topic || !data.topic.startsWith('tickers.') || !data.data) {
+              return;
+            }
 
-                if (price === undefined) {
-                  return;
-                }
+            const tickerData = data.data;
+            const rawSymbol: string | undefined = tickerData?.symbol;
+            const price = safeParseNumber(tickerData?.lastPrice);
 
-                const update: ExtendedPriceUpdate = {
-                  priceKey: `${id}-${symbol}`,
-                  price,
-                  ...(change24h !== undefined ? { change24h } : {}),
-                  ...(volume24h !== undefined ? { volume24h } : {}),
-                };
+            if (!rawSymbol || price === undefined || price <= 0) {
+              return;
+            }
 
-                callback(update);
+            const symbol = rawSymbol.replace('USDT', '');
+            const change24h = deriveChangePercent({
+              ratio: tickerData?.price24hPcnt,
+              percent: tickerData?.price24hPcnt,
+              priceChange: tickerData?.change24h ?? tickerData?.lastPrice24h,
+              openPrice: tickerData?.prevPrice24h ?? tickerData?.prevPrice1h ?? tickerData?.prevPrice,
+              lastPrice: price,
+            });
 
-                if (Math.random() < 0.05) {
-                  const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
-                  const volumeText = volume24h !== undefined ? `$${(volume24h / 1000000).toFixed(2)}M` : 'N/A';
-                  console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
-                }
-              }
+            const volume24h = deriveQuoteVolume(
+              tickerData?.turnover24h,
+              tickerData?.volume24h,
+              price
+            );
+
+            callback({
+              priceKey: `${id}-${symbol}`,
+              price,
+              ...(change24h !== undefined ? { change24h } : {}),
+              ...(volume24h !== undefined ? { volume24h } : {}),
+            });
+
+            if (Math.random() < 0.05) {
+              const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+              const volumeLog = volume24h !== undefined ? (volume24h / 1_000_000).toFixed(2) : 'n/a';
+              console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeLog}%) Vol: $${volumeLog}M`);
             }
           } catch (error) {
             console.error(`❌ [${id}] Error parsing message:`, error);
