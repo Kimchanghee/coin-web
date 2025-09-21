@@ -796,11 +796,17 @@ const HomePage: React.FC = () => {
                     ? (priceDifference / comparisonPrice) * 100
                     : 0;
                 
-                // ✅ 전일대비는 항상 기준 거래소 기준으로 사용
-                let change24h = baseCoin.change24h ?? 0;
-                if (baseExtData.change24h !== undefined) {
-                    change24h = baseExtData.change24h;
-                    console.log(`📈 Using real change24h for ${baseCoin.symbol}: ${change24h}%`);
+                // ✅ 전일대비는 실시간 데이터 우선 (기준 거래소 → 비교 거래소 → 기본 값)
+                const liveChange =
+                    baseExtData.change24h !== undefined
+                        ? baseExtData.change24h
+                        : comparisonExtData.change24h;
+                const change24h =
+                    liveChange !== undefined
+                        ? liveChange
+                        : baseCoin.change24h ?? 0;
+                if (liveChange !== undefined) {
+                    console.log(`📈 Using live change24h for ${baseCoin.symbol}: ${liveChange}%`);
                 }
                 
                 // 거래대금 계산 - 실시간 데이터만 사용

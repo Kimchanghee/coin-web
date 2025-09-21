@@ -3,7 +3,12 @@ import type {
   ExtendedPriceUpdateCallback,
   PriceUpdateCallback,
 } from '../../../types';
-import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
+import {
+  deriveChangePercent,
+  deriveQuoteVolume,
+  normalizeSymbol,
+  safeParseNumber,
+} from './utils';
 
 const createGateioSpotService = (): ExchangeService => {
   const id = 'gateio_usdt_spot';
@@ -56,11 +61,11 @@ const createGateioSpotService = (): ExchangeService => {
 
             const ticker = data.result;
             const pair: string | undefined = ticker?.currency_pair;
-            if (!pair) {
+            const symbol = normalizeSymbol(pair);
+            if (!symbol) {
               return;
             }
 
-            const symbol = pair.split('_')[0];
             const price = safeParseNumber(ticker.last);
             if (price === undefined || price <= 0) {
               return;

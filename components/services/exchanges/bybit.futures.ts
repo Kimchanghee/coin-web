@@ -3,7 +3,12 @@ import type {
   ExtendedPriceUpdateCallback,
   PriceUpdateCallback,
 } from '../../../types';
-import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
+import {
+  deriveChangePercent,
+  deriveQuoteVolume,
+  normalizeSymbol,
+  safeParseNumber,
+} from './utils';
 
 const createBybitFuturesService = (): ExchangeService => {
   const id = 'bybit_usdt_futures';
@@ -55,13 +60,12 @@ const createBybitFuturesService = (): ExchangeService => {
 
             const tickerData = data.data;
             const rawSymbol: string | undefined = tickerData?.symbol;
+            const symbol = normalizeSymbol(rawSymbol);
             const price = safeParseNumber(tickerData?.lastPrice);
 
-            if (!rawSymbol || price === undefined || price <= 0) {
+            if (!symbol || price === undefined || price <= 0) {
               return;
             }
-
-            const symbol = rawSymbol.replace('USDT', '');
             const change24h = deriveChangePercent({
               ratio: tickerData?.price24hPcnt,
               percent: tickerData?.price24hPcnt,

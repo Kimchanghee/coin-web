@@ -5,7 +5,13 @@ import type {
   ExtendedPriceUpdateCallback,
   PriceUpdateCallback,
 } from '../../../types';
-import { buildProxyUrl, deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
+import {
+  buildProxyUrl,
+  deriveChangePercent,
+  deriveQuoteVolume,
+  normalizeSymbol,
+  safeParseNumber,
+} from './utils';
 
 const POLLING_INTERVAL_MS = 5000;
 
@@ -66,7 +72,7 @@ const createBithumbService = (): ExchangeService => {
           price
         );
 
-        const symbol = symbolKey.split('_')[0]?.toUpperCase();
+        const symbol = normalizeSymbol(symbolKey);
         if (!symbol) {
           return;
         }

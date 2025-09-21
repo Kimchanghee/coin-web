@@ -3,7 +3,12 @@ import type {
   ExtendedPriceUpdateCallback,
   PriceUpdateCallback,
 } from '../../../types';
-import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
+import {
+  deriveChangePercent,
+  deriveQuoteVolume,
+  normalizeSymbol,
+  safeParseNumber,
+} from './utils';
 
 const createOKXSpotService = (): ExchangeService => {
   const id = 'okx_usdt_spot';
@@ -61,11 +66,11 @@ const createOKXSpotService = (): ExchangeService => {
 
             data.data.forEach((ticker: any) => {
               const instId: string | undefined = ticker?.instId;
-              if (!instId) {
+              const symbol = normalizeSymbol(instId);
+              if (!symbol) {
                 return;
               }
 
-              const symbol = instId.split('-')[0];
               const lastPrice = safeParseNumber(ticker.last);
               if (lastPrice === undefined || lastPrice <= 0) {
                 return;

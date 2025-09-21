@@ -68,6 +68,53 @@ export const safeParseNumber = (value: unknown): number | undefined => {
   return parseNumber(value);
 };
 
+const SUFFIX_PATTERNS = [
+  /[_\-]?USDT$/i,
+  /[_\-]?USDC$/i,
+  /[_\-]?USD$/i,
+  /[_\-]?KRW$/i,
+  /[_\-]?PERP$/i,
+  /[_\-]?SPBL$/i,
+  /[_\-]?UMCBL$/i,
+  /[_\-]?CMCBL$/i,
+  /[_\-]?SWAP$/i,
+];
+
+const PREFIX_PATTERNS = [
+  /^KRW[_\-]/i,
+  /^USD[_\-]/i,
+  /^USDT[_\-]/i,
+  /^USDC[_\-]/i,
+  /^PERP[_\-]/i,
+  /^SPOT[_\-]/i,
+  /^FUTURES[_\-]/i,
+];
+
+export const normalizeSymbol = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  let normalized = trimmed.toUpperCase();
+
+  PREFIX_PATTERNS.forEach(pattern => {
+    normalized = normalized.replace(pattern, '');
+  });
+
+  SUFFIX_PATTERNS.forEach(pattern => {
+    normalized = normalized.replace(pattern, '');
+  });
+
+  normalized = normalized.replace(/[\s]/g, '');
+
+  return normalized || undefined;
+};
+
 export const safeMultiply = (
   left: unknown,
   right: unknown

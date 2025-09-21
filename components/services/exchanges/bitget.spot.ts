@@ -3,7 +3,12 @@ import type {
   ExtendedPriceUpdateCallback,
   PriceUpdateCallback,
 } from '../../../types';
-import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
+import {
+  deriveChangePercent,
+  deriveQuoteVolume,
+  normalizeSymbol,
+  safeParseNumber,
+} from './utils';
 
 const createBitgetSpotService = (): ExchangeService => {
   const id = 'bitget_usdt_spot';
@@ -59,11 +64,11 @@ const createBitgetSpotService = (): ExchangeService => {
 
             data.data.forEach((ticker: any) => {
               const instId: string | undefined = ticker?.instId;
-              if (!instId) {
+              const symbol = normalizeSymbol(instId);
+              if (!symbol) {
                 return;
               }
 
-              const symbol = instId.split('_')[0].replace('USDT', '');
               const price = safeParseNumber(ticker.last);
               if (price === undefined || price <= 0) {
                 return;

@@ -5,7 +5,12 @@ import type {
   ExtendedPriceUpdateCallback,
   PriceUpdateCallback,
 } from '../../../types';
-import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
+import {
+  deriveChangePercent,
+  deriveQuoteVolume,
+  normalizeSymbol,
+  safeParseNumber,
+} from './utils';
 
 const SUPPORTED_SYMBOLS = [
   'btcusdt', 'ethusdt', 'solusdt', 'xrpusdt', 'adausdt',
@@ -38,22 +43,27 @@ const createBinanceSpotService = (): ExchangeService => {
             const message = JSON.parse(event.data);
             const data = message?.data;
             const rawSymbol: string | undefined = data?.s;
-            if (!rawSymbol) {
+            const symbol = normalizeSymbol(rawSymbol);
+            if (!symbol) {
               return;
             }
 
-            const symbol = rawSymbol.replace('USDT', '');
             const price = safeParseNumber(data.c);
             if (price === undefined || price <= 0) {
               return;
             }
 
             const change24h = deriveChangePercent({
+              percent: data.P,
               priceChange: data.p,
               openPrice: data.o,
               lastPrice: price,
             });
-            const volume24h = deriveQuoteVolume(data.q, data.v, price);
+            const volume24h = deriveQuoteVolume(
+              data.q ?? data.Q ?? data.quoteVolume,
+              data.v ?? data.V ?? data.baseVolume,
+              price,
+            );
 
             callback({
               priceKey: `${id}-${symbol}`,

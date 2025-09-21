@@ -4,7 +4,12 @@ import type {
   ExtendedPriceUpdateCallback,
   PriceUpdateCallback,
 } from '../../../types';
-import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
+import {
+  deriveChangePercent,
+  deriveQuoteVolume,
+  normalizeSymbol,
+  safeParseNumber,
+} from './utils';
 
 const SYMBOLS = [
   'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT',
@@ -77,13 +82,13 @@ const createBybitSpotService = (): ExchangeService => {
               if (!payload) return;
 
               const rawSymbol = typeof payload.symbol === 'string' ? payload.symbol : undefined;
+              const symbol = normalizeSymbol(rawSymbol);
               const price = safeParseNumber(payload.lastPrice);
 
-              if (!rawSymbol || price === undefined || price <= 0) {
+              if (!symbol || price === undefined || price <= 0) {
                 return;
               }
 
-              const symbol = rawSymbol.replace('USDT', '');
               const change24h = deriveChangePercent({
                 ratio: payload.price24hPcnt,
                 percent: payload.price24hPcnt,

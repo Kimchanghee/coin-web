@@ -5,7 +5,12 @@ import type {
   ExtendedPriceUpdateCallback,
   PriceUpdateCallback,
 } from '../../../types';
-import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
+import {
+  deriveChangePercent,
+  deriveQuoteVolume,
+  normalizeSymbol,
+  safeParseNumber,
+} from './utils';
 
 const createUpbitService = (): ExchangeService => {
   const id = 'upbit_krw';
@@ -72,7 +77,7 @@ const createUpbitService = (): ExchangeService => {
             
             // ticker 데이터 처리
             if (data.type === 'ticker') {
-              const symbol = typeof data.code === 'string' ? data.code.replace('KRW-', '') : undefined;
+              const symbol = normalizeSymbol(data.code);
               const price = safeParseNumber(data.trade_price);
               const volume24h = deriveQuoteVolume(
                 data.acc_trade_price_24h,
