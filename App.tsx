@@ -6,11 +6,6 @@ import SubscriptionPage from './pages/SubscriptionPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
-import {
-  ExchangeArbitragePage,
-  ListingAutoPage,
-  TradingviewAutoPage,
-} from './pages/FeaturePlaceholderPage';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -26,9 +21,6 @@ const App: React.FC = () => {
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/" element={<HomePage />} />
                 <Route path="/announcements" element={<AnnouncementsPage />} />
-                <Route path="/arbitrage" element={<ExchangeArbitragePage />} />
-                <Route path="/tradingview-auto" element={<TradingviewAutoPage />} />
-                <Route path="/listing-auto" element={<ListingAutoPage />} />
                 <Route path="/admin" element={
                   <ProtectedRoute>
                     <AdminPage />

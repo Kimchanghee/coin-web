@@ -15,11 +15,17 @@ export const TRACKED_COINS: CoinId[] = ['BTC', 'ETH', 'SOL'];
 
 export const COIN_DISPLAY_LIMIT = 30;
 
-export const EXCHANGE_NAV_ITEMS = [
-  { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-  { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/arbitrage' },
-  { key: 'tradingview_auto', icon: 'fa-chart-line', path: '/tradingview-auto' },
-  { key: 'listing_auto', icon: 'fa-robot', path: '/listing-auto' },
+export type ExchangeNavItem = {
+  key: string;
+  icon: string;
+  path?: string;
+};
+
+export const EXCHANGE_NAV_ITEMS: ExchangeNavItem[] = [
+  { key: 'exchange_announcements', icon: 'fa-bullhorn' },
+  { key: 'exchange_arbitrage', icon: 'fa-scale-balanced' },
+  { key: 'tradingview_auto', icon: 'fa-chart-line' },
+  { key: 'listing_auto', icon: 'fa-robot' },
 ];
 
 // 모든 거래소를 하나로 합친 리스트 (기준거래소용)
