@@ -1,7 +1,9 @@
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-import { safeParseNumber, safeMultiply } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 const createBitgetSpotService = (): ExchangeService => {
   const id = 'bitget_usdt_spot';
@@ -51,36 +53,49 @@ const createBitgetSpotService = (): ExchangeService => {
             
             const data = JSON.parse(event.data);
             
-            if (data.arg && data.arg.channel === 'ticker' && data.data) {
-              data.data.forEach((ticker: any) => {
-                const symbol = ticker.instId.split('_')[0].replace('USDT', '');
-                const price = safeParseNumber(ticker.last);
-                const changeRaw = safeParseNumber(ticker.changeUtc24h ?? ticker.change24h ?? ticker.chgUTC);
-                const change24h = changeRaw !== undefined ? changeRaw * 100 : undefined;
-                const quoteVolume = safeParseNumber(ticker.usdtVolume ?? ticker.quoteVolume);
-                const baseVolume = safeParseNumber(ticker.baseVolume);
-                const volume24h = quoteVolume ?? (baseVolume !== undefined && price !== undefined ? safeMultiply(baseVolume, price) : undefined);
-
-                if (price === undefined) {
-                  return;
-                }
-
-                const update: ExtendedPriceUpdate = {
-                  priceKey: `${id}-${symbol}`,
-                  price,
-                  ...(change24h !== undefined ? { change24h } : {}),
-                  ...(volume24h !== undefined ? { volume24h } : {}),
-                };
-
-                callback(update);
-
-                if (Math.random() < 0.05) {
-                  const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
-                  const volumeText = volume24h !== undefined ? `$${(volume24h / 1000000).toFixed(2)}M` : 'N/A';
-                  console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
-                }
-              });
+            if (!data.arg || data.arg.channel !== 'ticker' || !data.data) {
+              return;
             }
+
+            data.data.forEach((ticker: any) => {
+              const instId: string | undefined = ticker?.instId;
+              if (!instId) {
+                return;
+              }
+
+              const symbol = instId.split('_')[0].replace('USDT', '');
+              const price = safeParseNumber(ticker.last);
+              if (price === undefined || price <= 0) {
+                return;
+              }
+
+              const change24h = deriveChangePercent({
+                percent: ticker.changeUtc24h ?? ticker.changeRatio ?? ticker.changePercentage,
+                ratio: ticker.changeRatio ?? ticker.changeUtc24h,
+                priceChange: ticker.change24h ?? ticker.change,
+                openPrice: ticker.openUtc24h ?? ticker.openUtc ?? ticker.open24h ?? ticker.open,
+                lastPrice: price,
+              });
+
+              const volume24h = deriveQuoteVolume(
+                ticker.usdtVolume ?? ticker.quoteVolume,
+                ticker.baseVolume ?? ticker.volume,
+                price
+              );
+
+              callback({
+                priceKey: `${id}-${symbol}`,
+                price,
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+              });
+
+              if (Math.random() < 0.05) {
+                const changeLog = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
+                const volumeLog = volume24h !== undefined ? (volume24h / 1_000_000).toFixed(2) : 'n/a';
+                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeLog}%) Vol: $${volumeLog}M`);
+              }
+            });
           } catch (error) {
             console.error(`❌ [${id}] Error parsing message:`, error);
           }
