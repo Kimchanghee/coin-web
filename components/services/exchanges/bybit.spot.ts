@@ -1,8 +1,9 @@
-// components/services/exchanges/bybit.spot.ts
-import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
-import { safeParseNumber, safeMultiply } from './utils';
-
-type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
+import type {
+  ExchangeService,
+  ExtendedPriceUpdateCallback,
+  PriceUpdateCallback,
+} from '../../../types';
+import { deriveChangePercent, deriveQuoteVolume, safeParseNumber } from './utils';
 
 const SYMBOLS = [
   'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT',
@@ -74,41 +75,37 @@ const createBybitSpotService = (): ExchangeService => {
               const payload = Array.isArray(message.data) ? message.data[0] : message.data;
               if (!payload) return;
 
-              const symbol = typeof payload.symbol === 'string'
-                ? payload.symbol.replace('USDT', '')
-                : undefined;
+              const rawSymbol = typeof payload.symbol === 'string' ? payload.symbol : undefined;
               const price = safeParseNumber(payload.lastPrice);
 
-              if (!symbol || price === undefined) {
+              if (!rawSymbol || price === undefined || price <= 0) {
                 return;
               }
 
-              const change24hRatio = safeParseNumber(payload.price24hPcnt);
-              const change24h = change24hRatio !== undefined ? change24hRatio * 100 : undefined;
-              const turnover24h = safeParseNumber(payload.turnover24h);
-              const volume24hBase = safeParseNumber(payload.volume24h);
+              const symbol = rawSymbol.replace('USDT', '');
+              const change24h = deriveChangePercent({
+                ratio: payload.price24hPcnt,
+                percent: payload.price24hPcnt,
+                priceChange: payload.change24h ?? payload.price24hPcntValue,
+                openPrice: payload.prevPrice24h ?? payload.prevPrice1h ?? payload.prevPrice,
+                lastPrice: price,
+              });
 
-              let volume24h: number | undefined = undefined;
-              if (turnover24h !== undefined) {
-                volume24h = turnover24h;
-              } else if (volume24hBase !== undefined) {
-                const converted = safeMultiply(volume24hBase, price);
-                if (converted !== undefined) {
-                  volume24h = converted;
-                }
-              }
+              const volume24h = deriveQuoteVolume(
+                payload.turnover24h,
+                payload.volume24h,
+                price
+              );
 
-              const update: ExtendedPriceUpdate = {
+              callback({
                 priceKey: `${id}-${symbol}`,
                 price,
                 ...(change24h !== undefined ? { change24h } : {}),
                 ...(volume24h !== undefined ? { volume24h } : {}),
-              };
-
-              callback(update);
+              });
 
               if ((symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') && Math.random() < 0.05) {
-                const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
+                const changeText = change24h !== undefined ? change24h.toFixed(2) : 'n/a';
                 const volumeText = volume24h !== undefined ? volume24h.toFixed(0) : 'N/A';
                 console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
               }
