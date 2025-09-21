@@ -3,15 +3,13 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext.js';
 import type { Announcement, ExchangeId, User } from '../types.js';
-import { EXCHANGES } from '../constants.js';
+import { EXCHANGES, EXCHANGE_NAV_ITEMS } from '../constants';
 import { allAnnouncementServices } from '../components/services/announcements/index.js';
 import LanguageSwitcher from '../components/LanguageSwitcher.js';
 import Clock from '../components/Clock.js';
 import ThemeToggle from '../components/ThemeToggle.js';
 
-type MenuItemKey = 'exchange_announcements' | 'exchange_arbitrage' | 'tradingview_auto' | 'listing_auto';
-
-// Header Component (copied from HomePage)
+// Header Component
 const Header: React.FC<{ onMenuClick: () => void; user: User | null }> = ({ onMenuClick, user }) => {
     const { t } = useTranslation();
     return (
@@ -59,7 +57,7 @@ const Header: React.FC<{ onMenuClick: () => void; user: User | null }> = ({ onMe
     );
 };
 
-// Sidebar Component (copied from HomePage)
+// Sidebar Component
 const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
@@ -71,12 +69,8 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
         navigate('/');
     }
 
-    const menuItems: { key: MenuItemKey; icon: string; path?: string }[] = [
-        { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
-        { key: 'tradingview_auto', icon: 'fa-robot' },
-        { key: 'listing_auto', icon: 'fa-rocket' },
-    ];
+    const menuItems = EXCHANGE_NAV_ITEMS;
+
     return (
         <>
             <aside className={`fixed z-40 inset-y-0 left-0 bg-gray-50 dark:bg-[#111111] w-64 p-4 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:w-56 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col`}>
@@ -144,16 +138,12 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
     );
 };
 
-// Bottom Navigation Component (copied and adapted from HomePage)
+// Bottom Navigation Component
 const BottomNav: React.FC = () => {
     const { t } = useTranslation();
     const location = useLocation();
-    const navItems: { key: MenuItemKey; icon: string; path?: string }[] = [
-        { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
-        { key: 'tradingview_auto', icon: 'fa-robot' },
-        { key: 'listing_auto', icon: 'fa-rocket' },
-    ];
+    const navItems = EXCHANGE_NAV_ITEMS;
+    
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#161616] border-t border-gray-200 dark:border-gray-800 flex justify-around p-2 lg:hidden z-20">
             {navItems.map(item => {
@@ -190,7 +180,6 @@ const BottomNav: React.FC = () => {
         </nav>
     );
 };
-
 
 const AnnouncementsPage: React.FC = () => {
     const { t } = useTranslation();
