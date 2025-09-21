@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP } from '../constants';
-import type { CoinData, User } from '../types';
+import type { CoinData, User, ExtendedPriceUpdate } from '../types';
 import { allServices } from '../components/services/exchanges';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -605,26 +605,45 @@ const HomePage: React.FC = () => {
 
 useEffect(() => {
     console.log('🔧 Starting exchange services...');
-    
+
     // Collects all incoming updates into a buffer.
-    const handleUpdate = (update: any) => {
+    const handleUpdate = (update: ExtendedPriceUpdate) => {
         console.log('📊 Price update received:', update);
-        updatesBuffer.current.prices[update.priceKey] = update.price;
-        
-        if (update.change24h !== undefined || update.volume24h !== undefined) {
+
+        if (typeof update.price === 'number' && !Number.isNaN(update.price)) {
+            updatesBuffer.current.prices[update.priceKey] = update.price;
+        }
+
+        const hasExtendedFields =
+            update.change24h !== undefined ||
+            update.volume24h !== undefined ||
+            update.changePrice !== undefined;
+
+        if (hasExtendedFields) {
             console.log('📈 Extended data received:', {
                 priceKey: update.priceKey,
                 change24h: update.change24h,
                 volume24h: update.volume24h,
                 changePrice: update.changePrice
             });
-            updatesBuffer.current.extended[update.priceKey] = {
-                change24h: update.change24h,
-                volume24h: update.volume24h,
-                ...(update.changePrice !== undefined && { changePrice: update.changePrice })
-            };
+
+            const nextExtended: { change24h?: number; volume24h?: number; changePrice?: number } = {};
+
+            if (update.change24h !== undefined && !Number.isNaN(update.change24h)) {
+                nextExtended.change24h = update.change24h;
+            }
+            if (update.volume24h !== undefined && !Number.isNaN(update.volume24h)) {
+                nextExtended.volume24h = update.volume24h;
+            }
+            if (update.changePrice !== undefined && !Number.isNaN(update.changePrice)) {
+                nextExtended.changePrice = update.changePrice;
+            }
+
+            if (Object.keys(nextExtended).length > 0) {
+                updatesBuffer.current.extended[update.priceKey] = nextExtended;
+            }
         }
-    }; // Fixed: Added missing closing brace
+    };
 
     // 각 서비스별로 확장 데이터 지원 여부 확인하고 연결
     allServices.forEach(service => {
@@ -647,8 +666,18 @@ useEffect(() => {
         
         if (priceUpdates > 0 || extendedUpdates > 0) {
             console.log(`🔄 Applying ${priceUpdates} price updates, ${extendedUpdates} extended updates`);
-            setAllPrices(prev => ({ ...prev, ...updatesBuffer.current.prices }));
-            setAllExtendedData(prev => ({ ...prev, ...updatesBuffer.current.extended }));
+            const bufferedPrices = updatesBuffer.current.prices;
+            const bufferedExtended = updatesBuffer.current.extended;
+
+            setAllPrices(prev => ({ ...prev, ...bufferedPrices }));
+            setAllExtendedData(prev => {
+                const next = { ...prev };
+                Object.entries(bufferedExtended).forEach(([key, data]) => {
+                    next[key] = { ...next[key], ...data };
+                });
+                return next;
+            });
+
             updatesBuffer.current = { prices: {}, extended: {} };
         }
     }, 1000);

@@ -1,6 +1,7 @@
 // components/services/exchanges/binance.spot.ts - 확장 데이터 추가
 
 import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import { safeParseNumber, safeMultiply } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -42,10 +43,21 @@ const createBinanceSpotService = (): ExchangeService => {
             if (message.stream && message.data) {
               const data = message.data;
               const symbol = data.s.replace('USDT', '');
-              const price = parseFloat(data.c); // Current price
-              const change24h = parseFloat(data.P); // 24hr change percentage
-              const volume24h = parseFloat(data.q) || parseFloat(data.v) * price; // Quote volume or calculate from base volume
-              
+              const price = safeParseNumber(data.c);
+              const change24h = safeParseNumber(data.P);
+              const quoteVolume = safeParseNumber(data.q);
+              const baseVolume = safeParseNumber(data.v);
+              const volume24h =
+                quoteVolume !== undefined
+                  ? quoteVolume
+                  : baseVolume !== undefined && price !== undefined
+                  ? safeMultiply(baseVolume, price)
+                  : undefined;
+
+              if (price === undefined) {
+                return;
+              }
+
               // 가격 히스토리 추적 (간단한 변동률 계산용)
               if (!priceHistory[symbol]) {
                 priceHistory[symbol] = [];
@@ -55,16 +67,20 @@ const createBinanceSpotService = (): ExchangeService => {
                 priceHistory[symbol].shift(); // 최대 100개 유지
               }
 
-              callback({
+              const update: ExtendedPriceUpdate = {
                 priceKey: `${id}-${symbol}`,
-                price: price,
-                change24h: change24h,
-                volume24h: volume24h
-              });
-              
+                price,
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+              };
+
+              callback(update);
+
               // 디버깅용 로그 (주요 코인만)
               if ((symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') && Math.random() < 0.05) {
-                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${change24h.toFixed(2)}%) Vol: ${volume24h.toFixed(0)}`);
+                const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
+                const volumeText = volume24h !== undefined ? volume24h.toFixed(0) : 'N/A';
+                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
               }
             }
           } catch (error) {

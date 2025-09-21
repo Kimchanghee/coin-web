@@ -1,5 +1,6 @@
 // components/services/exchanges/upbit.ts
 import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import { safeParseNumber } from './utils';
 
 // ExtendedPriceUpdate 타입을 사용 (types.ts에 정의됨)
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
@@ -19,7 +20,7 @@ const createUpbitService = (): ExchangeService => {
       try {
         console.log(`[${id}] Connecting to Upbit WebSocket...`);
         ws = new WebSocket('wss://api.upbit.com/websocket/v1');
-        ws.binaryType = 'blob';
+        ws.binaryType = 'arraybuffer';
         
         ws.onopen = () => {
           console.log(`[${id}] WebSocket connected successfully!`);
@@ -58,9 +59,11 @@ const createUpbitService = (): ExchangeService => {
         ws.onmessage = async (event) => {
           try {
             let data;
-            
-            // Upbit은 Blob 형태로 데이터를 보냄
-            if (event.data instanceof Blob) {
+
+            if (event.data instanceof ArrayBuffer) {
+              const text = new TextDecoder('utf-8').decode(event.data);
+              data = JSON.parse(text);
+            } else if (event.data instanceof Blob) {
               const text = await event.data.text();
               data = JSON.parse(text);
             } else {
@@ -70,37 +73,44 @@ const createUpbitService = (): ExchangeService => {
             // ticker 데이터 처리
             if (data.type === 'ticker') {
               const symbol = data.code.replace('KRW-', '');
-              const price = data.trade_price;
-              const change24h = data.signed_change_rate * 100; // 변동률 (%)
-              const volume24h = data.acc_trade_price_24h; // 24시간 거래대금 (KRW)
-              const changePrice = data.signed_change_price; // 변동 금액
+              const price = safeParseNumber(data.trade_price);
+              const changeRate = safeParseNumber(data.signed_change_rate);
+              const change24h = changeRate !== undefined ? changeRate * 100 : undefined; // 변동률 (%)
+              const volume24h = safeParseNumber(data.acc_trade_price_24h); // 24시간 거래대금 (KRW)
+              const changePrice = safeParseNumber(data.signed_change_price); // 변동 금액
+
+              if (price === undefined) {
+                return;
+              }
               
               // 확장 데이터 저장
               const priceKey = `${id}-${symbol}`;
               extendedData.set(priceKey, {
                 priceKey,
                 price,
-                change24h,
-                volume24h,
-                changePrice
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+                ...(changePrice !== undefined ? { changePrice } : {}),
               });
-              
+
               // 확장 데이터로 콜백 호출
               callback({
                 priceKey: priceKey,
                 price: price,
-                change24h: change24h,
-                volume24h: volume24h,
-                changePrice: changePrice
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+                ...(changePrice !== undefined ? { changePrice } : {}),
               });
-              
+
               // 디버깅용 상세 로그
               if (symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') {
-                const volumeInBillion = (volume24h / 100000000).toFixed(0);
+                const volumeInBillion = volume24h !== undefined
+                  ? (volume24h / 100000000).toFixed(0)
+                  : '0';
                 console.log(`[${id}] Extended Data Sent:`, {
                   symbol,
                   price,
-                  change24h: `${change24h.toFixed(2)}%`,
+                  change24h: change24h !== undefined ? `${change24h.toFixed(2)}%` : 'N/A',
                   volume24h,
                   volumeFormatted: `₩${volumeInBillion}억`
                 });
