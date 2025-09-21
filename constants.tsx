@@ -11,6 +11,25 @@ export const EXCHANGES: Exchange[] = [
   { id: 'gateio', name: 'Gate.io', color: 'border-t-cyan-500', icon: <i className="fa-solid fa-door-open text-cyan-500"></i> },
 ];
 
+export type ExchangeNavKey =
+  | 'exchange_announcements'
+  | 'exchange_arbitrage'
+  | 'tradingview_auto'
+  | 'listing_auto';
+
+export interface ExchangeNavItem {
+  key: ExchangeNavKey;
+  icon: string;
+  path?: string;
+}
+
+export const EXCHANGE_NAV_ITEMS: readonly ExchangeNavItem[] = [
+  { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
+  { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
+  { key: 'tradingview_auto', icon: 'fa-robot' },
+  { key: 'listing_auto', icon: 'fa-rocket' },
+];
+
 export const TRACKED_COINS: CoinId[] = ['BTC', 'ETH', 'SOL'];
 
 export const COIN_DISPLAY_LIMIT = 30;

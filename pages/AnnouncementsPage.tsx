@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext.js';
 import type { Announcement, ExchangeId, User } from '../types.js';
-import { EXCHANGES } from '../constants.js';
+import { EXCHANGES, EXCHANGE_NAV_ITEMS } from '../constants';
 import { allAnnouncementServices } from '../components/services/announcements/index.js';
 import LanguageSwitcher from '../components/LanguageSwitcher.js';
 import Clock from '../components/Clock.js';
@@ -56,15 +56,6 @@ const Header: React.FC<{ onMenuClick: () => void; user: User | null }> = ({ onMe
         </header>
     );
 };
-
-const EXCHANGE_NAV_ITEMS = [
-    { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-    { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
-    { key: 'tradingview_auto', icon: 'fa-robot' },
-    { key: 'listing_auto', icon: 'fa-rocket' },
-] as const;
-
-type NavigationKey = (typeof EXCHANGE_NAV_ITEMS)[number]['key'];
 
 // Sidebar Component (copied from HomePage)
 const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
