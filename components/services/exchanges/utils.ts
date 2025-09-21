@@ -36,8 +36,32 @@ const parseNumber = (value: unknown): number | undefined => {
     return undefined;
   }
 
-  const num = typeof value === 'number' ? value : parseFloat(String(value));
-  return Number.isFinite(num) ? num : undefined;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+
+    const normalized = trimmed
+      .replace(/[,\s]+/g, '')
+      .replace(/[%％]/g, '')
+      .replace(/[₩$€£¥₫]/g, '')
+      .replace(/_/g, '');
+
+    if (!normalized || normalized === '-' || normalized === '+') {
+      return undefined;
+    }
+
+    const num = Number(normalized);
+    return Number.isFinite(num) ? num : undefined;
+  }
+
+  const coerced = Number(value);
+  return Number.isFinite(coerced) ? coerced : undefined;
 };
 
 export const safeParseNumber = (value: unknown): number | undefined => {

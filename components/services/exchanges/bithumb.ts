@@ -36,6 +36,10 @@ const createBithumbService = (): ExchangeService => {
           return;
         }
 
+        if (typeof symbolKey !== 'string' || !symbolKey.toLowerCase().endsWith('_krw')) {
+          return;
+        }
+
         const price = safeParseNumber(priceData.closing_price);
         if (price === undefined || price <= 0) {
           return;
@@ -60,7 +64,10 @@ const createBithumbService = (): ExchangeService => {
           price
         );
 
-        const symbol = symbolKey.toUpperCase();
+        const symbol = symbolKey.split('_')[0]?.toUpperCase();
+        if (!symbol) {
+          return;
+        }
 
         callback({
           priceKey: `${id}-${symbol}`,
