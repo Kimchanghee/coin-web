@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP } from '../constants';
+import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP, EXCHANGE_NAV_ITEMS } from '../constants';
 import type { CoinData, User, ExtendedPriceUpdate } from '../types';
 import { allServices } from '../components/services/exchanges';
 import { useAuth } from '../context/AuthContext';
@@ -11,10 +11,8 @@ import ThemeToggle from '../components/ThemeToggle';
 
 type ExchangeOption = { id: string; name: string };
 type CurrencyCode = 'KRW' | 'USD' | 'JPY' | 'CNY' | 'THB' | 'VND';
-
 type SortKey = 'name' | 'basePrice' | 'comparisonPrice' | 'priceDifference' | 'change24h' | 'baseVolume' | 'comparisonVolume';
 type SortDirection = 'asc' | 'desc';
-type MenuItemKey = 'exchange_announcements' | 'exchange_arbitrage' | 'tradingview_auto' | 'listing_auto';
 
 // Currency conversion utility
 const convertCurrency = (amount: number, fromCurrency: string, toCurrency: CurrencyCode, usdKrw: number): number => {
@@ -51,7 +49,7 @@ const formatCurrency = (amount: number, currency: CurrencyCode): string => {
   }
 };
 
-// Custom Select Component (Fixed with outside click)
+// Custom Select Component
 const CustomSelect: React.FC<{
     options: ExchangeOption[];
     value: ExchangeOption;
@@ -60,7 +58,6 @@ const CustomSelect: React.FC<{
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-    // 드롭다운 바깥 클릭 시 닫기
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -171,12 +168,8 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
         navigate('/');
     }
 
-    const menuItems: { key: MenuItemKey; icon: string; path?: string }[] = [
-        { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
-        { key: 'tradingview_auto', icon: 'fa-robot' },
-        { key: 'listing_auto', icon: 'fa-rocket' },
-    ];
+    const menuItems = EXCHANGE_NAV_ITEMS;
+
     return (
         <>
             <aside className={`fixed z-40 inset-y-0 left-0 bg-gray-50 dark:bg-[#111111] w-64 p-4 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:w-56 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col`}>
@@ -248,12 +241,8 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
 const BottomNav: React.FC = () => {
     const { t } = useTranslation();
     const location = useLocation();
-    const navItems: { key: MenuItemKey; icon: string; path?: string }[] = [
-        { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-        { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/' },
-        { key: 'tradingview_auto', icon: 'fa-robot' },
-        { key: 'listing_auto', icon: 'fa-rocket' },
-    ];
+    const navItems = EXCHANGE_NAV_ITEMS;
+    
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#161616] border-t border-gray-200 dark:border-gray-800 flex justify-around p-2 lg:hidden z-20">
             {navItems.map(item => {
@@ -290,7 +279,6 @@ const BottomNav: React.FC = () => {
         </nav>
     );
 };
-
 // Enhanced CoinData type for processed data
 interface ProcessedCoinData extends CoinData {
     basePrice: number;
@@ -366,43 +354,33 @@ const CryptoPriceComparisonTable: React.FC<{
                 <table className="w-full text-sm text-left">
                     <thead className="bg-gray-50 dark:bg-gray-900/50 text-xs text-gray-500 dark:text-gray-400">
                         <tr>
-                            {/* 코인 정보 */}
                             <th scope="col" className="px-1 sm:px-4 py-3 text-left sticky left-0 bg-gray-50 dark:bg-gray-900/50 z-10" onClick={() => onSort('name')}>
                                 <div className="flex items-center cursor-pointer whitespace-nowrap">
                                     {t('table.name')}
                                     {getSortIcon('name')}
                                 </div>
                             </th>
-                            
-                            {/* 가격 섹션 */}
                             <th scope="col" className="px-1 sm:px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
                                 <div className="text-gray-600 dark:text-gray-300 font-semibold">{t('table.current_price')}</div>
                             </th>
-                            
-                            {/* 가격 차이 */}
                             <th scope="col" className="px-1 sm:px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('priceDifference')}>
                                 <div className="flex items-center justify-end cursor-pointer whitespace-nowrap">
                                     {t('table.price_difference')}
                                     {getSortIcon('priceDifference')}
                                 </div>
                             </th>
-                            
-                            {/* 전일대비 */}
                             <th scope="col" className="px-1 sm:px-4 py-3 text-right border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('change24h')}>
                                 <div className="flex items-center justify-end cursor-pointer whitespace-nowrap">
                                     {t('table.daily_change')}
                                     {getSortIcon('change24h')}
                                 </div>
                             </th>
-                            
-                            {/* 거래대금 섹션 */}
                             <th scope="col" className="px-1 sm:px-3 py-3 text-center border-l border-gray-200 dark:border-gray-700" colSpan={2}>
                                 <div className="text-gray-600 dark:text-gray-300 font-semibold">{t('table.trading_volume_24h')}</div>
                             </th>
                         </tr>
                         <tr className="border-t border-gray-200 dark:border-gray-700">
                             <th className="sticky left-0 bg-gray-50 dark:bg-gray-900/50"></th>
-                            {/* 가격 서브헤더 */}
                             <th className="px-1 sm:px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('basePrice')}>
                                 <div className="flex items-center justify-end cursor-pointer">
                                     <span className="truncate max-w-[80px]">{baseExchangeName.split(' ')[0]}</span>
@@ -417,7 +395,6 @@ const CryptoPriceComparisonTable: React.FC<{
                             </th>
                             <th className="border-l border-gray-200 dark:border-gray-700"></th>
                             <th className="border-l border-gray-200 dark:border-gray-700"></th>
-                            {/* 거래대금 서브헤더 */}
                             <th className="px-1 sm:px-3 py-2 text-right text-xs border-l border-gray-200 dark:border-gray-700" onClick={() => onSort('baseVolume')}>
                                 <div className="flex items-center justify-end cursor-pointer">
                                     <span className="truncate max-w-[80px]">{baseExchangeName.split(' ')[0]}</span>
@@ -435,7 +412,6 @@ const CryptoPriceComparisonTable: React.FC<{
                     <tbody>
                         {data.map(coin => (
                             <tr key={coin.id} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100/50 dark:hover:bg-gray-800/50">
-                                {/* 코인 정보 */}
                                 <td className="px-1 sm:px-4 py-3 font-medium text-black dark:text-white sticky left-0 bg-white dark:bg-[#1a1a1a]">
                                     <div className="flex items-center gap-2 sm:gap-3">
                                         <span className="text-lg">{coin.logo}</span>
@@ -445,18 +421,12 @@ const CryptoPriceComparisonTable: React.FC<{
                                         </div>
                                     </div>
                                 </td>
-                                
-                                {/* 기준 가격 */}
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
                                     <p className="font-semibold text-xs sm:text-base">{formatCurrency(coin.basePrice, currency)}</p>
                                 </td>
-                                
-                                {/* 비교 가격 */}
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200">
                                     <p className="font-semibold text-xs sm:text-base">{formatCurrency(coin.comparisonPrice, currency)}</p>
                                 </td>
-                                
-                                {/* 가격 차이 */}
                                 <td className={`px-1 sm:px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.priceDifferencePercentage)}`}>
                                     <div className="flex flex-col items-end">
                                         <span className="text-xs sm:text-base">{formatPercentage(coin.priceDifferencePercentage)}</span>
@@ -465,19 +435,13 @@ const CryptoPriceComparisonTable: React.FC<{
                                         </span>
                                     </div>
                                 </td>
-                                
-                                {/* 전일대비 */}
                                 <td className={`px-1 sm:px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.change24h)}`}>
                                     <span className="text-xs sm:text-base">{formatPercentage(coin.change24h)}</span>
                                 </td>
-                                
-                                {/* 기준 거래대금 */}
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
                                     <p className="font-medium text-xs sm:text-sm">{coin.baseVolume}</p>
                                     <p className="text-[10px] text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
                                 </td>
-                                
-                                {/* 비교 거래대금 */}
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200">
                                     <p className="font-medium text-xs sm:text-sm">{coin.comparisonVolume}</p>
                                     <p className="text-[10px] text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
@@ -487,8 +451,6 @@ const CryptoPriceComparisonTable: React.FC<{
                     </tbody>
                 </table>
             </div>
-            
-            {/* 리스트된 코인 수 표시 */}
             <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700">
                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                     총 {data.length}개 코인 표시 중 • {CURRENCY_RATES[currency]?.name} 기준
@@ -510,7 +472,6 @@ const ReferralBanner: React.FC = () => {
             className="block w-full mb-8 no-underline"
         >
             <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-black via-slate-900 to-black p-3 md:p-6 lg:p-8 border border-cyan-500/30 shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-1">
-                {/* Animated background grid */}
                 <div className="absolute inset-0 opacity-20 pointer-events-none">
                     <div 
                         className="absolute inset-0 bg-[size:40px_40px] animate-slide"
@@ -521,22 +482,18 @@ const ReferralBanner: React.FC = () => {
                     />
                 </div>
                 
-                {/* Sparkles */}
                 <span className="absolute top-4 left-4 text-yellow-400 text-lg md:text-xl animate-pulse">✦</span>
                 <span className="absolute top-8 right-8 text-yellow-400 text-lg md:text-xl animate-pulse" style={{animationDelay: '0.5s'}}>✦</span>
                 <span className="absolute bottom-4 left-1/3 text-yellow-400 text-lg md:text-xl animate-pulse" style={{animationDelay: '1s'}}>✦</span>
                 <span className="absolute bottom-8 right-4 text-yellow-400 text-lg md:text-xl animate-pulse" style={{animationDelay: '1.5s'}}>✦</span>
                 
-                {/* Content */}
                 <div className="relative z-10 flex flex-row items-center justify-between gap-2 md:gap-6 lg:gap-8">
-                    {/* Logo */}
                     <div className="flex-shrink-0">
                         <div className="w-14 h-14 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/50 transform hover:rotate-3 transition-transform duration-300">
                             <span className="text-white font-black text-sm md:text-lg lg:text-xl">GATE.IO</span>
                         </div>
                     </div>
                     
-                    {/* Text Section */}
                     <div className="flex-1 text-center md:text-left min-w-0">
                         <h3 className="text-base md:text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-400 to-white animate-shimmer bg-[size:200%_auto] truncate">
                             <span className="md:hidden">{t('banner.mobile_main_title')}</span>
@@ -547,7 +504,6 @@ const ReferralBanner: React.FC = () => {
                         </p>
                     </div>
                     
-                    {/* Discount Badge */}
                     <div className="flex-shrink-0 flex flex-col items-center">
                         <div className="relative">
                             <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-black text-[9px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-full whitespace-nowrap z-10">
@@ -562,7 +518,6 @@ const ReferralBanner: React.FC = () => {
                         </div>
                     </div>
                     
-                    {/* CTA Button */}
                     <div className="flex-shrink-0 flex flex-col items-center gap-1">
                         <button className="bg-gradient-to-r from-green-400 to-cyan-400 text-black font-black text-xs md:text-base px-4 py-2 md:px-8 md:py-3 rounded-md md:rounded-lg shadow-lg hover:shadow-green-400/50 transition-all duration-300 hover:scale-105 uppercase tracking-wider whitespace-nowrap">
                             <span className="md:hidden">{t('banner.cta_mobile')}</span>
@@ -599,7 +554,6 @@ const ReferralBanner: React.FC = () => {
     );
 };
 
-
 // Main Page Component
 const HomePage: React.FC = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -610,13 +564,11 @@ const HomePage: React.FC = () => {
     const { t, i18n } = useTranslation();
     const [usdKrw, setUsdKrw] = useState(1385);
 
-    // Buffer for incoming data to throttle UI updates
     const updatesBuffer = useRef<{
         prices: Record<string, number>;
         extended: Record<string, { change24h?: number; volume24h?: number; changePrice?: number }>;
     }>({ prices: {}, extended: {} });
 
-    // Get current currency based on language
     const currentCurrency: CurrencyCode = (LANGUAGE_CURRENCY_MAP as any)[i18n.language] || 'USD';
 
     useEffect(() => {
@@ -645,91 +597,88 @@ const HomePage: React.FC = () => {
         });
     }, [i18n.language, translatedAllExchanges]);
 
-useEffect(() => {
-    console.log('🔧 Starting exchange services...');
+    useEffect(() => {
+        console.log('🔧 Starting exchange services...');
 
-    // Collects all incoming updates into a buffer.
-    const handleUpdate = (update: ExtendedPriceUpdate) => {
-        console.log('📊 Price update received:', update);
+        const handleUpdate = (update: ExtendedPriceUpdate) => {
+            console.log('📊 Price update received:', update);
 
-        if (typeof update.price === 'number' && !Number.isNaN(update.price)) {
-            updatesBuffer.current.prices[update.priceKey] = update.price;
-        }
-
-        const hasExtendedFields =
-            update.change24h !== undefined ||
-            update.volume24h !== undefined ||
-            update.changePrice !== undefined;
-
-        if (hasExtendedFields) {
-            console.log('📈 Extended data received:', {
-                priceKey: update.priceKey,
-                change24h: update.change24h,
-                volume24h: update.volume24h,
-                changePrice: update.changePrice
-            });
-
-            const nextExtended: { change24h?: number; volume24h?: number; changePrice?: number } = {};
-
-            if (update.change24h !== undefined && !Number.isNaN(update.change24h)) {
-                nextExtended.change24h = update.change24h;
-            }
-            if (update.volume24h !== undefined && !Number.isNaN(update.volume24h)) {
-                nextExtended.volume24h = update.volume24h;
-            }
-            if (update.changePrice !== undefined && !Number.isNaN(update.changePrice)) {
-                nextExtended.changePrice = update.changePrice;
+            if (typeof update.price === 'number' && !Number.isNaN(update.price)) {
+                updatesBuffer.current.prices[update.priceKey] = update.price;
             }
 
-            if (Object.keys(nextExtended).length > 0) {
-                updatesBuffer.current.extended[update.priceKey] = nextExtended;
+            const hasExtendedFields =
+                update.change24h !== undefined ||
+                update.volume24h !== undefined ||
+                update.changePrice !== undefined;
+
+            if (hasExtendedFields) {
+                console.log('📈 Extended data received:', {
+                    priceKey: update.priceKey,
+                    change24h: update.change24h,
+                    volume24h: update.volume24h,
+                    changePrice: update.changePrice
+                });
+
+                const nextExtended: { change24h?: number; volume24h?: number; changePrice?: number } = {};
+
+                if (update.change24h !== undefined && !Number.isNaN(update.change24h)) {
+                    nextExtended.change24h = update.change24h;
+                }
+                if (update.volume24h !== undefined && !Number.isNaN(update.volume24h)) {
+                    nextExtended.volume24h = update.volume24h;
+                }
+                if (update.changePrice !== undefined && !Number.isNaN(update.changePrice)) {
+                    nextExtended.changePrice = update.changePrice;
+                }
+
+                if (Object.keys(nextExtended).length > 0) {
+                    const existing = updatesBuffer.current.extended[update.priceKey] ?? {};
+                    updatesBuffer.current.extended[update.priceKey] = { ...existing, ...nextExtended };
+                }
             }
-        }
-    };
+        };
 
-    // 각 서비스별로 확장 데이터 지원 여부 확인하고 연결
-    allServices.forEach(service => {
-        console.log(`🏢 Connecting service: ${service.id}`);
-        
-        const extService = service as any;
-        if (extService.connectExtended && typeof extService.connectExtended === 'function') {
-            console.log(`✅ Using extended connection for: ${service.id}`);
-            extService.connectExtended(handleUpdate);
-        } else {
-            console.log(`⚠️ Using basic connection for: ${service.id} (no extended data)`);
-            service.connect(handleUpdate);
-        }
-    });
+        allServices.forEach(service => {
+            console.log(`🏢 Connecting service: ${service.id}`);
 
-    // Applies the buffered updates to the state every 1 second.
-    const intervalId = setInterval(() => {
-        const priceUpdates = Object.keys(updatesBuffer.current.prices).length;
-        const extendedUpdates = Object.keys(updatesBuffer.current.extended).length;
-        
-        if (priceUpdates > 0 || extendedUpdates > 0) {
-            console.log(`🔄 Applying ${priceUpdates} price updates, ${extendedUpdates} extended updates`);
+            if (service.connectExtended && typeof service.connectExtended === 'function') {
+                console.log(`✅ Using extended connection for: ${service.id}`);
+                service.connectExtended(handleUpdate);
+            } else {
+                console.log(`⚠️ Using basic connection for: ${service.id} (no extended data)`);
+                service.connect(handleUpdate);
+            }
+        });
+
+        const intervalId = setInterval(() => {
             const bufferedPrices = updatesBuffer.current.prices;
             const bufferedExtended = updatesBuffer.current.extended;
+            const priceUpdates = Object.keys(bufferedPrices).length;
+            const extendedUpdates = Object.keys(bufferedExtended).length;
 
-            setAllPrices(prev => ({ ...prev, ...bufferedPrices }));
-            setAllExtendedData(prev => {
-                const next = { ...prev };
-                Object.entries(bufferedExtended).forEach(([key, data]) => {
-                    next[key] = { ...next[key], ...data };
+            if (priceUpdates > 0 || extendedUpdates > 0) {
+                console.log(`🔄 Applying ${priceUpdates} price updates, ${extendedUpdates} extended updates`);
+
+                setAllPrices(prev => ({ ...prev, ...bufferedPrices }));
+                setAllExtendedData(prev => {
+                    const next = { ...prev };
+                    Object.entries(bufferedExtended).forEach(([key, data]) => {
+                        next[key] = { ...next[key], ...data };
+                    });
+                    return next;
                 });
-                return next;
-            });
 
-            updatesBuffer.current = { prices: {}, extended: {} };
-        }
-    }, 1000);
+                updatesBuffer.current = { prices: {}, extended: {} };
+            }
+        }, 1000);
 
-    return () => {
-        console.log('🛑 Disconnecting all services');
-        allServices.forEach(service => service.disconnect());
-        clearInterval(intervalId);
-    };
-}, []);
+        return () => {
+            console.log('🛑 Disconnecting all services');
+            allServices.forEach(service => service.disconnect());
+            clearInterval(intervalId);
+        };
+    }, []);
 
     const handleSort = (key: SortKey) => {
         let direction: SortDirection = 'desc';
@@ -763,11 +712,9 @@ useEffect(() => {
                 const basePriceKey = `${selectedBase.id}-${baseCoin.symbol}`;
                 const comparisonPriceKey = `${selectedComparison.id}-${baseCoin.symbol}`;
 
-                // 실제 가격 데이터 확인
                 const rawBasePrice = allPrices[basePriceKey];
                 const rawComparisonPrice = allPrices[comparisonPriceKey];
                 
-                // 확장 데이터 가져오기 (디버깅 정보 포함)
                 const baseExtData = allExtendedData[basePriceKey] || {};
                 const comparisonExtData = allExtendedData[comparisonPriceKey] || {};
                 
@@ -778,46 +725,35 @@ useEffect(() => {
                     comparisonExtData
                 });
                 
-                // 두 거래소 모두에서 실제 가격 데이터가 없는 경우 null 반환 (필터링됨)
                 if (rawBasePrice === undefined && rawComparisonPrice === undefined) {
                     return null;
                 }
                 
-                // 한쪽 거래소에만 데이터가 있는 경우도 null 반환 (필터링됨)
                 if (rawBasePrice === undefined || rawComparisonPrice === undefined) {
                     return null;
                 }
 
-                // 가격이 0이거나 음수인 경우도 제외
                 if (rawBasePrice <= 0 || rawComparisonPrice <= 0) {
                     return null;
                 }
                 
-                // 두 거래소 모두에 유효한 데이터가 있는 경우만 처리
                 const baseCurrencyType = selectedBase.id.includes('krw') ? 'KRW' : 'USD';
                 const comparisonCurrencyType = selectedComparison.id.includes('krw') ? 'KRW' : 'USD';
                 
                 const basePrice = convertCurrency(rawBasePrice, baseCurrencyType, currentCurrency, usdKrw);
                 const comparisonPrice = convertCurrency(rawComparisonPrice, comparisonCurrencyType, currentCurrency, usdKrw);
                 
-                // Calculate price difference
                 const priceDifference = basePrice - comparisonPrice;
                 const priceDifferencePercentage = comparisonPrice > 0 
                     ? (priceDifference / comparisonPrice) * 100
                     : 0;
                 
-                // ✅ 전일대비는 항상 기준 거래소 기준으로 사용
-                let change24h = 0;
+                let change24h = baseCoin.change24h ?? 0;
                 if (baseExtData.change24h !== undefined) {
                     change24h = baseExtData.change24h;
                     console.log(`📈 Using real change24h for ${baseCoin.symbol}: ${change24h}%`);
-                } else {
-                    // 실시간 데이터가 없으면 Mock 데이터 + 약간의 변동
-                    change24h = baseCoin.change24h + (Math.random() - 0.5) * 0.2;
-                    console.log(`🎲 Using simulated change24h for ${baseCoin.symbol}: ${change24h}%`);
                 }
                 
-                // 거래대금 계산 - 실시간 데이터만 사용
                 const baseVolumeValue = baseExtData.volume24h;
                 const comparisonVolumeValue = comparisonExtData.volume24h;
 
@@ -835,10 +771,9 @@ useEffect(() => {
                     comparisonPrice,
                     priceDifference,
                     priceDifferencePercentage,
-                    change24h, // 기준 거래소 기준 전일대비
+                    change24h,
                     baseVolume,
                     comparisonVolume,
-                    // Legacy compatibility
                     domesticPrice: basePrice,
                     overseasPrice: comparisonPrice,
                     kimchiPremium: priceDifferencePercentage,
@@ -847,11 +782,10 @@ useEffect(() => {
                     overseasVolume: comparisonVolume,
                 } as ProcessedCoinData;
             })
-            .filter((coin): coin is ProcessedCoinData => coin !== null); // null 값들을 필터링
+            .filter((coin): coin is ProcessedCoinData => coin !== null);
 
         console.log(`✅ Processed ${liveData.length} coins`);
 
-        // 정렬 로직
         liveData.sort((a, b) => {
             const { key, direction } = sortConfig;
             let aValue: string | number;
@@ -891,6 +825,7 @@ useEffect(() => {
     const visibleCoinData = useMemo(() => (
         user ? processedCoinData : processedCoinData.slice(0, COIN_DISPLAY_LIMIT)
     ), [processedCoinData, user]);
+    
     return (
         <div className="bg-gray-50 dark:bg-black min-h-screen text-gray-600 dark:text-gray-300 font-sans">
             <div className="flex">
