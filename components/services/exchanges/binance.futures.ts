@@ -1,4 +1,5 @@
 import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import { safeParseNumber } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -35,19 +36,27 @@ const createBinanceFuturesService = (): ExchangeService => {
             if (message.stream && message.data) {
               const data = message.data;
               const symbol = data.s.replace('USDT', '');
-              const price = parseFloat(data.c); // Current price
-              const change24h = parseFloat(data.P); // 24hr percent change
-              const volume24h = parseFloat(data.q); // 24hr quote volume (USDT)
-              
-              callback({
+              const price = safeParseNumber(data.c);
+              const change24h = safeParseNumber(data.P);
+              const volume24h = safeParseNumber(data.q);
+
+              if (price === undefined) {
+                return;
+              }
+
+              const update: ExtendedPriceUpdate = {
                 priceKey: `${id}-${symbol}`,
-                price: price,
-                change24h: change24h,
-                volume24h: volume24h
-              });
-              
+                price,
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+              };
+
+              callback(update);
+
               if (Math.random() < 0.01) {
-                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${change24h.toFixed(2)}%) Vol: $${(volume24h/1000000).toFixed(2)}M`);
+                const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
+                const volumeText = volume24h !== undefined ? `$${(volume24h / 1000000).toFixed(2)}M` : 'N/A';
+                console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
               }
             }
           } catch (error) {

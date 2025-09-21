@@ -1,5 +1,6 @@
 // components/services/exchanges/bybit.spot.ts
 import type { ExchangeService, PriceUpdateCallback, ExtendedPriceUpdate } from '../../../types';
+import { safeParseNumber, safeMultiply } from './utils';
 
 type ExtendedPriceUpdateCallback = (update: ExtendedPriceUpdate) => void;
 
@@ -76,36 +77,39 @@ const createBybitSpotService = (): ExchangeService => {
               const symbol = typeof payload.symbol === 'string'
                 ? payload.symbol.replace('USDT', '')
                 : undefined;
-              const price = payload.lastPrice ? parseFloat(payload.lastPrice) : undefined;
+              const price = safeParseNumber(payload.lastPrice);
 
-              if (!symbol || !price || !Number.isFinite(price)) {
+              if (!symbol || price === undefined) {
                 return;
               }
 
-              const change24hRaw = payload.price24hPcnt ? parseFloat(payload.price24hPcnt) * 100 : undefined;
-              const turnover24h = payload.turnover24h ? parseFloat(payload.turnover24h) : undefined;
-              const volume24hBase = payload.volume24h ? parseFloat(payload.volume24h) : undefined;
+              const change24hRatio = safeParseNumber(payload.price24hPcnt);
+              const change24h = change24hRatio !== undefined ? change24hRatio * 100 : undefined;
+              const turnover24h = safeParseNumber(payload.turnover24h);
+              const volume24hBase = safeParseNumber(payload.volume24h);
 
               let volume24h: number | undefined = undefined;
-              if (Number.isFinite(turnover24h)) {
-                volume24h = turnover24h as number;
-              } else if (Number.isFinite(volume24hBase)) {
-                volume24h = (volume24hBase as number) * price;
+              if (turnover24h !== undefined) {
+                volume24h = turnover24h;
+              } else if (volume24hBase !== undefined) {
+                const converted = safeMultiply(volume24hBase, price);
+                if (converted !== undefined) {
+                  volume24h = converted;
+                }
               }
 
-              const change24h = Number.isFinite(change24hRaw) ? (change24hRaw as number) : undefined;
-              const normalizedVolume = Number.isFinite(volume24h) ? (volume24h as number) : undefined;
-
-              callback({
+              const update: ExtendedPriceUpdate = {
                 priceKey: `${id}-${symbol}`,
                 price,
-                change24h,
-                volume24h: normalizedVolume
-              });
+                ...(change24h !== undefined ? { change24h } : {}),
+                ...(volume24h !== undefined ? { volume24h } : {}),
+              };
+
+              callback(update);
 
               if ((symbol === 'BTC' || symbol === 'ETH' || symbol === 'SOL') && Math.random() < 0.05) {
-                const changeText = change24h !== undefined ? change24h.toFixed(2) : '0.00';
-                const volumeText = normalizedVolume !== undefined ? normalizedVolume.toFixed(0) : 'N/A';
+                const changeText = change24h !== undefined ? change24h.toFixed(2) : 'N/A';
+                const volumeText = volume24h !== undefined ? volume24h.toFixed(0) : 'N/A';
                 console.log(`📊 [${id}] ${symbol}: $${price.toFixed(2)} (${changeText}%) Vol: ${volumeText}`);
               }
             }
