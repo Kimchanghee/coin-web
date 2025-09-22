@@ -876,40 +876,40 @@ const HomePage: React.FC = () => {
                             : undefined
                 } as const;
 
-const getVolumeDisplay = (
-    liveValue: number | undefined,
-    liveCurrency: CurrencyCode,
-    fallback: { value: number; currency: CurrencyCode } | undefined
-): { formatted: string; numeric: number; state: VolumeState } => {
-    if (typeof liveValue === 'number' && liveValue > 0) {
-        const converted = convertCurrency(liveValue, liveCurrency, currentCurrency, usdKrw);
-        return {
-            formatted: formatVolume(converted, currentCurrency, t),
-            numeric: converted,
-            state: 'live'
-        };
-    }
+                const getVolumeDisplay = (
+                    liveValue: number | undefined,
+                    liveCurrency: CurrencyCode,
+                    fallback: { value: number; currency: CurrencyCode } | undefined
+                ): { formatted: string; numeric: number; state: VolumeState } => {
+                    if (typeof liveValue === 'number' && liveValue > 0) {
+                        const converted = convertCurrency(liveValue, liveCurrency, currentCurrency, usdKrw);
+                        return {
+                            formatted: formatVolume(converted, currentCurrency, t),
+                            numeric: converted,
+                            state: 'live'
+                        };
+                    }
 
-    if (fallback && fallback.value > 0) {
-        const convertedFallback = convertCurrency(
-            fallback.value,
-            fallback.currency,
-            currentCurrency,
-            usdKrw
-        );
-        return {
-            formatted: formatVolume(convertedFallback, currentCurrency, t),
-            numeric: convertedFallback,
-            state: 'estimated'
-        };
-    }
+                    if (fallback && fallback.value > 0) {
+                        const convertedFallback = convertCurrency(
+                            fallback.value,
+                            fallback.currency,
+                            currentCurrency,
+                            usdKrw
+                        );
+                        return {
+                            formatted: formatVolume(convertedFallback, currentCurrency, t),
+                            numeric: convertedFallback,
+                            state: 'estimated'
+                        };
+                    }
 
-    return {
-        formatted: noVolumeLabel,
-        numeric: 0,
-        state: 'loading'
-    };
-};
+                    return {
+                        formatted: noVolumeLabel,
+                        numeric: 0,
+                        state: 'loading'
+                    };
+                };
 
                 console.log(`💰 ${baseCoin.symbol}:`, {
                     basePrice: rawBasePrice,
