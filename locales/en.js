@@ -43,11 +43,17 @@ export default {
     "daily_change": "24h Change",
     "trading_volume_24h": "24h Volume",
     "no_data": "No data",
+    "estimated": "Est.",
+    "live": "Live",
     "hundred_million": "100M",
     "trillion": "T",
     "billion": "B",
     "million": "M",
-    "thousand": "K"
+    "thousand": "K",
+    "loading": "Loading...",
+    "awaiting_live": "Awaiting live feed",
+    "estimated_tooltip": "Showing an estimated 24h volume until the live feed updates.",
+    "live_tooltip": "Live 24h volume from the exchange feed."
   },
   "login": {
     "welcome_back": "Welcome Back",

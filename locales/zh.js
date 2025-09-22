@@ -43,11 +43,17 @@ export default {
     "daily_change": "24小时变化",
     "trading_volume_24h": "24h 交易量",
     "no_data": "无数据",
+    "estimated": "估算",
+    "live": "实时",
     "hundred_million": "亿",
     "trillion": "万亿",
     "billion": "B",
     "million": "M",
-    "thousand": "K"
+    "thousand": "K",
+    "loading": "加载中...",
+    "awaiting_live": "实时数据获取中",
+    "estimated_tooltip": "在实时数据更新之前显示估算的24小时成交额。",
+    "live_tooltip": "来自交易所的实时24小时成交额。"
   },
   "login": {
     "welcome_back": "欢迎回来",

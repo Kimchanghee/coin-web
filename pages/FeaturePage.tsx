@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import PremiumLayout from '../components/layouts/PremiumLayout';
+import { resolveExchangeNavLabel } from '../constants';
 
 type FeatureKey = 'exchange_arbitrage' | 'tradingview_auto' | 'listing_auto';
 
@@ -17,6 +18,7 @@ const featureIcons: Record<FeatureKey, string> = {
 const FeaturePageTemplate: React.FC<FeaturePageTemplateProps> = ({ featureKey }) => {
     const { t } = useTranslation();
     const icon = featureIcons[featureKey];
+    const featureLabel = resolveExchangeNavLabel(t, featureKey);
     const highlightKeys = [0, 1, 2].map(index => `feature_pages.${featureKey}.points.${index}`);
 
     return (
@@ -26,7 +28,7 @@ const FeaturePageTemplate: React.FC<FeaturePageTemplateProps> = ({ featureKey })
                     <i className="fas fa-sparkles"></i>
                     {t('feature_pages.coming_soon')}
                 </span>
-                <h1 className="mt-4 text-2xl font-bold text-black dark:text-white">{t(`sidebar.${featureKey}`)}</h1>
+                <h1 className="mt-4 text-2xl font-bold text-black dark:text-white">{featureLabel}</h1>
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t(`feature_pages.${featureKey}.intro`)}</p>
             </div>
 
@@ -37,7 +39,7 @@ const FeaturePageTemplate: React.FC<FeaturePageTemplateProps> = ({ featureKey })
                             <i className={`fas ${icon} text-xl`}></i>
                         </span>
                         <div>
-                            <h2 className="text-lg font-semibold text-black dark:text-white">{t(`sidebar.${featureKey}`)}</h2>
+                            <h2 className="text-lg font-semibold text-black dark:text-white">{featureLabel}</h2>
                             <p className="text-sm text-gray-500 dark:text-gray-400">{t('feature_pages.coming_soon')}</p>
                         </div>
                     </div>

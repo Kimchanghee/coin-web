@@ -43,11 +43,17 @@ export default {
     "daily_change": "เปลี่ยนแปลง 24 ชม.",
     "trading_volume_24h": "ปริมาณการซื้อขาย 24 ชม.",
     "no_data": "ไม่มีข้อมูล",
+    "estimated": "ประมาณ",
+    "live": "สด",
     "hundred_million": "ร้อยล้าน",
     "trillion": "ล้านล้าน",
     "billion": "B",
     "million": "M",
-    "thousand": "K"
+    "thousand": "K",
+    "loading": "กำลังโหลด...",
+    "awaiting_live": "กำลังดึงข้อมูลแบบเรียลไทม์",
+    "estimated_tooltip": "แสดงมูลค่าซื้อขาย 24 ชม. แบบประมาณการจนกว่าจะมีข้อมูลเรียลไทม์.",
+    "live_tooltip": "มูลค่าซื้อขาย 24 ชม. แบบเรียลไทม์จากตลาด."
   },
   "login": {
     "welcome_back": "ยินดีต้อนรับกลับ",

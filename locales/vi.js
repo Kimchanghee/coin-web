@@ -43,11 +43,17 @@ export default {
     "daily_change": "Thay đổi 24h",
     "trading_volume_24h": "Khối lượng 24h",
     "no_data": "Không có dữ liệu",
+    "estimated": "Ước tính",
+    "live": "Trực tiếp",
     "hundred_million": "trăm triệu",
     "trillion": "nghìn tỷ",
     "billion": "B",
     "million": "M",
-    "thousand": "K"
+    "thousand": "K",
+    "loading": "Đang tải...",
+    "awaiting_live": "Đang lấy dữ liệu trực tiếp",
+    "estimated_tooltip": "Hiển thị khối lượng 24h ước tính cho đến khi dữ liệu trực tiếp được cập nhật.",
+    "live_tooltip": "Khối lượng 24h trực tiếp từ sàn giao dịch."
   },
   "login": {
     "welcome_back": "Chào mừng trở lại",
