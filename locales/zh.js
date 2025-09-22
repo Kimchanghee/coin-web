@@ -49,7 +49,11 @@ export default {
     "trillion": "万亿",
     "billion": "B",
     "million": "M",
-    "thousand": "K"
+    "thousand": "K",
+    "loading": "加载中...",
+    "awaiting_live": "实时数据获取中",
+    "estimated_tooltip": "在实时数据更新之前显示估算的24小时成交额。",
+    "live_tooltip": "来自交易所的实时24小时成交额。"
   },
   "login": {
     "welcome_back": "欢迎回来",

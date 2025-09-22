@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import type { User } from '../../types';
-import { EXCHANGE_NAV_ITEMS, EXCHANGE_NAV_TRANSLATIONS } from '../../constants';
+import { EXCHANGE_NAV_ITEMS, resolveExchangeNavLabel } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import LanguageSwitcher from '../LanguageSwitcher';
 import Clock from '../Clock';
@@ -83,13 +82,6 @@ type PremiumSidebarProps = {
     onLogout: () => void;
 };
 
-const resolveNavLabel = (t: TFunction, key: keyof typeof EXCHANGE_NAV_TRANSLATIONS) => {
-    const translationKeys = EXCHANGE_NAV_TRANSLATIONS[key];
-    return t(translationKeys.primary, {
-        defaultValue: t(translationKeys.fallback)
-    });
-};
-
 const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, onLogout }) => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -126,7 +118,7 @@ const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, 
                                         onClick={onClose}
                                     >
                                         <i className={`fas ${item.icon} w-5`}></i>
-                                        <span>{resolveNavLabel(t, item.key)}</span>
+                                        <span>{resolveExchangeNavLabel(t, item.key)}</span>
                                     </Link>
                                 </li>
                             );
@@ -136,7 +128,7 @@ const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, 
                             <li key={item.key}>
                                 <button type="button" className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`} disabled>
                                     <i className={`fas ${item.icon} w-5`}></i>
-                                    <span>{resolveNavLabel(t, item.key)}</span>
+                                    <span>{resolveExchangeNavLabel(t, item.key)}</span>
                                 </button>
                             </li>
                         );
@@ -190,7 +182,7 @@ const PremiumBottomNav: React.FC = () => {
                             className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
                         >
                             <i className={`fas ${item.icon} text-lg`}></i>
-                            <span>{resolveNavLabel(t, item.key)}</span>
+                            <span>{resolveExchangeNavLabel(t, item.key)}</span>
                         </Link>
                     );
                 }
@@ -198,7 +190,7 @@ const PremiumBottomNav: React.FC = () => {
                 return (
                     <button type="button" key={item.key} className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`} disabled>
                         <i className={`fas ${item.icon} text-lg`}></i>
-                        <span>{resolveNavLabel(t, item.key)}</span>
+                        <span>{resolveExchangeNavLabel(t, item.key)}</span>
                     </button>
                 );
             })}

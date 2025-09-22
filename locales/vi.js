@@ -49,7 +49,11 @@ export default {
     "trillion": "nghìn tỷ",
     "billion": "B",
     "million": "M",
-    "thousand": "K"
+    "thousand": "K",
+    "loading": "Đang tải...",
+    "awaiting_live": "Đang lấy dữ liệu trực tiếp",
+    "estimated_tooltip": "Hiển thị khối lượng 24h ước tính cho đến khi dữ liệu trực tiếp được cập nhật.",
+    "live_tooltip": "Khối lượng 24h trực tiếp từ sàn giao dịch."
   },
   "login": {
     "welcome_back": "Chào mừng trở lại",

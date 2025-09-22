@@ -49,7 +49,11 @@ export default {
     "trillion": "조",
     "billion": "B",
     "million": "M",
-    "thousand": "K"
+    "thousand": "K",
+    "loading": "로딩 중...",
+    "awaiting_live": "실시간 데이터 수집 중",
+    "estimated_tooltip": "실시간 거래대금이 들어오기 전까지 추정값을 표시합니다.",
+    "live_tooltip": "거래소에서 받아온 실시간 24시간 거래대금입니다."
   },
   "login": {
     "welcome_back": "다시 오신 것을 환영합니다",

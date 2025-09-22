@@ -49,7 +49,11 @@ export default {
     "trillion": "ล้านล้าน",
     "billion": "B",
     "million": "M",
-    "thousand": "K"
+    "thousand": "K",
+    "loading": "กำลังโหลด...",
+    "awaiting_live": "กำลังดึงข้อมูลแบบเรียลไทม์",
+    "estimated_tooltip": "แสดงมูลค่าซื้อขาย 24 ชม. แบบประมาณการจนกว่าจะมีข้อมูลเรียลไทม์.",
+    "live_tooltip": "มูลค่าซื้อขาย 24 ชม. แบบเรียลไทม์จากตลาด."
   },
   "login": {
     "welcome_back": "ยินดีต้อนรับกลับ",

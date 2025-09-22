@@ -1,4 +1,5 @@
 import React from 'react';
+import type { TFunction } from 'i18next';
 import type { Exchange, CoinData, ExchangeId, CoinId } from './types';
 
 export const EXCHANGES: Exchange[] = [
@@ -51,6 +52,13 @@ export const EXCHANGE_NAV_TRANSLATIONS: Record<ExchangeNavKey, { primary: string
     primary: 'bottom_nav.listing_auto',
     fallback: 'sidebar.listing_auto'
   }
+};
+
+export const resolveExchangeNavLabel = (t: TFunction, key: ExchangeNavKey) => {
+  const translationKeys = EXCHANGE_NAV_TRANSLATIONS[key];
+  return t(translationKeys.primary, {
+    defaultValue: t(translationKeys.fallback)
+  });
 };
 
 // 모든 거래소를 하나로 합친 리스트 (기준거래소용)

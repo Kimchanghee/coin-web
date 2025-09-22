@@ -49,7 +49,11 @@ export default {
     "trillion": "兆",
     "billion": "B",
     "million": "M",
-    "thousand": "K"
+    "thousand": "K",
+    "loading": "読み込み中...",
+    "awaiting_live": "ライブデータ取得中",
+    "estimated_tooltip": "ライブデータが反映されるまで推定値を表示します。",
+    "live_tooltip": "取引所からのライブの24時間出来高です。"
   },
   "login": {
     "welcome_back": "おかえりなさい",

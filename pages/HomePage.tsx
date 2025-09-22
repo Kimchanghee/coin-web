@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
-import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP, EXCHANGE_NAV_ITEMS, EXCHANGE_NAV_TRANSLATIONS } from '../constants';
+import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP, EXCHANGE_NAV_ITEMS, resolveExchangeNavLabel } from '../constants';
 import type { CoinData, User, ExtendedPriceUpdate } from '../types';
 import { allServices } from '../components/services/exchanges';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +13,7 @@ type ExchangeOption = { id: string; name: string };
 type CurrencyCode = 'KRW' | 'USD' | 'JPY' | 'CNY' | 'THB' | 'VND';
 type SortKey = 'name' | 'basePrice' | 'comparisonPrice' | 'priceDifference' | 'change24h' | 'baseVolume' | 'comparisonVolume';
 type SortDirection = 'asc' | 'desc';
+type VolumeState = 'loading' | 'estimated' | 'live';
 
 // Currency conversion utility
 const convertCurrency = (amount: number, fromCurrency: string, toCurrency: CurrencyCode, usdKrw: number): number => {
@@ -83,13 +83,6 @@ const parseVolumeString = (volume: string | number | undefined): number => {
     }
 
     return numericPortion * multiplier;
-};
-
-const translateNavLabel = (t: TFunction, key: keyof typeof EXCHANGE_NAV_TRANSLATIONS) => {
-    const translationKeys = EXCHANGE_NAV_TRANSLATIONS[key];
-    return t(translationKeys.primary, {
-        defaultValue: t(translationKeys.fallback)
-    });
 };
 
 // Custom Select Component
@@ -236,7 +229,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                                             onClick={onClose}
                                         >
                                             <i className={`fas ${item.icon} w-5`}></i>
-                                            <span>{translateNavLabel(t, item.key)}</span>
+                                            <span>{resolveExchangeNavLabel(t, item.key)}</span>
                                         </Link>
                                     </li>
                                 );
@@ -250,7 +243,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                                         disabled
                                     >
                                         <i className={`fas ${item.icon} w-5`}></i>
-                                        <span>{translateNavLabel(t, item.key)}</span>
+                                        <span>{resolveExchangeNavLabel(t, item.key)}</span>
                                     </button>
                                 </li>
                             );
@@ -302,7 +295,7 @@ const BottomNav: React.FC = () => {
                             className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
                         >
                             <i className={`fas ${item.icon} text-lg`}></i>
-                            <span>{translateNavLabel(t, item.key)}</span>
+                            <span>{resolveExchangeNavLabel(t, item.key)}</span>
                         </Link>
                     );
                 }
@@ -315,7 +308,7 @@ const BottomNav: React.FC = () => {
                         disabled
                     >
                         <i className={`fas ${item.icon} text-lg`}></i>
-                        <span>{translateNavLabel(t, item.key)}</span>
+                        <span>{resolveExchangeNavLabel(t, item.key)}</span>
                     </button>
                 );
             })}
@@ -332,8 +325,8 @@ interface ProcessedCoinData extends CoinData {
     comparisonVolume: string;
     baseVolumeValue: number;
     comparisonVolumeValue: number;
-    baseVolumeEstimated: boolean;
-    comparisonVolumeEstimated: boolean;
+    baseVolumeState: VolumeState;
+    comparisonVolumeState: VolumeState;
 }
 
 // Format volume with proper localization
@@ -486,49 +479,113 @@ const CryptoPriceComparisonTable: React.FC<{
                                     <span className="text-xs sm:text-base">{formatPercentage(coin.change24h)}</span>
                                 </td>
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
-                                    <p
-                                        className={`font-medium text-xs sm:text-sm ${
-                                            coin.baseVolumeEstimated ? 'text-gray-500 dark:text-gray-400' : ''
-                                        }`}
-                                    >
-                                        {coin.baseVolume}
-                                    </p>
-                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center justify-end gap-1">
-                                        <span
-                                            className={`inline-flex items-center gap-1 ${
-                                                coin.baseVolumeEstimated
-                                                    ? 'text-amber-500 dark:text-amber-300'
-                                                    : 'text-emerald-500 dark:text-emerald-300'
+                                    {coin.baseVolumeState === 'loading' ? (
+                                        <div className="flex justify-end">
+                                            <span
+                                                className="inline-flex h-3 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <span className="sr-only">{t('table.loading')}</span>
+                                        </div>
+                                    ) : (
+                                        <p
+                                            className={`font-medium text-xs sm:text-sm ${
+                                                coin.baseVolumeState === 'estimated' ? 'text-gray-500 dark:text-gray-400' : ''
                                             }`}
                                         >
-                                            <i className={`fas ${coin.baseVolumeEstimated ? 'fa-clock' : 'fa-bolt'}`}></i>
-                                            {t(coin.baseVolumeEstimated ? 'table.estimated' : 'table.live')}
-                                        </span>
-                                        <span className="text-gray-300 dark:text-gray-600">•</span>
-                                        <span className="text-gray-500 dark:text-gray-400">{CURRENCY_RATES[currency]?.name || 'KRW'}</span>
+                                            {coin.baseVolume}
+                                        </p>
+                                    )}
+                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center justify-end gap-1">
+                                        {coin.baseVolumeState === 'loading' ? (
+                                            <>
+                                                <span className="inline-flex items-center gap-1 text-amber-500 dark:text-amber-300">
+                                                    <i className="fas fa-circle-notch animate-spin"></i>
+                                                    {t('table.loading')}
+                                                </span>
+                                                <span className="text-gray-300 dark:text-gray-600">•</span>
+                                                <span className="text-gray-500 dark:text-gray-400">{t('table.awaiting_live')}</span>
+                                                <span className="text-gray-300 dark:text-gray-600">•</span>
+                                                <span className="text-gray-500 dark:text-gray-400">{CURRENCY_RATES[currency]?.name || 'KRW'}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span
+                                                    className={`inline-flex items-center gap-1 ${
+                                                        coin.baseVolumeState === 'estimated'
+                                                            ? 'text-amber-500 dark:text-amber-300'
+                                                            : 'text-emerald-500 dark:text-emerald-300'
+                                                    }`}
+                                                    title={t(coin.baseVolumeState === 'estimated' ? 'table.estimated_tooltip' : 'table.live_tooltip')}
+                                                >
+                                                    <i className={`fas ${coin.baseVolumeState === 'estimated' ? 'fa-clock' : 'fa-bolt'}`}></i>
+                                                    {t(coin.baseVolumeState === 'estimated' ? 'table.estimated' : 'table.live')}
+                                                </span>
+                                                <span className="text-gray-300 dark:text-gray-600">•</span>
+                                                <span className="text-gray-500 dark:text-gray-400">{CURRENCY_RATES[currency]?.name || 'KRW'}</span>
+                                                {coin.baseVolumeState === 'estimated' && (
+                                                    <>
+                                                        <span className="text-gray-300 dark:text-gray-600">•</span>
+                                                        <span className="text-gray-500 dark:text-gray-400">{t('table.awaiting_live')}</span>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
                                     </p>
                                 </td>
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200">
-                                    <p
-                                        className={`font-medium text-xs sm:text-sm ${
-                                            coin.comparisonVolumeEstimated ? 'text-gray-500 dark:text-gray-400' : ''
-                                        }`}
-                                    >
-                                        {coin.comparisonVolume}
-                                    </p>
-                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center justify-end gap-1">
-                                        <span
-                                            className={`inline-flex items-center gap-1 ${
-                                                coin.comparisonVolumeEstimated
-                                                    ? 'text-amber-500 dark:text-amber-300'
-                                                    : 'text-emerald-500 dark:text-emerald-300'
+                                    {coin.comparisonVolumeState === 'loading' ? (
+                                        <div className="flex justify-end">
+                                            <span
+                                                className="inline-flex h-3 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <span className="sr-only">{t('table.loading')}</span>
+                                        </div>
+                                    ) : (
+                                        <p
+                                            className={`font-medium text-xs sm:text-sm ${
+                                                coin.comparisonVolumeState === 'estimated' ? 'text-gray-500 dark:text-gray-400' : ''
                                             }`}
                                         >
-                                            <i className={`fas ${coin.comparisonVolumeEstimated ? 'fa-clock' : 'fa-bolt'}`}></i>
-                                            {t(coin.comparisonVolumeEstimated ? 'table.estimated' : 'table.live')}
-                                        </span>
-                                        <span className="text-gray-300 dark:text-gray-600">•</span>
-                                        <span className="text-gray-500 dark:text-gray-400">{CURRENCY_RATES[currency]?.name || 'KRW'}</span>
+                                            {coin.comparisonVolume}
+                                        </p>
+                                    )}
+                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center justify-end gap-1">
+                                        {coin.comparisonVolumeState === 'loading' ? (
+                                            <>
+                                                <span className="inline-flex items-center gap-1 text-amber-500 dark:text-amber-300">
+                                                    <i className="fas fa-circle-notch animate-spin"></i>
+                                                    {t('table.loading')}
+                                                </span>
+                                                <span className="text-gray-300 dark:text-gray-600">•</span>
+                                                <span className="text-gray-500 dark:text-gray-400">{t('table.awaiting_live')}</span>
+                                                <span className="text-gray-300 dark:text-gray-600">•</span>
+                                                <span className="text-gray-500 dark:text-gray-400">{CURRENCY_RATES[currency]?.name || 'KRW'}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span
+                                                    className={`inline-flex items-center gap-1 ${
+                                                        coin.comparisonVolumeState === 'estimated'
+                                                            ? 'text-amber-500 dark:text-amber-300'
+                                                            : 'text-emerald-500 dark:text-emerald-300'
+                                                    }`}
+                                                    title={t(coin.comparisonVolumeState === 'estimated' ? 'table.estimated_tooltip' : 'table.live_tooltip')}
+                                                >
+                                                    <i className={`fas ${coin.comparisonVolumeState === 'estimated' ? 'fa-clock' : 'fa-bolt'}`}></i>
+                                                    {t(coin.comparisonVolumeState === 'estimated' ? 'table.estimated' : 'table.live')}
+                                                </span>
+                                                <span className="text-gray-300 dark:text-gray-600">•</span>
+                                                <span className="text-gray-500 dark:text-gray-400">{CURRENCY_RATES[currency]?.name || 'KRW'}</span>
+                                                {coin.comparisonVolumeState === 'estimated' && (
+                                                    <>
+                                                        <span className="text-gray-300 dark:text-gray-600">•</span>
+                                                        <span className="text-gray-500 dark:text-gray-400">{t('table.awaiting_live')}</span>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
                                     </p>
                                 </td>
                             </tr>
@@ -756,7 +813,7 @@ const HomePage: React.FC = () => {
 
                 updatesBuffer.current = { prices: {}, extended: {} };
             }
-        }, 1000);
+        }, 500);
 
         return () => {
             console.log('🛑 Disconnecting all services');
@@ -819,40 +876,40 @@ const HomePage: React.FC = () => {
                             : undefined
                 } as const;
 
-                const getVolumeDisplay = (
-                    liveValue: number | undefined,
-                    liveCurrency: CurrencyCode,
-                    fallback: { value: number; currency: CurrencyCode } | undefined
-                ): { formatted: string; numeric: number; isEstimated: boolean } => {
-                    if (typeof liveValue === 'number' && liveValue > 0) {
-                        const converted = convertCurrency(liveValue, liveCurrency, currentCurrency, usdKrw);
-                        return {
-                            formatted: formatVolume(converted, currentCurrency, t),
-                            numeric: converted,
-                            isEstimated: false
-                        };
-                    }
+const getVolumeDisplay = (
+    liveValue: number | undefined,
+    liveCurrency: CurrencyCode,
+    fallback: { value: number; currency: CurrencyCode } | undefined
+): { formatted: string; numeric: number; state: VolumeState } => {
+    if (typeof liveValue === 'number' && liveValue > 0) {
+        const converted = convertCurrency(liveValue, liveCurrency, currentCurrency, usdKrw);
+        return {
+            formatted: formatVolume(converted, currentCurrency, t),
+            numeric: converted,
+            state: 'live'
+        };
+    }
 
-                    if (fallback && fallback.value > 0) {
-                        const convertedFallback = convertCurrency(
-                            fallback.value,
-                            fallback.currency,
-                            currentCurrency,
-                            usdKrw
-                        );
-                        return {
-                            formatted: formatVolume(convertedFallback, currentCurrency, t),
-                            numeric: convertedFallback,
-                            isEstimated: true
-                        };
-                    }
+    if (fallback && fallback.value > 0) {
+        const convertedFallback = convertCurrency(
+            fallback.value,
+            fallback.currency,
+            currentCurrency,
+            usdKrw
+        );
+        return {
+            formatted: formatVolume(convertedFallback, currentCurrency, t),
+            numeric: convertedFallback,
+            state: 'estimated'
+        };
+    }
 
-                    return {
-                        formatted: noVolumeLabel,
-                        numeric: 0,
-                        isEstimated: true
-                    };
-                };
+    return {
+        formatted: noVolumeLabel,
+        numeric: 0,
+        state: 'loading'
+    };
+};
 
                 console.log(`💰 ${baseCoin.symbol}:`, {
                     basePrice: rawBasePrice,
@@ -912,8 +969,8 @@ const HomePage: React.FC = () => {
                     comparisonVolume: comparisonVolumeData.formatted,
                     baseVolumeValue: baseVolumeData.numeric,
                     comparisonVolumeValue: comparisonVolumeData.numeric,
-                    baseVolumeEstimated: baseVolumeData.isEstimated,
-                    comparisonVolumeEstimated: comparisonVolumeData.isEstimated,
+                    baseVolumeState: baseVolumeData.state,
+                    comparisonVolumeState: comparisonVolumeData.state,
                     domesticPrice: basePrice,
                     overseasPrice: comparisonPrice,
                     kimchiPremium: priceDifferencePercentage,
