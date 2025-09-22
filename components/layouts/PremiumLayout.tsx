@@ -87,6 +87,11 @@ const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, 
     const location = useLocation();
     const { t } = useTranslation();
 
+    const getNavLabel = (key: string) =>
+        t(`bottom_nav.${key}`, {
+            defaultValue: t(`sidebar.${key}`)
+        });
+
     const handleLogout = () => {
         onLogout();
         navigate('/');
@@ -118,7 +123,7 @@ const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, 
                                         onClick={onClose}
                                     >
                                         <i className={`fas ${item.icon} w-5`}></i>
-                                        <span>{t(`sidebar.${item.key}`)}</span>
+                                        <span>{getNavLabel(item.key)}</span>
                                     </Link>
                                 </li>
                             );
@@ -128,7 +133,7 @@ const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, 
                             <li key={item.key}>
                                 <button type="button" className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`} disabled>
                                     <i className={`fas ${item.icon} w-5`}></i>
-                                    <span>{t(`sidebar.${item.key}`)}</span>
+                                    <span>{getNavLabel(item.key)}</span>
                                 </button>
                             </li>
                         );
