@@ -28,6 +28,18 @@ export default {
     "tradingview_auto": "TradingView Auto Trading",
     "listing_auto": "Listing Auto Trading"
   },
+  "feature_page": {
+    "coming_soon": "Coming Soon",
+    "description": "We're working hard to bring {{feature}} online. Please stay tuned!",
+    "progress_label": "Current status",
+    "progress_value": "In active development",
+    "eta_label": "Next milestone",
+    "eta_value": "Beta release planned for Q2",
+    "update_label": "Last update",
+    "update_value": "Roadmap refreshed this week",
+    "cta_dashboard": "Back to Dashboard",
+    "cta_subscribe": "Get Early Access Updates"
+  },
   "home": {
     "title": "Kimchi Premium",
     "subtitle": "Check the price difference between domestic and overseas exchanges.",
