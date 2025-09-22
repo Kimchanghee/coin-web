@@ -742,11 +742,48 @@ const HomePage: React.FC = () => {
     useEffect(() => {
         console.log('🔧 Starting exchange services...');
 
+        const applyBufferedUpdates = () => {
+            const { prices, extended } = updatesBuffer.current;
+            const priceUpdates = Object.keys(prices).length;
+            const extendedUpdates = Object.keys(extended).length;
+
+            if (priceUpdates > 0 || extendedUpdates > 0) {
+                console.log(`🔄 Applying ${priceUpdates} price updates, ${extendedUpdates} extended updates`);
+
+                setAllPrices(prev => ({ ...prev, ...prices }));
+                setAllExtendedData(prev => {
+                    const next = { ...prev };
+                    Object.entries(extended).forEach(([key, data]) => {
+                        next[key] = { ...next[key], ...data };
+                    });
+                    return next;
+                });
+
+                updatesBuffer.current = { prices: {}, extended: {} };
+            }
+        };
+
+        let rafId: number | null = null;
+        const scheduleBufferedFlush = () => {
+            if (typeof window === 'undefined') {
+                applyBufferedUpdates();
+                return;
+            }
+
+            if (rafId === null) {
+                rafId = window.requestAnimationFrame(() => {
+                    rafId = null;
+                    applyBufferedUpdates();
+                });
+            }
+        };
+
         const handleUpdate = (update: ExtendedPriceUpdate) => {
             console.log('📊 Price update received:', update);
 
             if (typeof update.price === 'number' && !Number.isNaN(update.price)) {
                 updatesBuffer.current.prices[update.priceKey] = update.price;
+                scheduleBufferedFlush();
             }
 
             const hasExtendedFields =
@@ -777,6 +814,7 @@ const HomePage: React.FC = () => {
                 if (Object.keys(nextExtended).length > 0) {
                     const existing = updatesBuffer.current.extended[update.priceKey] ?? {};
                     updatesBuffer.current.extended[update.priceKey] = { ...existing, ...nextExtended };
+                    scheduleBufferedFlush();
                 }
             }
         };
@@ -793,32 +831,15 @@ const HomePage: React.FC = () => {
             }
         });
 
-        const intervalId = setInterval(() => {
-            const bufferedPrices = updatesBuffer.current.prices;
-            const bufferedExtended = updatesBuffer.current.extended;
-            const priceUpdates = Object.keys(bufferedPrices).length;
-            const extendedUpdates = Object.keys(bufferedExtended).length;
-
-            if (priceUpdates > 0 || extendedUpdates > 0) {
-                console.log(`🔄 Applying ${priceUpdates} price updates, ${extendedUpdates} extended updates`);
-
-                setAllPrices(prev => ({ ...prev, ...bufferedPrices }));
-                setAllExtendedData(prev => {
-                    const next = { ...prev };
-                    Object.entries(bufferedExtended).forEach(([key, data]) => {
-                        next[key] = { ...next[key], ...data };
-                    });
-                    return next;
-                });
-
-                updatesBuffer.current = { prices: {}, extended: {} };
-            }
-        }, 500);
+        const intervalId = window.setInterval(applyBufferedUpdates, 500);
 
         return () => {
             console.log('🛑 Disconnecting all services');
             allServices.forEach(service => service.disconnect());
             clearInterval(intervalId);
+            if (typeof window !== 'undefined' && rafId !== null) {
+                window.cancelAnimationFrame(rafId);
+            }
         };
     }, []);
 
