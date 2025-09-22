@@ -24,14 +24,14 @@ export type ExchangeNavKey =
 export type ExchangeNavItem = {
   key: ExchangeNavKey;
   icon: string;
-  path: string;
+  path?: string;
 };
 
 export const EXCHANGE_NAV_ITEMS: ExchangeNavItem[] = [
   { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-  { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/arbitrage' },
-  { key: 'tradingview_auto', icon: 'fa-chart-line', path: '/tradingview-auto' },
-  { key: 'listing_auto', icon: 'fa-robot', path: '/listing-auto' },
+  { key: 'exchange_arbitrage', icon: 'fa-scale-balanced' },
+  { key: 'tradingview_auto', icon: 'fa-chart-line' },
+  { key: 'listing_auto', icon: 'fa-robot' },
 ];
 
 // 모든 거래소를 하나로 합친 리스트 (기준거래소용)

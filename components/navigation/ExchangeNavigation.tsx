@@ -33,21 +33,36 @@ export const ExchangeSidebar: React.FC<ExchangeSidebarProps> = ({ isOpen, onClos
           </div>
           <ul className="space-y-4">
             {EXCHANGE_NAV_ITEMS.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive = item.path ? location.pathname === item.path : false;
               const baseClasses = 'flex items-center gap-3 p-2 rounded-md transition-colors';
               const activeClasses = 'bg-gray-200 dark:bg-gray-800 text-black dark:text-white';
               const inactiveClasses = 'hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400';
 
+              if (item.path) {
+                return (
+                  <li key={item.key}>
+                    <Link
+                      to={item.path}
+                      className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+                      onClick={onClose}
+                    >
+                      <i className={`fas ${item.icon} w-5`}></i>
+                      <span>{t(`sidebar.${item.key}`)}</span>
+                    </Link>
+                  </li>
+                );
+              }
+
               return (
                 <li key={item.key}>
-                  <Link
-                    to={item.path}
-                    className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
-                    onClick={onClose}
+                  <button
+                    type="button"
+                    className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`}
+                    disabled
                   >
                     <i className={`fas ${item.icon} w-5`}></i>
                     <span>{t(`sidebar.${item.key}`)}</span>
-                  </Link>
+                  </button>
                 </li>
               );
             })}
@@ -89,20 +104,34 @@ export const ExchangeBottomNav: React.FC = () => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#161616] border-t border-gray-200 dark:border-gray-800 flex justify-around p-2 lg:hidden z-20">
       {EXCHANGE_NAV_ITEMS.map((item) => {
-        const isActive = location.pathname === item.path;
+        const isActive = item.path ? location.pathname === item.path : false;
         const baseClasses = 'flex flex-col items-center gap-1 flex-1 text-xs transition-colors';
         const activeClasses = 'text-yellow-400';
         const inactiveClasses = 'text-gray-500 hover:text-black dark:hover:text-white';
 
+        if (item.path) {
+          return (
+            <Link
+              to={item.path}
+              key={item.key}
+              className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+            >
+              <i className={`fas ${item.icon} text-lg`}></i>
+              <span>{t(`bottom_nav.${item.key}`)}</span>
+            </Link>
+          );
+        }
+
         return (
-          <Link
-            to={item.path}
+          <button
+            type="button"
             key={item.key}
-            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+            className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`}
+            disabled
           >
             <i className={`fas ${item.icon} text-lg`}></i>
             <span>{t(`bottom_nav.${item.key}`)}</span>
-          </Link>
+          </button>
         );
       })}
     </nav>
