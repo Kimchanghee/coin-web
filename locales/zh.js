@@ -43,6 +43,8 @@ export default {
     "daily_change": "24小时变化",
     "trading_volume_24h": "24h 交易量",
     "no_data": "无数据",
+    "estimated": "估算",
+    "live": "实时",
     "hundred_million": "亿",
     "trillion": "万亿",
     "billion": "B",

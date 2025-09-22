@@ -43,6 +43,8 @@ export default {
     "daily_change": "24h Change",
     "trading_volume_24h": "24h Volume",
     "no_data": "No data",
+    "estimated": "Est.",
+    "live": "Live",
     "hundred_million": "100M",
     "trillion": "T",
     "billion": "B",

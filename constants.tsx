@@ -34,6 +34,25 @@ export const EXCHANGE_NAV_ITEMS: ExchangeNavItem[] = [
   { key: 'listing_auto', icon: 'fa-robot', path: '/listing-auto' },
 ];
 
+export const EXCHANGE_NAV_TRANSLATIONS: Record<ExchangeNavKey, { primary: string; fallback: string }> = {
+  exchange_announcements: {
+    primary: 'bottom_nav.exchange_announcements',
+    fallback: 'sidebar.exchange_announcements'
+  },
+  exchange_arbitrage: {
+    primary: 'bottom_nav.exchange_arbitrage',
+    fallback: 'sidebar.exchange_arbitrage'
+  },
+  tradingview_auto: {
+    primary: 'bottom_nav.tradingview_auto',
+    fallback: 'sidebar.tradingview_auto'
+  },
+  listing_auto: {
+    primary: 'bottom_nav.listing_auto',
+    fallback: 'sidebar.listing_auto'
+  }
+};
+
 // 모든 거래소를 하나로 합친 리스트 (기준거래소용)
 export const ALL_EXCHANGES_FOR_COMPARISON = [
     { id: 'upbit_krw', nameKey: 'exchanges.upbit_krw' },

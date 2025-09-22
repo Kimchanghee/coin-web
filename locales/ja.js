@@ -43,6 +43,8 @@ export default {
     "daily_change": "前日比",
     "trading_volume_24h": "24h 取引高",
     "no_data": "データなし",
+    "estimated": "推定",
+    "live": "リアルタイム",
     "hundred_million": "億",
     "trillion": "兆",
     "billion": "B",

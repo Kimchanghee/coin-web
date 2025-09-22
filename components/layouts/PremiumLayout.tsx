@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { User } from '../../types';
-import { EXCHANGE_NAV_ITEMS } from '../../constants';
+import { EXCHANGE_NAV_ITEMS, EXCHANGE_NAV_TRANSLATIONS } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
 import LanguageSwitcher from '../LanguageSwitcher';
 import Clock from '../Clock';
@@ -87,6 +87,13 @@ const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, 
     const location = useLocation();
     const { t } = useTranslation();
 
+    const getNavLabel = (key: keyof typeof EXCHANGE_NAV_TRANSLATIONS) => {
+        const translationKeys = EXCHANGE_NAV_TRANSLATIONS[key];
+        return t(translationKeys.primary, {
+            defaultValue: t(translationKeys.fallback)
+        });
+    };
+
     const handleLogout = () => {
         onLogout();
         navigate('/');
@@ -118,7 +125,7 @@ const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, 
                                         onClick={onClose}
                                     >
                                         <i className={`fas ${item.icon} w-5`}></i>
-                                        <span>{t(`sidebar.${item.key}`)}</span>
+                                        <span>{getNavLabel(item.key)}</span>
                                     </Link>
                                 </li>
                             );
@@ -128,7 +135,7 @@ const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, 
                             <li key={item.key}>
                                 <button type="button" className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`} disabled>
                                     <i className={`fas ${item.icon} w-5`}></i>
-                                    <span>{t(`sidebar.${item.key}`)}</span>
+                                    <span>{getNavLabel(item.key)}</span>
                                 </button>
                             </li>
                         );

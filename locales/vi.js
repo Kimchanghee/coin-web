@@ -43,6 +43,8 @@ export default {
     "daily_change": "Thay đổi 24h",
     "trading_volume_24h": "Khối lượng 24h",
     "no_data": "Không có dữ liệu",
+    "estimated": "Ước tính",
+    "live": "Trực tiếp",
     "hundred_million": "trăm triệu",
     "trillion": "nghìn tỷ",
     "billion": "B",

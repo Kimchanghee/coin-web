@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP, EXCHANGE_NAV_ITEMS } from '../constants';
+import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP, EXCHANGE_NAV_ITEMS, EXCHANGE_NAV_TRANSLATIONS } from '../constants';
 import type { CoinData, User, ExtendedPriceUpdate } from '../types';
 import { allServices } from '../components/services/exchanges';
 import { useAuth } from '../context/AuthContext';
@@ -31,7 +31,7 @@ const convertCurrency = (amount: number, fromCurrency: string, toCurrency: Curre
 const formatCurrency = (amount: number, currency: CurrencyCode): string => {
   const currencyInfo = CURRENCY_RATES[currency];
   if (!currencyInfo) return amount.toLocaleString();
-  
+
   const symbol = currencyInfo.symbol;
   
   if (currency === 'VND') {
@@ -47,6 +47,41 @@ const formatCurrency = (amount: number, currency: CurrencyCode): string => {
   } else { // KRW
     return `${symbol}${Math.round(amount).toLocaleString('ko-KR')}`;
   }
+};
+
+const parseVolumeString = (volume: string | number | undefined): number => {
+    if (volume === undefined || volume === null) {
+        return 0;
+    }
+
+    const rawValue = String(volume).trim();
+
+    if (!rawValue) {
+        return 0;
+    }
+
+    let multiplier = 1;
+    const upperValue = rawValue.toUpperCase();
+
+    if (upperValue.includes('조') || upperValue.includes('T')) {
+        multiplier = 1_000_000_000_000;
+    } else if (upperValue.includes('억')) {
+        multiplier = 100_000_000;
+    } else if (upperValue.includes('B')) {
+        multiplier = 1_000_000_000;
+    } else if (upperValue.includes('M')) {
+        multiplier = 1_000_000;
+    } else if (upperValue.includes('K')) {
+        multiplier = 1_000;
+    }
+
+    const numericPortion = parseFloat(rawValue.replace(/[^0-9.-]/g, ''));
+
+    if (!Number.isFinite(numericPortion)) {
+        return 0;
+    }
+
+    return numericPortion * multiplier;
 };
 
 // Custom Select Component
@@ -168,6 +203,13 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
         navigate('/');
     }
 
+    const getNavLabel = (key: keyof typeof EXCHANGE_NAV_TRANSLATIONS) => {
+        const translationKeys = EXCHANGE_NAV_TRANSLATIONS[key];
+        return t(translationKeys.primary, {
+            defaultValue: t(translationKeys.fallback)
+        });
+    };
+
     const menuItems = EXCHANGE_NAV_ITEMS;
 
     return (
@@ -193,7 +235,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                                             onClick={onClose}
                                         >
                                             <i className={`fas ${item.icon} w-5`}></i>
-                                            <span>{t(`sidebar.${item.key}`)}</span>
+                                            <span>{getNavLabel(item.key)}</span>
                                         </Link>
                                     </li>
                                 );
@@ -207,7 +249,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                                         disabled
                                     >
                                         <i className={`fas ${item.icon} w-5`}></i>
-                                        <span>{t(`sidebar.${item.key}`)}</span>
+                                        <span>{getNavLabel(item.key)}</span>
                                     </button>
                                 </li>
                             );
@@ -251,6 +293,11 @@ const BottomNav: React.FC = () => {
                 const activeClasses = 'text-yellow-400';
                 const inactiveClasses = 'text-gray-500 hover:text-black dark:hover:text-white';
 
+                const translationKeys = EXCHANGE_NAV_TRANSLATIONS[item.key];
+                const label = t(translationKeys.primary, {
+                    defaultValue: t(translationKeys.fallback)
+                });
+
                 if (item.path) {
                     return (
                         <Link
@@ -259,7 +306,7 @@ const BottomNav: React.FC = () => {
                             className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
                         >
                             <i className={`fas ${item.icon} text-lg`}></i>
-                            <span>{t(`bottom_nav.${item.key}`)}</span>
+                            <span>{label}</span>
                         </Link>
                     );
                 }
@@ -272,7 +319,7 @@ const BottomNav: React.FC = () => {
                         disabled
                     >
                         <i className={`fas ${item.icon} text-lg`}></i>
-                        <span>{t(`bottom_nav.${item.key}`)}</span>
+                        <span>{label}</span>
                     </button>
                 );
             })}
@@ -287,6 +334,10 @@ interface ProcessedCoinData extends CoinData {
     priceDifferencePercentage: number;
     baseVolume: string;
     comparisonVolume: string;
+    baseVolumeValue: number;
+    comparisonVolumeValue: number;
+    baseVolumeEstimated: boolean;
+    comparisonVolumeEstimated: boolean;
 }
 
 // Format volume with proper localization
@@ -439,12 +490,50 @@ const CryptoPriceComparisonTable: React.FC<{
                                     <span className="text-xs sm:text-base">{formatPercentage(coin.change24h)}</span>
                                 </td>
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
-                                    <p className="font-medium text-xs sm:text-sm">{coin.baseVolume}</p>
-                                    <p className="text-[10px] text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
+                                    <p
+                                        className={`font-medium text-xs sm:text-sm ${
+                                            coin.baseVolumeEstimated ? 'text-gray-500 dark:text-gray-400' : ''
+                                        }`}
+                                    >
+                                        {coin.baseVolume}
+                                    </p>
+                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center justify-end gap-1">
+                                        <span
+                                            className={`inline-flex items-center gap-1 ${
+                                                coin.baseVolumeEstimated
+                                                    ? 'text-amber-500 dark:text-amber-300'
+                                                    : 'text-emerald-500 dark:text-emerald-300'
+                                            }`}
+                                        >
+                                            <i className={`fas ${coin.baseVolumeEstimated ? 'fa-clock' : 'fa-bolt'}`}></i>
+                                            {t(coin.baseVolumeEstimated ? 'table.estimated' : 'table.live')}
+                                        </span>
+                                        <span className="text-gray-300 dark:text-gray-600">•</span>
+                                        <span className="text-gray-500 dark:text-gray-400">{CURRENCY_RATES[currency]?.name || 'KRW'}</span>
+                                    </p>
                                 </td>
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200">
-                                    <p className="font-medium text-xs sm:text-sm">{coin.comparisonVolume}</p>
-                                    <p className="text-[10px] text-gray-500">{CURRENCY_RATES[currency]?.name || 'KRW'}</p>
+                                    <p
+                                        className={`font-medium text-xs sm:text-sm ${
+                                            coin.comparisonVolumeEstimated ? 'text-gray-500 dark:text-gray-400' : ''
+                                        }`}
+                                    >
+                                        {coin.comparisonVolume}
+                                    </p>
+                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center justify-end gap-1">
+                                        <span
+                                            className={`inline-flex items-center gap-1 ${
+                                                coin.comparisonVolumeEstimated
+                                                    ? 'text-amber-500 dark:text-amber-300'
+                                                    : 'text-emerald-500 dark:text-emerald-300'
+                                            }`}
+                                        >
+                                            <i className={`fas ${coin.comparisonVolumeEstimated ? 'fa-clock' : 'fa-bolt'}`}></i>
+                                            {t(coin.comparisonVolumeEstimated ? 'table.estimated' : 'table.live')}
+                                        </span>
+                                        <span className="text-gray-300 dark:text-gray-600">•</span>
+                                        <span className="text-gray-500 dark:text-gray-400">{CURRENCY_RATES[currency]?.name || 'KRW'}</span>
+                                    </p>
                                 </td>
                             </tr>
                         ))}
@@ -691,22 +780,10 @@ const HomePage: React.FC = () => {
     const processedCoinData = useMemo(() => {
         const noVolumeLabel = t('table.no_data');
 
-        const parseVolume = (volumeStr: string): number => {
-            const valueStr = String(volumeStr).replace(/,/g, '');
-            let multiplier = 1;
-            if (valueStr.includes('조') || valueStr.includes('T')) {
-                multiplier = 1000000000000;
-            } else if (valueStr.includes('억') || valueStr.includes('B')) {
-                multiplier = 100000000;
-            }
-            const num = parseFloat(valueStr);
-            return isNaN(num) ? 0 : num * multiplier;
-        };
-        
         console.log('🔄 Processing coin data...');
         console.log('📊 Current prices:', Object.keys(allPrices).length);
         console.log('📈 Extended data:', Object.keys(allExtendedData).length);
-        
+
         const liveData = MOCK_COIN_DATA
             .map(baseCoin => {
                 const basePriceKey = `${selectedBase.id}-${baseCoin.symbol}`;
@@ -717,7 +794,70 @@ const HomePage: React.FC = () => {
                 
                 const baseExtData = allExtendedData[basePriceKey] || {};
                 const comparisonExtData = allExtendedData[comparisonPriceKey] || {};
-                
+
+                const fallbackDomesticVolumeKrw = parseVolumeString(baseCoin.volume);
+                const assumedCoinAmount =
+                    baseCoin.domesticPrice > 0
+                        ? fallbackDomesticVolumeKrw / baseCoin.domesticPrice
+                        : 0;
+                const overseasPriceKrw = baseCoin.overseasPrice * usdKrw;
+                const fallbackOverseasVolumeKrw =
+                    assumedCoinAmount > 0 && overseasPriceKrw > 0
+                        ? assumedCoinAmount * overseasPriceKrw
+                        : fallbackDomesticVolumeKrw;
+
+                const fallbackSources = {
+                    base: selectedBase.id.includes('krw')
+                        ? fallbackDomesticVolumeKrw > 0
+                            ? { value: fallbackDomesticVolumeKrw, currency: 'KRW' as CurrencyCode }
+                            : undefined
+                        : fallbackOverseasVolumeKrw > 0
+                            ? { value: fallbackOverseasVolumeKrw / usdKrw, currency: 'USD' as CurrencyCode }
+                            : undefined,
+                    comparison: selectedComparison.id.includes('krw')
+                        ? fallbackDomesticVolumeKrw > 0
+                            ? { value: fallbackDomesticVolumeKrw, currency: 'KRW' as CurrencyCode }
+                            : undefined
+                        : fallbackOverseasVolumeKrw > 0
+                            ? { value: fallbackOverseasVolumeKrw / usdKrw, currency: 'USD' as CurrencyCode }
+                            : undefined
+                } as const;
+
+                const getVolumeDisplay = (
+                    liveValue: number | undefined,
+                    liveCurrency: CurrencyCode,
+                    fallback: { value: number; currency: CurrencyCode } | undefined
+                ): { formatted: string; numeric: number; isEstimated: boolean } => {
+                    if (typeof liveValue === 'number' && liveValue > 0) {
+                        const converted = convertCurrency(liveValue, liveCurrency, currentCurrency, usdKrw);
+                        return {
+                            formatted: formatVolume(converted, currentCurrency, t),
+                            numeric: converted,
+                            isEstimated: false
+                        };
+                    }
+
+                    if (fallback && fallback.value > 0) {
+                        const convertedFallback = convertCurrency(
+                            fallback.value,
+                            fallback.currency,
+                            currentCurrency,
+                            usdKrw
+                        );
+                        return {
+                            formatted: formatVolume(convertedFallback, currentCurrency, t),
+                            numeric: convertedFallback,
+                            isEstimated: true
+                        };
+                    }
+
+                    return {
+                        formatted: noVolumeLabel,
+                        numeric: 0,
+                        isEstimated: true
+                    };
+                };
+
                 console.log(`💰 ${baseCoin.symbol}:`, {
                     basePrice: rawBasePrice,
                     comparisonPrice: rawComparisonPrice,
@@ -754,16 +894,16 @@ const HomePage: React.FC = () => {
                     console.log(`📈 Using real change24h for ${baseCoin.symbol}: ${change24h}%`);
                 }
                 
-                const baseVolumeValue = baseExtData.volume24h;
-                const comparisonVolumeValue = comparisonExtData.volume24h;
-
-                const baseVolume = (typeof baseVolumeValue === 'number' && baseVolumeValue > 0)
-                    ? formatVolume(convertCurrency(baseVolumeValue, baseCurrencyType, currentCurrency, usdKrw), currentCurrency, t)
-                    : noVolumeLabel;
-
-                const comparisonVolume = (typeof comparisonVolumeValue === 'number' && comparisonVolumeValue > 0)
-                    ? formatVolume(convertCurrency(comparisonVolumeValue, comparisonCurrencyType, currentCurrency, usdKrw), currentCurrency, t)
-                    : noVolumeLabel;
+                const baseVolumeData = getVolumeDisplay(
+                    baseExtData.volume24h,
+                    baseCurrencyType,
+                    fallbackSources.base
+                );
+                const comparisonVolumeData = getVolumeDisplay(
+                    comparisonExtData.volume24h,
+                    comparisonCurrencyType,
+                    fallbackSources.comparison
+                );
 
                 return {
                     ...baseCoin,
@@ -772,14 +912,18 @@ const HomePage: React.FC = () => {
                     priceDifference,
                     priceDifferencePercentage,
                     change24h,
-                    baseVolume,
-                    comparisonVolume,
+                    baseVolume: baseVolumeData.formatted,
+                    comparisonVolume: comparisonVolumeData.formatted,
+                    baseVolumeValue: baseVolumeData.numeric,
+                    comparisonVolumeValue: comparisonVolumeData.numeric,
+                    baseVolumeEstimated: baseVolumeData.isEstimated,
+                    comparisonVolumeEstimated: comparisonVolumeData.isEstimated,
                     domesticPrice: basePrice,
                     overseasPrice: comparisonPrice,
                     kimchiPremium: priceDifferencePercentage,
-                    volume: baseVolume,
-                    domesticVolume: baseVolume,
-                    overseasVolume: comparisonVolume,
+                    volume: baseVolumeData.formatted,
+                    domesticVolume: baseVolumeData.formatted,
+                    overseasVolume: comparisonVolumeData.formatted,
                 } as ProcessedCoinData;
             })
             .filter((coin): coin is ProcessedCoinData => coin !== null);
@@ -792,11 +936,11 @@ const HomePage: React.FC = () => {
             let bValue: string | number;
 
             if (key === 'baseVolume') {
-                aValue = parseVolume(a.baseVolume);
-                bValue = parseVolume(b.baseVolume);
+                aValue = a.baseVolumeValue;
+                bValue = b.baseVolumeValue;
             } else if (key === 'comparisonVolume') {
-                aValue = parseVolume(a.comparisonVolume);
-                bValue = parseVolume(b.comparisonVolume);
+                aValue = a.comparisonVolumeValue;
+                bValue = b.comparisonVolumeValue;
             } else if (key === 'name') {
                 aValue = a.names[i18n.language] || a.names['en'];
                 bValue = b.names[i18n.language] || b.names['en'];

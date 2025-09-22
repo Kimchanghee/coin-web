@@ -43,6 +43,8 @@ export default {
     "daily_change": "เปลี่ยนแปลง 24 ชม.",
     "trading_volume_24h": "ปริมาณการซื้อขาย 24 ชม.",
     "no_data": "ไม่มีข้อมูล",
+    "estimated": "ประมาณ",
+    "live": "สด",
     "hundred_million": "ร้อยล้าน",
     "trillion": "ล้านล้าน",
     "billion": "B",

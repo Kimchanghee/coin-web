@@ -43,6 +43,8 @@ export default {
     "daily_change": "전일대비",
     "trading_volume_24h": "24h 거래대금",
     "no_data": "데이터 없음",
+    "estimated": "추정",
+    "live": "실시간",
     "hundred_million": "억",
     "trillion": "조",
     "billion": "B",
