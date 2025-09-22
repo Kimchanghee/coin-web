@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import PremiumLayout from '../components/layouts/PremiumLayout';
-import { EXCHANGE_NAV_TRANSLATIONS } from '../constants';
+import { resolveExchangeNavLabel } from '../constants';
 
 type FeatureKey = 'exchange_arbitrage' | 'tradingview_auto' | 'listing_auto';
 
@@ -18,10 +18,7 @@ const featureIcons: Record<FeatureKey, string> = {
 const FeaturePageTemplate: React.FC<FeaturePageTemplateProps> = ({ featureKey }) => {
     const { t } = useTranslation();
     const icon = featureIcons[featureKey];
-    const translationKeys = EXCHANGE_NAV_TRANSLATIONS[featureKey];
-    const featureLabel = t(translationKeys.primary, {
-        defaultValue: t(translationKeys.fallback)
-    });
+    const featureLabel = resolveExchangeNavLabel(t, featureKey);
     const highlightKeys = [0, 1, 2].map(index => `feature_pages.${featureKey}.points.${index}`);
 
     return (
