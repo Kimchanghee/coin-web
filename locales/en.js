@@ -148,36 +148,5 @@ export default {
     "cta_mobile": "JOIN NOW",
     "bonus_pc": "⚡ LIMITED OFFER ⚡",
     "bonus_mobile": "LIMITED"
-  },
-  "feature_pages": {
-    "coming_soon": "This feature is in development and will be available soon.",
-    "notify_me": "Notify Me",
-    "early_access_title": "Request Early Access",
-    "early_access_description": "Leave your email and we'll let you know as soon as the feature launches.",
-    "email_placeholder": "Enter your email address",
-    "exchange_arbitrage": {
-      "intro": "Analyze real-time price gaps between exchanges to capture the best arbitrage opportunities.",
-      "points": [
-        "Track domestic and global exchange spreads in real time.",
-        "Get automatically calculated spreads and projected returns.",
-        "Stay informed with customized alerts so you never miss a trade."
-      ]
-    },
-    "tradingview_auto": {
-      "intro": "Turn your TradingView strategy signals into automated orders.",
-      "points": [
-        "Connect TradingView alerts to a variety of trading strategies.",
-        "Securely link to major exchanges through API key integration.",
-        "Review execution logs and performance reports for each strategy."
-      ]
-    },
-    "listing_auto": {
-      "intro": "Detect listing announcements instantly and link them with automated trading strategies.",
-      "points": [
-        "Monitor listing notices from major exchanges every second.",
-        "Apply custom filters to focus on the coins that matter to you.",
-        "Use automated buy/sell simulations to reduce risk."
-      ]
-    }
   }
-};
+}

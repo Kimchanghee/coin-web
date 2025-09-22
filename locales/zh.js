@@ -148,36 +148,5 @@ export default {
     "cta_mobile": "立即加入",
     "bonus_pc": "⚡ 限时优惠 ⚡",
     "bonus_mobile": "限时"
-  },
-  "feature_pages": {
-    "coming_soon": "该功能正在开发中，很快就会与您见面。",
-    "notify_me": "通知我",
-    "early_access_title": "申请抢先体验",
-    "early_access_description": "留下您的邮箱，我们会在功能上线时第一时间通知您。",
-    "email_placeholder": "请输入您的邮箱地址",
-    "exchange_arbitrage": {
-      "intro": "实时分析各交易所之间的价差，捕捉最佳套利机会。",
-      "points": [
-        "实时追踪国内外交易所的价差。",
-        "提供自动计算的价差和预期收益率。",
-        "通过自定义提醒不遗漏任何机会。"
-      ]
-    },
-    "tradingview_auto": {
-      "intro": "将 TradingView 策略信号转换为自动下单。",
-      "points": [
-        "把 TradingView 提醒连接到多种交易策略。",
-        "通过 API 密钥与主流交易所安全对接。",
-        "查看每个策略的执行日志和绩效报告。"
-      ]
-    },
-    "listing_auto": {
-      "intro": "即时捕捉上币公告，并与自动交易策略联动。",
-      "points": [
-        "按秒监控主流交易所的上币公告。",
-        "支持自定义筛选，只关注感兴趣的币种。",
-        "利用自动买卖模拟降低风险。"
-      ]
-    }
   }
-};
+}

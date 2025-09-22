@@ -44,7 +44,7 @@
     "hundred_million": "trăm triệu",
     "trillion": "nghìn tỷ",
     "billion": "B",
-    "million": "M",
+    "million": "M", 
     "thousand": "K"
   },
   "login": {
@@ -146,36 +146,5 @@
     "cta_mobile": "THAM GIA",
     "bonus_pc": "⚡ ƯU ĐÃI GIỚI HẠN ⚡",
     "bonus_mobile": "GIỚI HẠN"
-  },
-  "feature_pages": {
-    "coming_soon": "Tính năng này đang được phát triển và sẽ sớm ra mắt.",
-    "notify_me": "Thông báo cho tôi",
-    "early_access_title": "Đăng ký truy cập sớm",
-    "early_access_description": "Để lại email của bạn và chúng tôi sẽ thông báo ngay khi tính năng ra mắt.",
-    "email_placeholder": "Nhập địa chỉ email của bạn",
-    "exchange_arbitrage": {
-      "intro": "Phân tích chênh lệch giá theo thời gian thực giữa các sàn để nắm bắt cơ hội arbitrage tốt nhất.",
-      "points": [
-        "Theo dõi chênh lệch giữa các sàn trong nước và quốc tế theo thời gian thực.",
-        "Cung cấp mức chênh lệch và lợi nhuận dự kiến được tính toán tự động.",
-        "Nhận cảnh báo tùy chỉnh để không bỏ lỡ bất kỳ cơ hội nào."
-      ]
-    },
-    "tradingview_auto": {
-      "intro": "Biến tín hiệu chiến lược từ TradingView thành lệnh giao dịch tự động.",
-      "points": [
-        "Kết nối cảnh báo TradingView với nhiều chiến lược giao dịch khác nhau.",
-        "Liên kết an toàn tới các sàn lớn thông qua tích hợp API key.",
-        "Xem nhật ký thực thi và báo cáo hiệu suất cho từng chiến lược."
-      ]
-    },
-    "listing_auto": {
-      "intro": "Phát hiện thông báo niêm yết ngay lập tức và liên kết với chiến lược giao dịch tự động.",
-      "points": [
-        "Giám sát thông báo niêm yết từ các sàn lớn theo từng giây.",
-        "Hỗ trợ bộ lọc tùy chỉnh để tập trung vào những đồng coin bạn quan tâm.",
-        "Giảm rủi ro nhờ mô phỏng mua/bán tự động."
-      ]
-    }
   }
 }
