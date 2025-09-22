@@ -939,23 +939,33 @@ const HomePage: React.FC = () => {
                     comparisonExtData
                 });
                 
-                if (rawBasePrice === undefined && rawComparisonPrice === undefined) {
-                    return null;
-                }
-                
-                if (rawBasePrice === undefined || rawComparisonPrice === undefined) {
+                const baseCurrencyType = selectedBase.id.includes('krw') ? 'KRW' : 'USD';
+                const comparisonCurrencyType = selectedComparison.id.includes('krw') ? 'KRW' : 'USD';
+                const fallbackBasePrice = selectedBase.id.includes('krw')
+                    ? baseCoin.domesticPrice
+                    : baseCoin.overseasPrice;
+                const fallbackComparisonPrice = selectedComparison.id.includes('krw')
+                    ? baseCoin.domesticPrice
+                    : baseCoin.overseasPrice;
+
+                const basePriceSource =
+                    typeof rawBasePrice === 'number' && rawBasePrice > 0 ? rawBasePrice : fallbackBasePrice;
+                const comparisonPriceSource =
+                    typeof rawComparisonPrice === 'number' && rawComparisonPrice > 0
+                        ? rawComparisonPrice
+                        : fallbackComparisonPrice;
+
+                if (!basePriceSource || !comparisonPriceSource) {
                     return null;
                 }
 
-                if (rawBasePrice <= 0 || rawComparisonPrice <= 0) {
-                    return null;
-                }
-                
-                const baseCurrencyType = selectedBase.id.includes('krw') ? 'KRW' : 'USD';
-                const comparisonCurrencyType = selectedComparison.id.includes('krw') ? 'KRW' : 'USD';
-                
-                const basePrice = convertCurrency(rawBasePrice, baseCurrencyType, currentCurrency, usdKrw);
-                const comparisonPrice = convertCurrency(rawComparisonPrice, comparisonCurrencyType, currentCurrency, usdKrw);
+                const basePrice = convertCurrency(basePriceSource, baseCurrencyType, currentCurrency, usdKrw);
+                const comparisonPrice = convertCurrency(
+                    comparisonPriceSource,
+                    comparisonCurrencyType,
+                    currentCurrency,
+                    usdKrw
+                );
                 
                 const priceDifference = basePrice - comparisonPrice;
                 const priceDifferencePercentage = comparisonPrice > 0 
