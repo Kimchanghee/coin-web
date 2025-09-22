@@ -50,7 +50,7 @@ export interface CoinData {
   domesticPrice: number;
   overseasPrice: number;
   kimchiPremium: number;
-  change24h: number;
+  change24h: number | null;
   volume: string;
 }
 

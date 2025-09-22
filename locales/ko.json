@@ -27,6 +27,18 @@
     "tradingview_auto": "트레이딩뷰 자동 거래",
     "listing_auto": "상장 공지 자동 거래"
   },
+  "feature_page": {
+    "coming_soon": "곧 제공될 예정입니다",
+    "description": "{{feature}} 기능을 열심히 준비하고 있습니다. 조금만 기다려 주세요!",
+    "progress_label": "현재 진행 상황",
+    "progress_value": "개발이 활발히 진행 중",
+    "eta_label": "다음 마일스톤",
+    "eta_value": "2분기 베타 공개 예정",
+    "update_label": "최근 업데이트",
+    "update_value": "이번 주에 로드맵을 갱신했어요",
+    "cta_dashboard": "대시보드로 돌아가기",
+    "cta_subscribe": "얼리 액세스 소식 받기"
+  },
   "home": {
     "title": "김치 프리미엄",
     "subtitle": "국내와 해외 거래소의 가격차이를 확인하세요.",

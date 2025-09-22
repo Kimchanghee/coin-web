@@ -28,6 +28,18 @@
     "tradingview_auto": "Giao dịch tự động TradingView",
     "listing_auto": "Giao dịch tự động khi niêm yết"
   },
+  "feature_page": {
+    "coming_soon": "Sắp ra mắt",
+    "description": "Chúng tôi đang nỗ lực hoàn thiện {{feature}}. Hãy chờ đón nhé!",
+    "progress_label": "Trạng thái hiện tại",
+    "progress_value": "Đang phát triển tích cực",
+    "eta_label": "Cột mốc tiếp theo",
+    "eta_value": "Dự kiến ra mắt bản beta trong Quý 2",
+    "update_label": "Cập nhật gần đây",
+    "update_value": "Lộ trình đã được cập nhật trong tuần này",
+    "cta_dashboard": "Quay lại bảng điều khiển",
+    "cta_subscribe": "Nhận thông báo sớm"
+  },
   "home": {
     "title": "Chênh lệch giá Kimchi",
     "subtitle": "Kiểm tra chênh lệch giá giữa các sàn giao dịch trong nước và quốc tế.",

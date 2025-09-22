@@ -27,6 +27,18 @@
     "tradingview_auto": "TradingView自動取引",
     "listing_auto": "上場通知自動取引"
   },
+  "feature_page": {
+    "coming_soon": "まもなく公開予定です",
+    "description": "{{feature}} 機能を鋭意開発中です。公開まで今しばらくお待ちください。",
+    "progress_label": "現在の進捗",
+    "progress_value": "開発を進めています",
+    "eta_label": "次のマイルストーン",
+    "eta_value": "第2四半期にベータ公開予定",
+    "update_label": "最新アップデート",
+    "update_value": "今週ロードマップを更新しました",
+    "cta_dashboard": "ダッシュボードに戻る",
+    "cta_subscribe": "最新情報を受け取る"
+  },
   "home": {
     "title": "キムチプレミアム",
     "subtitle": "国内外の取引所の価格差を確認してください。",

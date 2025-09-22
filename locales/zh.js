@@ -28,6 +28,18 @@ export default {
     "tradingview_auto": "TradingView 自动交易",
     "listing_auto": "上币公告自动交易"
   },
+  "feature_page": {
+    "coming_soon": "即将上线",
+    "description": "我们正在努力开发 {{feature}} 功能，敬请期待！",
+    "progress_label": "当前进度",
+    "progress_value": "开发进行中",
+    "eta_label": "下一个里程碑",
+    "eta_value": "计划在第二季度推出测试版",
+    "update_label": "最新更新",
+    "update_value": "本周已刷新路线图",
+    "cta_dashboard": "返回仪表板",
+    "cta_subscribe": "订阅抢先消息"
+  },
   "home": {
     "title": "泡菜溢价",
     "subtitle": "查看国内外交易所的价格差异。",

@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP, EXCHANGE_NAV_ITEMS } from '../constants';
+import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP } from '../constants';
 import type { CoinData, User, ExtendedPriceUpdate } from '../types';
 import { allServices } from '../components/services/exchanges';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import Clock from '../components/Clock';
 import ThemeToggle from '../components/ThemeToggle';
+import { ExchangeSidebar, ExchangeBottomNav } from '../components/navigation/ExchangeNavigation';
 
 type ExchangeOption = { id: string; name: string };
 type CurrencyCode = 'KRW' | 'USD' | 'JPY' | 'CNY' | 'THB' | 'VND';
@@ -156,129 +157,6 @@ const Header: React.FC<{ onMenuClick: () => void; user: User | null, usdKrw: num
     );
 };
 
-// Sidebar Component
-const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { t } = useTranslation();
-
-    const handleLogout = () => {
-        logout();
-        navigate('/');
-    }
-
-    const menuItems = EXCHANGE_NAV_ITEMS;
-
-    return (
-        <>
-            <aside className={`fixed z-40 inset-y-0 left-0 bg-gray-50 dark:bg-[#111111] w-64 p-4 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 lg:w-56 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col`}>
-                <nav className="flex flex-col flex-grow">
-                    <div className="mb-8">
-                         <h2 className="text-lg font-semibold text-black dark:text-white">{t('sidebar.premium_header')}</h2>
-                    </div>
-                    <ul className="space-y-4">
-                        {menuItems.map(item => {
-                            const isActive = item.path ? location.pathname === item.path : false;
-                            const baseClasses = 'flex items-center gap-3 p-2 rounded-md transition-colors';
-                            const activeClasses = 'bg-gray-200 dark:bg-gray-800 text-black dark:text-white';
-                            const inactiveClasses = 'hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400';
-
-                            if (item.path) {
-                                return (
-                                    <li key={item.key}>
-                                        <Link
-                                            to={item.path}
-                                            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
-                                            onClick={onClose}
-                                        >
-                                            <i className={`fas ${item.icon} w-5`}></i>
-                                            <span>{t(`sidebar.${item.key}`)}</span>
-                                        </Link>
-                                    </li>
-                                );
-                            }
-
-                            return (
-                                <li key={item.key}>
-                                    <button
-                                        type="button"
-                                        className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`}
-                                        disabled
-                                    >
-                                        <i className={`fas ${item.icon} w-5`}></i>
-                                        <span>{t(`sidebar.${item.key}`)}</span>
-                                    </button>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </nav>
-                 <div className="mt-auto border-t border-gray-200 dark:border-gray-800 pt-4">
-                    {user ? (
-                        <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{t('sidebar.logged_in_as')}</p>
-                            <p className="font-semibold text-black dark:text-white truncate">{user.email}</p>
-                            <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 mt-4 p-2 rounded-md bg-red-600/20 text-red-400 hover:bg-red-600/40 transition-colors">
-                                <i className="fas fa-sign-out-alt"></i>
-                                <span>{t('auth.logout')}</span>
-                            </button>
-                        </div>
-                    ) : (
-                        <Link to="/login" className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400">
-                             <i className="fas fa-sign-in-alt w-5"></i>
-                             <span>{t('sidebar.login_required')}</span>
-                        </Link>
-                    )}
-                </div>
-            </aside>
-            {isOpen && <div onClick={onClose} className="fixed inset-0 bg-black/60 z-30 lg:hidden"></div>}
-        </>
-    );
-};
-
-// Bottom Navigation Component
-const BottomNav: React.FC = () => {
-    const { t } = useTranslation();
-    const location = useLocation();
-    const navItems = EXCHANGE_NAV_ITEMS;
-    
-    return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#161616] border-t border-gray-200 dark:border-gray-800 flex justify-around p-2 lg:hidden z-20">
-            {navItems.map(item => {
-                const isActive = item.path ? location.pathname === item.path : false;
-                const baseClasses = 'flex flex-col items-center gap-1 flex-1 text-xs transition-colors';
-                const activeClasses = 'text-yellow-400';
-                const inactiveClasses = 'text-gray-500 hover:text-black dark:hover:text-white';
-
-                if (item.path) {
-                    return (
-                        <Link
-                            to={item.path}
-                            key={item.key}
-                            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
-                        >
-                            <i className={`fas ${item.icon} text-lg`}></i>
-                            <span>{t(`bottom_nav.${item.key}`)}</span>
-                        </Link>
-                    );
-                }
-
-                return (
-                    <button
-                        type="button"
-                        key={item.key}
-                        className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`}
-                        disabled
-                    >
-                        <i className={`fas ${item.icon} text-lg`}></i>
-                        <span>{t(`bottom_nav.${item.key}`)}</span>
-                    </button>
-                );
-            })}
-        </nav>
-    );
-};
 // Enhanced CoinData type for processed data
 interface ProcessedCoinData extends CoinData {
     basePrice: number;
@@ -287,6 +165,7 @@ interface ProcessedCoinData extends CoinData {
     priceDifferencePercentage: number;
     baseVolume: string;
     comparisonVolume: string;
+    change24h: number | null;
 }
 
 // Format volume with proper localization
@@ -335,8 +214,24 @@ const CryptoPriceComparisonTable: React.FC<{
     currency: CurrencyCode;
 }> = ({ data, onSort, sortConfig, baseExchangeName, comparisonExchangeName, currency }) => {
     const { t, i18n } = useTranslation();
-    const formatPercentage = (num: number) => `${num.toFixed(2)}%`;
-    const getTextColor = (num: number) => num > 0 ? 'text-green-500' : num < 0 ? 'text-red-500' : 'text-gray-800 dark:text-gray-300';
+    const formatPercentage = (num: number | null) => {
+        if (typeof num !== 'number' || Number.isNaN(num)) {
+            return '—';
+        }
+        return `${num.toFixed(2)}%`;
+    };
+    const getTextColor = (num: number | null) => {
+        if (typeof num !== 'number' || Number.isNaN(num)) {
+            return 'text-gray-400 dark:text-gray-500';
+        }
+        if (num > 0) {
+            return 'text-green-500';
+        }
+        if (num < 0) {
+            return 'text-red-500';
+        }
+        return 'text-gray-800 dark:text-gray-300';
+    };
 
     const getSortIcon = (key: SortKey) => {
         if (sortConfig.key !== key) {
@@ -748,8 +643,8 @@ const HomePage: React.FC = () => {
                     ? (priceDifference / comparisonPrice) * 100
                     : 0;
                 
-                let change24h = baseCoin.change24h ?? 0;
-                if (baseExtData.change24h !== undefined) {
+                let change24h: number | null = null;
+                if (typeof baseExtData.change24h === 'number' && !Number.isNaN(baseExtData.change24h)) {
                     change24h = baseExtData.change24h;
                     console.log(`📈 Using real change24h for ${baseCoin.symbol}: ${change24h}%`);
                 }
@@ -788,28 +683,53 @@ const HomePage: React.FC = () => {
 
         liveData.sort((a, b) => {
             const { key, direction } = sortConfig;
-            let aValue: string | number;
-            let bValue: string | number;
-
-            if (key === 'baseVolume') {
-                aValue = parseVolume(a.baseVolume);
-                bValue = parseVolume(b.baseVolume);
-            } else if (key === 'comparisonVolume') {
-                aValue = parseVolume(a.comparisonVolume);
-                bValue = parseVolume(b.comparisonVolume);
-            } else if (key === 'name') {
-                aValue = a.names[i18n.language] || a.names['en'];
-                bValue = b.names[i18n.language] || b.names['en'];
-            } else {
-                aValue = a[key as keyof ProcessedCoinData] as number;
-                bValue = b[key as keyof ProcessedCoinData] as number;
-            }
-            
             const dir = direction === 'asc' ? 1 : -1;
 
-            if (typeof aValue === 'string' && typeof bValue === 'string') {
+            if (key === 'baseVolume') {
+                const aValue = parseVolume(a.baseVolume);
+                const bValue = parseVolume(b.baseVolume);
+                if (aValue < bValue) {
+                    return -1 * dir;
+                }
+                if (aValue > bValue) {
+                    return 1 * dir;
+                }
+                return 0;
+            }
+
+            if (key === 'comparisonVolume') {
+                const aValue = parseVolume(a.comparisonVolume);
+                const bValue = parseVolume(b.comparisonVolume);
+                if (aValue < bValue) {
+                    return -1 * dir;
+                }
+                if (aValue > bValue) {
+                    return 1 * dir;
+                }
+                return 0;
+            }
+
+            if (key === 'name') {
+                const aValue = a.names[i18n.language] || a.names['en'];
+                const bValue = b.names[i18n.language] || b.names['en'];
                 return aValue.localeCompare(bValue) * dir;
             }
+
+            if (key === 'change24h') {
+                const fallback = direction === 'asc' ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+                const aValue = (typeof a.change24h === 'number' && Number.isFinite(a.change24h)) ? a.change24h : fallback;
+                const bValue = (typeof b.change24h === 'number' && Number.isFinite(b.change24h)) ? b.change24h : fallback;
+                if (aValue < bValue) {
+                    return -1 * dir;
+                }
+                if (aValue > bValue) {
+                    return 1 * dir;
+                }
+                return 0;
+            }
+
+            const aValue = a[key as keyof ProcessedCoinData] as number;
+            const bValue = b[key as keyof ProcessedCoinData] as number;
             if (aValue < bValue) {
                 return -1 * dir;
             }
@@ -829,7 +749,7 @@ const HomePage: React.FC = () => {
     return (
         <div className="bg-gray-50 dark:bg-black min-h-screen text-gray-600 dark:text-gray-300 font-sans">
             <div className="flex">
-                <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
+                <ExchangeSidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
                 <div className="flex-1 flex flex-col min-w-0">
                     <Header onMenuClick={() => setSidebarOpen(true)} user={user} usdKrw={usdKrw} />
                     <main className="p-2 sm:p-4 lg:p-6 pb-20 lg:pb-6">
@@ -879,7 +799,7 @@ const HomePage: React.FC = () => {
                     </main>
                 </div>
             </div>
-            <BottomNav />
+            <ExchangeBottomNav />
         </div>
     );
 };
