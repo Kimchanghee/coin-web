@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { MOCK_COIN_DATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP, EXCHANGE_NAV_ITEMS, EXCHANGE_NAV_TRANSLATIONS } from '../constants';
 import type { CoinData, User, ExtendedPriceUpdate } from '../types';
 import { allServices } from '../components/services/exchanges';
@@ -82,6 +83,13 @@ const parseVolumeString = (volume: string | number | undefined): number => {
     }
 
     return numericPortion * multiplier;
+};
+
+const translateNavLabel = (t: TFunction, key: keyof typeof EXCHANGE_NAV_TRANSLATIONS) => {
+    const translationKeys = EXCHANGE_NAV_TRANSLATIONS[key];
+    return t(translationKeys.primary, {
+        defaultValue: t(translationKeys.fallback)
+    });
 };
 
 // Custom Select Component
@@ -203,13 +211,6 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
         navigate('/');
     }
 
-    const getNavLabel = (key: keyof typeof EXCHANGE_NAV_TRANSLATIONS) => {
-        const translationKeys = EXCHANGE_NAV_TRANSLATIONS[key];
-        return t(translationKeys.primary, {
-            defaultValue: t(translationKeys.fallback)
-        });
-    };
-
     const menuItems = EXCHANGE_NAV_ITEMS;
 
     return (
@@ -235,7 +236,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                                             onClick={onClose}
                                         >
                                             <i className={`fas ${item.icon} w-5`}></i>
-                                            <span>{getNavLabel(item.key)}</span>
+                                            <span>{translateNavLabel(t, item.key)}</span>
                                         </Link>
                                     </li>
                                 );
@@ -249,7 +250,7 @@ const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, o
                                         disabled
                                     >
                                         <i className={`fas ${item.icon} w-5`}></i>
-                                        <span>{getNavLabel(item.key)}</span>
+                                        <span>{translateNavLabel(t, item.key)}</span>
                                     </button>
                                 </li>
                             );
@@ -293,11 +294,6 @@ const BottomNav: React.FC = () => {
                 const activeClasses = 'text-yellow-400';
                 const inactiveClasses = 'text-gray-500 hover:text-black dark:hover:text-white';
 
-                const translationKeys = EXCHANGE_NAV_TRANSLATIONS[item.key];
-                const label = t(translationKeys.primary, {
-                    defaultValue: t(translationKeys.fallback)
-                });
-
                 if (item.path) {
                     return (
                         <Link
@@ -306,7 +302,7 @@ const BottomNav: React.FC = () => {
                             className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
                         >
                             <i className={`fas ${item.icon} text-lg`}></i>
-                            <span>{label}</span>
+                            <span>{translateNavLabel(t, item.key)}</span>
                         </Link>
                     );
                 }
@@ -319,7 +315,7 @@ const BottomNav: React.FC = () => {
                         disabled
                     >
                         <i className={`fas ${item.icon} text-lg`}></i>
-                        <span>{label}</span>
+                        <span>{translateNavLabel(t, item.key)}</span>
                     </button>
                 );
             })}
