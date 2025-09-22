@@ -315,6 +315,7 @@ const BottomNav: React.FC = () => {
         </nav>
     );
 };
+
 // Enhanced CoinData type for processed data
 interface ProcessedCoinData extends CoinData {
     basePrice: number;
