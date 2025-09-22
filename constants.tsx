@@ -15,7 +15,19 @@ export const TRACKED_COINS: CoinId[] = ['BTC', 'ETH', 'SOL'];
 
 export const COIN_DISPLAY_LIMIT = 30;
 
-export const EXCHANGE_NAV_ITEMS = [
+export type ExchangeNavKey =
+  | 'exchange_announcements'
+  | 'exchange_arbitrage'
+  | 'tradingview_auto'
+  | 'listing_auto';
+
+export type ExchangeNavItem = {
+  key: ExchangeNavKey;
+  icon: string;
+  path?: string;
+};
+
+export const EXCHANGE_NAV_ITEMS: ExchangeNavItem[] = [
   { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
   { key: 'exchange_arbitrage', icon: 'fa-scale-balanced' },
   { key: 'tradingview_auto', icon: 'fa-chart-line' },
