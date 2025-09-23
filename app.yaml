@@ -1,0 +1,29 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: coin-web
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        # 최대 인스턴스 수
+        autoscaling.knative.dev/maxScale: "100"
+        # 최소 인스턴스 수 (콜드 스타트 방지)
+        autoscaling.knative.dev/minScale: "1"
+    spec:
+      containerConcurrency: 1000
+      timeoutSeconds: 300
+      containers:
+      - image: gcr.io/teamym-coinchart/coin-web
+        ports:
+        - name: http1
+          containerPort: 8080
+        env:
+        - name: REACT_APP_WS_URL
+          value: "wss://api.upbit.com/websocket/v1"
+        resources:
+          limits:
+            cpu: "2"
+            memory: "2Gi"
