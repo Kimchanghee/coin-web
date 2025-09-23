@@ -12,7 +12,7 @@ RUN npm install
 # 소스 코드 복사
 COPY . .
 
-# React 앱 빌드 (build/ 폴더 생성됨)
+# React 앱 빌드
 RUN npm run build
 
 # Production stage
@@ -20,14 +20,18 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# 빌드된 정적 파일 복사 (dist가 아닌 build 폴더)
+# 빌드된 정적 파일 복사
 COPY --from=builder /app/build ./build
 
-# serve 패키지 전역 설치 (정적 파일 서빙용)
+# serve 패키지 전역 설치
 RUN npm install -g serve
 
-# 포트 설정
-EXPOSE 3000
+# Cloud Run은 PORT 환경변수를 사용
+# 기본값은 8080
+ENV PORT=8080
 
-# serve를 사용하여 빌드된 앱 실행
-CMD ["serve", "-s", "build", "-l", "3000"]
+# PORT 환경변수 사용
+EXPOSE 8080
+
+# serve 실행 시 PORT 환경변수 사용
+CMD serve -s build -l $PORT
