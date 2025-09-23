@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
 import SubscriptionPage from './pages/SubscriptionPage';
@@ -14,7 +14,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <HashRouter>
+        <BrowserRouter>
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
@@ -34,7 +34,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 } />
             </Routes>
-        </HashRouter>
+        </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
   );
