@@ -15,18 +15,20 @@ export default {
   },
   "sidebar": {
     "premium_header": "溢价",
-    "exchange_announcements": "交易所公告",
-    "exchange_arbitrage": "交易所币种价差（套利）",
-    "tradingview_auto": "TradingView 自动交易",
-    "listing_auto": "上币公告自动交易",
+    "price_comparison": "交易所价格对比",
+    "funding_info": "交易所资金费率",
+    "airdrop_info": "空投信息",
+    "tradingview_auto": "TradingView 信号自动交易",
+    "listing_info": "交易所上币信息",
     "logged_in_as": "登录为",
     "login_required": "需要登录"
   },
   "bottom_nav": {
-    "exchange_announcements": "交易所公告",
-    "exchange_arbitrage": "交易所币种价差（套利）",
-    "tradingview_auto": "TradingView 自动交易",
-    "listing_auto": "上币公告自动交易"
+    "price_comparison": "价格对比",
+    "funding_info": "资金费率",
+    "airdrop_info": "空投",
+    "tradingview_auto": "自动交易",
+    "listing_info": "上币信息"
   },
   "home": {
     "title": "泡菜溢价",
@@ -161,12 +163,20 @@ export default {
     "early_access_title": "申请抢先体验",
     "early_access_description": "留下您的邮箱，我们会在功能上线时第一时间通知您。",
     "email_placeholder": "请输入您的邮箱地址",
-    "exchange_arbitrage": {
-      "intro": "实时分析各交易所之间的价差，捕捉最佳套利机会。",
+    "funding_info": {
+      "intro": "实时比较各交易所的资金费率，优化多空策略。",
       "points": [
-        "实时追踪国内外交易所的价差。",
-        "提供自动计算的价差和预期收益率。",
-        "通过自定义提醒不遗漏任何机会。"
+        "监控主流合约交易所的多空资金费率走势。",
+        "提供各币种的资金费率历史与平均值。",
+        "资金费率异常波动时立即提醒。"
+      ]
+    },
+    "airdrop_info": {
+      "intro": "集中查看空投日程与参与条件，不错过任何机会。",
+      "points": [
+        "汇总进行中与计划中的项目及快照日期。",
+        "提供参与条件与必备清单。",
+        "跟踪空投结束后的代币发放状态。"
       ]
     },
     "tradingview_auto": {
@@ -177,12 +187,12 @@ export default {
         "查看每个策略的执行日志和绩效报告。"
       ]
     },
-    "listing_auto": {
-      "intro": "即时捕捉上币公告，并与自动交易策略联动。",
+    "listing_info": {
+      "intro": "实时监控交易所上币公告，抢先布局行情。",
       "points": [
-        "按秒监控主流交易所的上币公告。",
-        "支持自定义筛选，只关注感兴趣的币种。",
-        "利用自动买卖模拟降低风险。"
+        "秒级捕捉主流交易所的上币资讯。",
+        "支持自定义筛选，聚焦重点币种。",
+        "提供上币前后的价格走势数据。"
       ]
     }
   }
