@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { COIN_METADATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP, EXCHANGE_NAV_ITEMS, resolveExchangeNavLabel } from '../constants';
@@ -14,6 +14,9 @@ type CurrencyCode = 'KRW' | 'USD' | 'JPY' | 'CNY' | 'THB' | 'VND';
 type SortKey = 'name' | 'basePrice' | 'comparisonPrice' | 'priceDifference' | 'change24h' | 'baseVolume' | 'comparisonVolume';
 type SortDirection = 'asc' | 'desc';
 type VolumeState = 'loading' | 'estimated' | 'live';
+
+const STALE_PRICE_WINDOW_MS = 15000;
+const STALE_VOLUME_WINDOW_MS = 20000;
 
 // Currency conversion utility
 const convertCurrency = (amount: number, fromCurrency: string, toCurrency: CurrencyCode, usdKrw: number): number => {
@@ -95,22 +98,26 @@ const CustomSelect: React.FC<{
 };
 
 // Header Component
-const Header: React.FC<{ onMenuClick: () => void; user: User | null, usdKrw: number }> = ({ onMenuClick, user, usdKrw }) => {
-    const { t } = useTranslation();
-    const [liveHeaderStats, setLiveHeaderStats] = useState({
-        tetherPremium: 0.90,
-        coinbasePremium: 0.01,
-    });
+type HeaderStats = {
+    tetherPremium: number | null;
+    coinbasePremium: number | null;
+};
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setLiveHeaderStats(prev => ({
-                tetherPremium: prev.tetherPremium + (Math.random() - 0.5) * 0.02,
-                coinbasePremium: prev.coinbasePremium + (Math.random() - 0.5) * 0.005,
-            }));
-        }, 2500);
-        return () => clearInterval(interval);
-    }, []);
+const Header: React.FC<{ onMenuClick: () => void; user: User | null; usdKrw: number; stats: HeaderStats }> = ({ onMenuClick, user, usdKrw, stats }) => {
+    const { t } = useTranslation();
+
+    const renderPremium = (value: number | null) => {
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            const color = value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'text-gray-800 dark:text-gray-200';
+            return <p className={`font-bold ${color}`}>{value.toFixed(2)}%</p>;
+        }
+
+        return (
+            <p className="font-bold text-gray-400 dark:text-gray-600" aria-live="polite">
+                —
+            </p>
+        );
+    };
 
     return (
         <header className="sticky top-0 z-20 bg-white/80 dark:bg-black/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
@@ -126,11 +133,11 @@ const Header: React.FC<{ onMenuClick: () => void; user: User | null, usdKrw: num
                 <div className="hidden md:flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300">
                     <div className="text-center">
                         <p className="text-gray-500 dark:text-gray-400">{t('header.tether_premium')}</p>
-                        <p className="font-bold text-green-500">{liveHeaderStats.tetherPremium.toFixed(2)}%</p>
+                        {renderPremium(stats.tetherPremium)}
                     </div>
                     <div className="text-center">
                         <p className="text-gray-500 dark:text-gray-400">{t('header.coinbase_premium')}</p>
-                        <p className="font-bold text-green-500">{liveHeaderStats.coinbasePremium.toFixed(2)}%</p>
+                        {renderPremium(stats.coinbasePremium)}
                     </div>
                     <div className="text-center">
                         <p className="text-gray-500 dark:text-gray-400">USD/KRW</p>
@@ -298,12 +305,6 @@ interface ProcessedCoinData extends CoinMetadata {
     isComparisonPriceReady: boolean;
     isPriceDifferenceReady: boolean;
     isChangeReady: boolean;
-    domesticPrice: number;
-    overseasPrice: number;
-    kimchiPremium: number;
-    volume: string;
-    domesticVolume: string;
-    overseasVolume: string;
 }
 
 // Format volume with proper localization
@@ -737,21 +738,12 @@ const HomePage: React.FC = () => {
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'baseVolume', direction: 'desc' });
     const { user } = useAuth();
     const { t, i18n } = useTranslation();
-    const [usdKrw, setUsdKrw] = useState(1385);
+    const usdKrw = useMemo(() => 1 / (CURRENCY_RATES.USD?.rate ?? (1 / 1385)), []);
 
-    const updatesBuffer = useRef<{
-        prices: Record<string, number>;
-        extended: Record<string, { change24h?: number; volume24h?: number; changePrice?: number }>;
-    }>({ prices: {}, extended: {} });
+    const lastPriceTimestamps = useRef<Record<string, number>>({});
+    const lastExtendedTimestamps = useRef<Record<string, number>>({});
 
     const currentCurrency: CurrencyCode = (LANGUAGE_CURRENCY_MAP as any)[i18n.language] || 'USD';
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setUsdKrw(prev => prev + (Math.random() - 0.5) * 0.5);
-        }, 2500);
-        return () => clearInterval(interval);
-    }, []);
 
     const translatedAllExchanges = useMemo(() => 
         ALL_EXCHANGES_FOR_COMPARISON.map(ex => ({ id: ex.id, name: t(ex.nameKey) })),
@@ -772,109 +764,131 @@ const HomePage: React.FC = () => {
         });
     }, [i18n.language, translatedAllExchanges]);
 
+    const handleExchangeUpdate = useCallback((update: ExtendedPriceUpdate) => {
+        const now = Date.now();
+
+        if (typeof update.price === 'number' && Number.isFinite(update.price) && update.price > 0) {
+            lastPriceTimestamps.current[update.priceKey] = now;
+            setAllPrices(prev => {
+                const previous = prev[update.priceKey];
+                if (previous !== undefined && previous === update.price) {
+                    return prev;
+                }
+                return { ...prev, [update.priceKey]: update.price };
+            });
+        }
+
+        const nextExtended: { change24h?: number; volume24h?: number; changePrice?: number } = {};
+
+        if (update.change24h !== undefined && Number.isFinite(update.change24h)) {
+            nextExtended.change24h = update.change24h;
+        }
+        if (update.volume24h !== undefined && Number.isFinite(update.volume24h)) {
+            nextExtended.volume24h = update.volume24h;
+        }
+        if (update.changePrice !== undefined && Number.isFinite(update.changePrice)) {
+            nextExtended.changePrice = update.changePrice;
+        }
+
+        if (Object.keys(nextExtended).length > 0) {
+            lastExtendedTimestamps.current[update.priceKey] = now;
+            setAllExtendedData(prev => {
+                const existing = prev[update.priceKey];
+                const merged = { ...existing, ...nextExtended };
+                if (existing &&
+                    existing.change24h === merged.change24h &&
+                    existing.volume24h === merged.volume24h &&
+                    existing.changePrice === merged.changePrice) {
+                    return prev;
+                }
+
+                return { ...prev, [update.priceKey]: merged };
+            });
+        }
+    }, []);
+
     useEffect(() => {
-        console.log('🔧 Starting exchange services...');
-
-        const applyBufferedUpdates = () => {
-            const { prices, extended } = updatesBuffer.current;
-            const priceUpdates = Object.keys(prices).length;
-            const extendedUpdates = Object.keys(extended).length;
-
-            if (priceUpdates > 0 || extendedUpdates > 0) {
-                console.log(`🔄 Applying ${priceUpdates} price updates, ${extendedUpdates} extended updates`);
-
-                setAllPrices(prev => ({ ...prev, ...prices }));
-                setAllExtendedData(prev => {
-                    const next = { ...prev };
-                    Object.entries(extended).forEach(([key, data]) => {
-                        next[key] = { ...next[key], ...data };
-                    });
-                    return next;
-                });
-
-                updatesBuffer.current = { prices: {}, extended: {} };
-            }
-        };
-
-        let rafId: number | null = null;
-        const scheduleBufferedFlush = () => {
-            if (typeof window === 'undefined') {
-                applyBufferedUpdates();
-                return;
-            }
-
-            if (rafId === null) {
-                rafId = window.requestAnimationFrame(() => {
-                    rafId = null;
-                    applyBufferedUpdates();
-                });
-            }
-        };
-
-        const handleUpdate = (update: ExtendedPriceUpdate) => {
-            console.log('📊 Price update received:', update);
-
-            if (typeof update.price === 'number' && !Number.isNaN(update.price)) {
-                updatesBuffer.current.prices[update.priceKey] = update.price;
-                scheduleBufferedFlush();
-            }
-
-            const hasExtendedFields =
-                update.change24h !== undefined ||
-                update.volume24h !== undefined ||
-                update.changePrice !== undefined;
-
-            if (hasExtendedFields) {
-                console.log('📈 Extended data received:', {
-                    priceKey: update.priceKey,
-                    change24h: update.change24h,
-                    volume24h: update.volume24h,
-                    changePrice: update.changePrice
-                });
-
-                const nextExtended: { change24h?: number; volume24h?: number; changePrice?: number } = {};
-
-                if (update.change24h !== undefined && !Number.isNaN(update.change24h)) {
-                    nextExtended.change24h = update.change24h;
-                }
-                if (update.volume24h !== undefined && !Number.isNaN(update.volume24h)) {
-                    nextExtended.volume24h = update.volume24h;
-                }
-                if (update.changePrice !== undefined && !Number.isNaN(update.changePrice)) {
-                    nextExtended.changePrice = update.changePrice;
-                }
-
-                if (Object.keys(nextExtended).length > 0) {
-                    const existing = updatesBuffer.current.extended[update.priceKey] ?? {};
-                    updatesBuffer.current.extended[update.priceKey] = { ...existing, ...nextExtended };
-                    scheduleBufferedFlush();
-                }
-            }
-        };
-
         allServices.forEach(service => {
-            console.log(`🏢 Connecting service: ${service.id}`);
-
-            if (service.connectExtended && typeof service.connectExtended === 'function') {
-                console.log(`✅ Using extended connection for: ${service.id}`);
-                service.connectExtended(handleUpdate);
+            if (typeof service.connectExtended === 'function') {
+                service.connectExtended(handleExchangeUpdate);
             } else {
-                console.log(`⚠️ Using basic connection for: ${service.id} (no extended data)`);
-                service.connect(handleUpdate);
+                service.connect(update => handleExchangeUpdate(update));
             }
         });
 
-        const intervalId = window.setInterval(applyBufferedUpdates, 500);
-
         return () => {
-            console.log('🛑 Disconnecting all services');
             allServices.forEach(service => service.disconnect());
-            clearInterval(intervalId);
-            if (typeof window !== 'undefined' && rafId !== null) {
-                window.cancelAnimationFrame(rafId);
-            }
         };
-    }, []);
+    }, [handleExchangeUpdate]);
+
+    const headerStats = useMemo<HeaderStats>(() => {
+        const findFirstPrice = (keys: string[]): number | undefined => {
+            for (const key of keys) {
+                const value = allPrices[key];
+                if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+                    return value;
+                }
+            }
+            return undefined;
+        };
+
+        const domesticBtc = findFirstPrice([
+            'upbit_krw-BTC',
+            'bithumb_krw-BTC',
+            'coinone_krw-BTC',
+        ]);
+        const overseasBtc = findFirstPrice([
+            'binance_usdt_spot-BTC',
+            'binance_usdt_futures-BTC',
+            'bitget_usdt_spot-BTC',
+            'bitget_usdt_futures-BTC',
+            'bybit_usdt_spot-BTC',
+            'bybit_usdt_futures-BTC',
+            'okx_usdt_spot-BTC',
+            'okx_usdt_futures-BTC',
+            'gateio_usdt_spot-BTC',
+            'gateio_usdt_futures-BTC',
+        ]);
+
+        let tetherPremium: number | null = null;
+        if (domesticBtc !== undefined && overseasBtc !== undefined) {
+            const overseasInKrw = convertCurrency(overseasBtc, 'USD', 'KRW', usdKrw);
+            if (overseasInKrw > 0) {
+                tetherPremium = ((domesticBtc - overseasInKrw) / overseasInKrw) * 100;
+            }
+        }
+
+        const domesticEth = findFirstPrice([
+            'upbit_krw-ETH',
+            'bithumb_krw-ETH',
+            'coinone_krw-ETH',
+        ]);
+        const overseasEth = findFirstPrice([
+            'binance_usdt_spot-ETH',
+            'binance_usdt_futures-ETH',
+            'bitget_usdt_spot-ETH',
+            'bitget_usdt_futures-ETH',
+            'bybit_usdt_spot-ETH',
+            'bybit_usdt_futures-ETH',
+            'okx_usdt_spot-ETH',
+            'okx_usdt_futures-ETH',
+            'gateio_usdt_spot-ETH',
+            'gateio_usdt_futures-ETH',
+        ]);
+
+        let coinbasePremium: number | null = null;
+        if (domesticEth !== undefined && overseasEth !== undefined) {
+            const overseasEthInKrw = convertCurrency(overseasEth, 'USD', 'KRW', usdKrw);
+            if (overseasEthInKrw > 0) {
+                coinbasePremium = ((domesticEth - overseasEthInKrw) / overseasEthInKrw) * 100;
+            }
+        }
+
+        return {
+            tetherPremium,
+            coinbasePremium,
+        };
+    }, [allPrices, usdKrw]);
 
     const handleSort = (key: SortKey) => {
         let direction: SortDirection = 'desc';
@@ -887,9 +901,7 @@ const HomePage: React.FC = () => {
     const processedCoinData = useMemo(() => {
         const noVolumeLabel = t('table.no_data');
 
-        console.log('🔄 Processing coin data...');
-        console.log('📊 Current prices:', Object.keys(allPrices).length);
-        console.log('📈 Extended data:', Object.keys(allExtendedData).length);
+        const now = Date.now();
 
         const liveData = COIN_METADATA
             .map(baseCoin => {
@@ -898,15 +910,27 @@ const HomePage: React.FC = () => {
 
                 const rawBasePrice = allPrices[basePriceKey];
                 const rawComparisonPrice = allPrices[comparisonPriceKey];
-                
+
                 const baseExtData = allExtendedData[basePriceKey] || {};
                 const comparisonExtData = allExtendedData[comparisonPriceKey] || {};
 
+                const basePriceFresh =
+                    typeof rawBasePrice === 'number' &&
+                    rawBasePrice > 0 &&
+                    lastPriceTimestamps.current[basePriceKey] !== undefined &&
+                    now - lastPriceTimestamps.current[basePriceKey]! <= STALE_PRICE_WINDOW_MS;
+                const comparisonPriceFresh =
+                    typeof rawComparisonPrice === 'number' &&
+                    rawComparisonPrice > 0 &&
+                    lastPriceTimestamps.current[comparisonPriceKey] !== undefined &&
+                    now - lastPriceTimestamps.current[comparisonPriceKey]! <= STALE_PRICE_WINDOW_MS;
+
                 const getVolumeDisplay = (
                     liveValue: number | undefined,
-                    liveCurrency: CurrencyCode
+                    liveCurrency: CurrencyCode,
+                    isFresh: boolean
                 ): { formatted: string; numeric: number; state: VolumeState } => {
-                    if (typeof liveValue === 'number' && liveValue > 0) {
+                    if (isFresh && typeof liveValue === 'number' && liveValue > 0) {
                         const converted = convertCurrency(liveValue, liveCurrency, currentCurrency, usdKrw);
                         return {
                             formatted: formatVolume(converted, currentCurrency, t),
@@ -922,24 +946,14 @@ const HomePage: React.FC = () => {
                     };
                 };
 
-                console.log(`💰 ${baseCoin.symbol}:`, {
-                    basePrice: rawBasePrice,
-                    comparisonPrice: rawComparisonPrice,
-                    baseExtData,
-                    comparisonExtData
-                });
-
                 const baseCurrencyType = selectedBase.id.includes('krw') ? 'KRW' : 'USD';
                 const comparisonCurrencyType = selectedComparison.id.includes('krw') ? 'KRW' : 'USD';
 
-                const basePriceReady = typeof rawBasePrice === 'number' && rawBasePrice > 0;
-                const comparisonPriceReady = typeof rawComparisonPrice === 'number' && rawComparisonPrice > 0;
-
-                const basePrice = basePriceReady
+                const basePrice = basePriceFresh
                     ? convertCurrency(rawBasePrice, baseCurrencyType, currentCurrency, usdKrw)
                     : null;
 
-                const comparisonPrice = comparisonPriceReady
+                const comparisonPrice = comparisonPriceFresh
                     ? convertCurrency(rawComparisonPrice, comparisonCurrencyType, currentCurrency, usdKrw)
                     : null;
 
@@ -953,16 +967,30 @@ const HomePage: React.FC = () => {
                         : null;
 
                 const liveChange24h =
-                    typeof baseExtData.change24h === 'number' && !Number.isNaN(baseExtData.change24h)
+                    typeof baseExtData.change24h === 'number' &&
+                    !Number.isNaN(baseExtData.change24h) &&
+                    lastExtendedTimestamps.current[basePriceKey] !== undefined &&
+                    now - lastExtendedTimestamps.current[basePriceKey]! <= STALE_VOLUME_WINDOW_MS
                         ? baseExtData.change24h
                         : null;
 
-                if (liveChange24h !== null) {
-                    console.log(`📈 Using real change24h for ${baseCoin.symbol}: ${liveChange24h}%`);
-                }
+                const baseVolumeFresh =
+                    lastExtendedTimestamps.current[basePriceKey] !== undefined &&
+                    now - lastExtendedTimestamps.current[basePriceKey]! <= STALE_VOLUME_WINDOW_MS;
+                const comparisonVolumeFresh =
+                    lastExtendedTimestamps.current[comparisonPriceKey] !== undefined &&
+                    now - lastExtendedTimestamps.current[comparisonPriceKey]! <= STALE_VOLUME_WINDOW_MS;
 
-                const baseVolumeData = getVolumeDisplay(baseExtData.volume24h, baseCurrencyType);
-                const comparisonVolumeData = getVolumeDisplay(comparisonExtData.volume24h, comparisonCurrencyType);
+                const baseVolumeData = getVolumeDisplay(
+                    baseExtData.volume24h,
+                    baseCurrencyType,
+                    baseVolumeFresh
+                );
+                const comparisonVolumeData = getVolumeDisplay(
+                    comparisonExtData.volume24h,
+                    comparisonCurrencyType,
+                    comparisonVolumeFresh
+                );
 
                 return {
                     ...baseCoin,
@@ -977,20 +1005,12 @@ const HomePage: React.FC = () => {
                     comparisonVolumeValue: comparisonVolumeData.numeric,
                     baseVolumeState: baseVolumeData.state,
                     comparisonVolumeState: comparisonVolumeData.state,
-                    domesticPrice: basePrice ?? 0,
-                    overseasPrice: comparisonPrice ?? 0,
-                    kimchiPremium: priceDifferencePercentage ?? 0,
-                    volume: baseVolumeData.formatted,
-                    domesticVolume: baseVolumeData.formatted,
-                    overseasVolume: comparisonVolumeData.formatted,
                     isBasePriceReady: basePrice !== null,
                     isComparisonPriceReady: comparisonPrice !== null,
                     isPriceDifferenceReady: priceDifferenceReady && priceDifferencePercentage !== null,
                     isChangeReady: liveChange24h !== null,
                 } as ProcessedCoinData;
             });
-
-        console.log(`✅ Processed ${liveData.length} coins`);
 
         const isMetricReady = (coin: ProcessedCoinData, key: SortKey): boolean => {
             switch (key) {
@@ -1071,7 +1091,7 @@ const HomePage: React.FC = () => {
             <div className="flex">
                 <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
                 <div className="flex-1 flex flex-col min-w-0">
-                    <Header onMenuClick={() => setSidebarOpen(true)} user={user} usdKrw={usdKrw} />
+                    <Header onMenuClick={() => setSidebarOpen(true)} user={user} usdKrw={usdKrw} stats={headerStats} />
                     <main className="p-2 sm:p-4 lg:p-6 pb-20 lg:pb-6">
                         <ReferralBanner />
                         <div className="mb-4">
