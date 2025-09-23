@@ -82,13 +82,14 @@ type PremiumSidebarProps = {
     onLogout: () => void;
 };
 
-const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, onLogout }) => {
+export const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, onLogout }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { t } = useTranslation();
 
     const handleLogout = () => {
         onLogout();
+        onClose();
         navigate('/');
     };
 
@@ -162,7 +163,7 @@ const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose, user, 
     );
 };
 
-const PremiumBottomNav: React.FC = () => {
+export const PremiumBottomNav: React.FC = () => {
     const { t } = useTranslation();
     const location = useLocation();
 
@@ -215,6 +216,12 @@ const PremiumLayout: React.FC<PremiumLayoutProps> = ({ children }) => {
                     user={user}
                     onLogout={logout}
                 />
+                {isSidebarOpen && (
+                    <div
+                        onClick={() => setSidebarOpen(false)}
+                        className="fixed inset-0 bg-black/60 z-30 lg:hidden"
+                    ></div>
+                )}
                 <div className="flex-1 flex flex-col min-w-0">
                     <PremiumHeader onMenuClick={() => setSidebarOpen(true)} user={user} />
                     <main className="p-2 sm:p-4 lg:p-6 pb-20 lg:pb-6">{children}</main>
