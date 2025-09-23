@@ -42,16 +42,11 @@ export interface ArbitrageInfo {
   percentage: number;
 }
 
-export interface CoinData {
+export interface CoinMetadata {
   id: string;
   names: { [key: string]: string }; // e.g., { en: 'Bitcoin', ko: '비트코인' }
   symbol: string;
   logo: React.ReactNode;
-  domesticPrice: number;
-  overseasPrice: number;
-  kimchiPremium: number;
-  change24h: number;
-  volume: string;
 }
 
 // Types for Exchange Services
