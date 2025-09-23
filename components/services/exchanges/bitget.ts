@@ -1,25 +1,26 @@
 import type { ExchangeService, PriceUpdateCallback } from '../../../types';
-import { MOCK_COIN_DATA } from '../../../constants';
+import { COIN_METADATA } from '../../../constants';
 
 const createBitgetService = (): ExchangeService => {
   const id = 'bitget_usdt';
   // FIX: Changed type from 'number' to a type compatible with setInterval's return value in all environments.
   let intervalId: ReturnType<typeof setInterval> | undefined;
   const prices: { [key: string]: number } = {};
+  const symbols = COIN_METADATA.map(coin => coin.symbol);
 
-  MOCK_COIN_DATA.forEach(coin => {
-    prices[coin.symbol] = coin.overseasPrice * 1.001;
+  symbols.forEach(symbol => {
+    prices[symbol] = 1;
   });
 
   const connect = (callback: PriceUpdateCallback) => {
     intervalId = setInterval(() => {
-      MOCK_COIN_DATA.forEach(coin => {
+      symbols.forEach(symbol => {
         const priceChangePercent = (Math.random() - 0.5) * 0.005;
-        prices[coin.symbol] *= (1 + priceChangePercent);
-        
+        prices[symbol] *= 1 + priceChangePercent;
+
         callback({
-          priceKey: `${id}-${coin.symbol}`,
-          price: prices[coin.symbol],
+          priceKey: `${id}-${symbol}`,
+          price: prices[symbol],
         });
       });
     }, 2100 + Math.random() * 1000);
