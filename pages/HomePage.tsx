@@ -50,41 +50,6 @@ const formatCurrency = (amount: number, currency: CurrencyCode): string => {
   }
 };
 
-const parseVolumeString = (volume: string | number | undefined): number => {
-    if (volume === undefined || volume === null) {
-        return 0;
-    }
-
-    const rawValue = String(volume).trim();
-
-    if (!rawValue) {
-        return 0;
-    }
-
-    let multiplier = 1;
-    const upperValue = rawValue.toUpperCase();
-
-    if (upperValue.includes('조') || upperValue.includes('T')) {
-        multiplier = 1_000_000_000_000;
-    } else if (upperValue.includes('억')) {
-        multiplier = 100_000_000;
-    } else if (upperValue.includes('B')) {
-        multiplier = 1_000_000_000;
-    } else if (upperValue.includes('M')) {
-        multiplier = 1_000_000;
-    } else if (upperValue.includes('K')) {
-        multiplier = 1_000;
-    }
-
-    const numericPortion = parseFloat(rawValue.replace(/[^0-9.-]/g, ''));
-
-    if (!Number.isFinite(numericPortion)) {
-        return 0;
-    }
-
-    return numericPortion * multiplier;
-};
-
 // Custom Select Component
 const CustomSelect: React.FC<{
     options: ExchangeOption[];
@@ -328,6 +293,10 @@ interface ProcessedCoinData extends CoinData {
     comparisonVolumeValue: number;
     baseVolumeState: VolumeState;
     comparisonVolumeState: VolumeState;
+    isBasePriceReady: boolean;
+    isComparisonPriceReady: boolean;
+    isPriceDifferenceReady: boolean;
+    isChangeReady: boolean;
 }
 
 // Format volume with proper localization
@@ -463,21 +432,77 @@ const CryptoPriceComparisonTable: React.FC<{
                                     </div>
                                 </td>
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
-                                    <p className="font-semibold text-xs sm:text-base">{formatCurrency(coin.basePrice, currency)}</p>
+                                    {coin.isBasePriceReady ? (
+                                        <p className="font-semibold text-xs sm:text-base">{formatCurrency(coin.basePrice, currency)}</p>
+                                    ) : (
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span
+                                                className="inline-flex h-3 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('table.awaiting_live')}</span>
+                                            <span className="sr-only">{t('table.loading')}</span>
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200">
-                                    <p className="font-semibold text-xs sm:text-base">{formatCurrency(coin.comparisonPrice, currency)}</p>
+                                    {coin.isComparisonPriceReady ? (
+                                        <p className="font-semibold text-xs sm:text-base">{formatCurrency(coin.comparisonPrice, currency)}</p>
+                                    ) : (
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span
+                                                className="inline-flex h-3 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{t('table.awaiting_live')}</span>
+                                            <span className="sr-only">{t('table.loading')}</span>
+                                        </div>
+                                    )}
                                 </td>
-                                <td className={`px-1 sm:px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.priceDifferencePercentage)}`}>
-                                    <div className="flex flex-col items-end">
-                                        <span className="text-xs sm:text-base">{formatPercentage(coin.priceDifferencePercentage)}</span>
-                                        <span className="text-[10px] sm:text-xs mt-0.5 text-gray-500">
-                                            {coin.priceDifference > 0 ? '+' : ''}{formatCurrency(coin.priceDifference, currency)}
-                                        </span>
-                                    </div>
+                                <td
+                                    className={`px-1 sm:px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${
+                                        coin.isPriceDifferenceReady
+                                            ? getTextColor(coin.priceDifferencePercentage)
+                                            : 'text-gray-400 dark:text-gray-500'
+                                    }`}
+                                >
+                                    {coin.isPriceDifferenceReady ? (
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-xs sm:text-base">{formatPercentage(coin.priceDifferencePercentage)}</span>
+                                            <span className="text-[10px] sm:text-xs mt-0.5 text-gray-500">
+                                                {coin.priceDifference > 0 ? '+' : ''}{formatCurrency(coin.priceDifference, currency)}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-end gap-1 text-[10px] sm:text-xs">
+                                            <span
+                                                className="inline-flex h-3 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-700"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <span className="text-gray-500 dark:text-gray-400">{t('table.awaiting_live')}</span>
+                                            <span className="sr-only">{t('table.loading')}</span>
+                                        </div>
+                                    )}
                                 </td>
-                                <td className={`px-1 sm:px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${getTextColor(coin.change24h)}`}>
-                                    <span className="text-xs sm:text-base">{formatPercentage(coin.change24h)}</span>
+                                <td
+                                    className={`px-1 sm:px-4 py-3 text-right font-bold border-l border-gray-200 dark:border-gray-700 ${
+                                        coin.isChangeReady
+                                            ? getTextColor(coin.change24h)
+                                            : 'text-gray-400 dark:text-gray-500'
+                                    }`}
+                                >
+                                    {coin.isChangeReady ? (
+                                        <span className="text-xs sm:text-base">{formatPercentage(coin.change24h)}</span>
+                                    ) : (
+                                        <div className="flex flex-col items-end gap-1 text-[10px] sm:text-xs">
+                                            <span
+                                                className="inline-flex h-3 w-12 animate-pulse rounded bg-gray-200 dark:bg-gray-700"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <span className="text-gray-500 dark:text-gray-400">{t('table.awaiting_live')}</span>
+                                            <span className="sr-only">{t('table.loading')}</span>
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-1 sm:px-3 py-3 text-right text-gray-800 dark:text-gray-200 border-l border-gray-200 dark:border-gray-700">
                                     {coin.baseVolumeState === 'loading' ? (
@@ -870,38 +895,9 @@ const HomePage: React.FC = () => {
                 const baseExtData = allExtendedData[basePriceKey] || {};
                 const comparisonExtData = allExtendedData[comparisonPriceKey] || {};
 
-                const fallbackDomesticVolumeKrw = parseVolumeString(baseCoin.volume);
-                const assumedCoinAmount =
-                    baseCoin.domesticPrice > 0
-                        ? fallbackDomesticVolumeKrw / baseCoin.domesticPrice
-                        : 0;
-                const overseasPriceKrw = baseCoin.overseasPrice * usdKrw;
-                const fallbackOverseasVolumeKrw =
-                    assumedCoinAmount > 0 && overseasPriceKrw > 0
-                        ? assumedCoinAmount * overseasPriceKrw
-                        : fallbackDomesticVolumeKrw;
-
-                const fallbackSources = {
-                    base: selectedBase.id.includes('krw')
-                        ? fallbackDomesticVolumeKrw > 0
-                            ? { value: fallbackDomesticVolumeKrw, currency: 'KRW' as CurrencyCode }
-                            : undefined
-                        : fallbackOverseasVolumeKrw > 0
-                            ? { value: fallbackOverseasVolumeKrw / usdKrw, currency: 'USD' as CurrencyCode }
-                            : undefined,
-                    comparison: selectedComparison.id.includes('krw')
-                        ? fallbackDomesticVolumeKrw > 0
-                            ? { value: fallbackDomesticVolumeKrw, currency: 'KRW' as CurrencyCode }
-                            : undefined
-                        : fallbackOverseasVolumeKrw > 0
-                            ? { value: fallbackOverseasVolumeKrw / usdKrw, currency: 'USD' as CurrencyCode }
-                            : undefined
-                } as const;
-
                 const getVolumeDisplay = (
                     liveValue: number | undefined,
-                    liveCurrency: CurrencyCode,
-                    fallback: { value: number; currency: CurrencyCode } | undefined
+                    liveCurrency: CurrencyCode
                 ): { formatted: string; numeric: number; state: VolumeState } => {
                     if (typeof liveValue === 'number' && liveValue > 0) {
                         const converted = convertCurrency(liveValue, liveCurrency, currentCurrency, usdKrw);
@@ -909,20 +905,6 @@ const HomePage: React.FC = () => {
                             formatted: formatVolume(converted, currentCurrency, t),
                             numeric: converted,
                             state: 'live'
-                        };
-                    }
-
-                    if (fallback && fallback.value > 0) {
-                        const convertedFallback = convertCurrency(
-                            fallback.value,
-                            fallback.currency,
-                            currentCurrency,
-                            usdKrw
-                        );
-                        return {
-                            formatted: formatVolume(convertedFallback, currentCurrency, t),
-                            numeric: convertedFallback,
-                            state: 'estimated'
                         };
                     }
 
@@ -939,84 +921,106 @@ const HomePage: React.FC = () => {
                     baseExtData,
                     comparisonExtData
                 });
-                
+
                 const baseCurrencyType = selectedBase.id.includes('krw') ? 'KRW' : 'USD';
                 const comparisonCurrencyType = selectedComparison.id.includes('krw') ? 'KRW' : 'USD';
-                const fallbackBasePrice = selectedBase.id.includes('krw')
-                    ? baseCoin.domesticPrice
-                    : baseCoin.overseasPrice;
-                const fallbackComparisonPrice = selectedComparison.id.includes('krw')
-                    ? baseCoin.domesticPrice
-                    : baseCoin.overseasPrice;
 
-                const basePriceSource =
-                    typeof rawBasePrice === 'number' && rawBasePrice > 0 ? rawBasePrice : fallbackBasePrice;
-                const comparisonPriceSource =
-                    typeof rawComparisonPrice === 'number' && rawComparisonPrice > 0
-                        ? rawComparisonPrice
-                        : fallbackComparisonPrice;
+                const basePriceReady = typeof rawBasePrice === 'number' && rawBasePrice > 0;
+                const comparisonPriceReady = typeof rawComparisonPrice === 'number' && rawComparisonPrice > 0;
 
-                if (!basePriceSource || !comparisonPriceSource) {
-                    return null;
+                const basePrice = basePriceReady
+                    ? convertCurrency(rawBasePrice, baseCurrencyType, currentCurrency, usdKrw)
+                    : null;
+
+                const comparisonPrice = comparisonPriceReady
+                    ? convertCurrency(rawComparisonPrice, comparisonCurrencyType, currentCurrency, usdKrw)
+                    : null;
+
+                const priceDifferenceReady = basePrice !== null && comparisonPrice !== null;
+                const priceDifference = priceDifferenceReady && basePrice !== null && comparisonPrice !== null
+                    ? basePrice - comparisonPrice
+                    : null;
+                const priceDifferencePercentage =
+                    priceDifferenceReady && comparisonPrice !== null && comparisonPrice !== 0
+                        ? (priceDifference! / comparisonPrice) * 100
+                        : null;
+
+                const liveChange24h =
+                    typeof baseExtData.change24h === 'number' && !Number.isNaN(baseExtData.change24h)
+                        ? baseExtData.change24h
+                        : null;
+
+                if (liveChange24h !== null) {
+                    console.log(`📈 Using real change24h for ${baseCoin.symbol}: ${liveChange24h}%`);
                 }
 
-                const basePrice = convertCurrency(basePriceSource, baseCurrencyType, currentCurrency, usdKrw);
-                const comparisonPrice = convertCurrency(
-                    comparisonPriceSource,
-                    comparisonCurrencyType,
-                    currentCurrency,
-                    usdKrw
-                );
-                
-                const priceDifference = basePrice - comparisonPrice;
-                const priceDifferencePercentage = comparisonPrice > 0 
-                    ? (priceDifference / comparisonPrice) * 100
-                    : 0;
-                
-                let change24h = baseCoin.change24h ?? 0;
-                if (baseExtData.change24h !== undefined) {
-                    change24h = baseExtData.change24h;
-                    console.log(`📈 Using real change24h for ${baseCoin.symbol}: ${change24h}%`);
-                }
-                
-                const baseVolumeData = getVolumeDisplay(
-                    baseExtData.volume24h,
-                    baseCurrencyType,
-                    fallbackSources.base
-                );
-                const comparisonVolumeData = getVolumeDisplay(
-                    comparisonExtData.volume24h,
-                    comparisonCurrencyType,
-                    fallbackSources.comparison
-                );
+                const baseVolumeData = getVolumeDisplay(baseExtData.volume24h, baseCurrencyType);
+                const comparisonVolumeData = getVolumeDisplay(comparisonExtData.volume24h, comparisonCurrencyType);
 
                 return {
                     ...baseCoin,
-                    basePrice,
-                    comparisonPrice,
-                    priceDifference,
-                    priceDifferencePercentage,
-                    change24h,
+                    basePrice: basePrice ?? 0,
+                    comparisonPrice: comparisonPrice ?? 0,
+                    priceDifference: priceDifference ?? 0,
+                    priceDifferencePercentage: priceDifferencePercentage ?? 0,
+                    change24h: liveChange24h ?? 0,
                     baseVolume: baseVolumeData.formatted,
                     comparisonVolume: comparisonVolumeData.formatted,
                     baseVolumeValue: baseVolumeData.numeric,
                     comparisonVolumeValue: comparisonVolumeData.numeric,
                     baseVolumeState: baseVolumeData.state,
                     comparisonVolumeState: comparisonVolumeData.state,
-                    domesticPrice: basePrice,
-                    overseasPrice: comparisonPrice,
-                    kimchiPremium: priceDifferencePercentage,
+                    domesticPrice: basePrice ?? 0,
+                    overseasPrice: comparisonPrice ?? 0,
+                    kimchiPremium: priceDifferencePercentage ?? 0,
                     volume: baseVolumeData.formatted,
                     domesticVolume: baseVolumeData.formatted,
                     overseasVolume: comparisonVolumeData.formatted,
+                    isBasePriceReady: basePrice !== null,
+                    isComparisonPriceReady: comparisonPrice !== null,
+                    isPriceDifferenceReady: priceDifferenceReady && priceDifferencePercentage !== null,
+                    isChangeReady: liveChange24h !== null,
                 } as ProcessedCoinData;
-            })
-            .filter((coin): coin is ProcessedCoinData => coin !== null);
+            });
 
         console.log(`✅ Processed ${liveData.length} coins`);
 
+        const isMetricReady = (coin: ProcessedCoinData, key: SortKey): boolean => {
+            switch (key) {
+                case 'basePrice':
+                    return coin.isBasePriceReady;
+                case 'comparisonPrice':
+                    return coin.isComparisonPriceReady;
+                case 'priceDifference':
+                    return coin.isPriceDifferenceReady;
+                case 'change24h':
+                    return coin.isChangeReady;
+                case 'baseVolume':
+                    return coin.baseVolumeState !== 'loading';
+                case 'comparisonVolume':
+                    return coin.comparisonVolumeState !== 'loading';
+                case 'name':
+                default:
+                    return true;
+            }
+        };
+
         liveData.sort((a, b) => {
             const { key, direction } = sortConfig;
+
+            const aReady = isMetricReady(a, key);
+            const bReady = isMetricReady(b, key);
+
+            if (aReady && !bReady) {
+                return -1;
+            }
+            if (!aReady && bReady) {
+                return 1;
+            }
+            if (!aReady && !bReady) {
+                return 0;
+            }
+
             let aValue: string | number;
             let bValue: string | number;
 
@@ -1033,7 +1037,7 @@ const HomePage: React.FC = () => {
                 aValue = a[key as keyof ProcessedCoinData] as number;
                 bValue = b[key as keyof ProcessedCoinData] as number;
             }
-            
+
             const dir = direction === 'asc' ? 1 : -1;
 
             if (typeof aValue === 'string' && typeof bValue === 'string') {
