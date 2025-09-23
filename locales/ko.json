@@ -14,18 +14,20 @@
   },
   "sidebar": {
     "premium_header": "프리미엄",
-    "exchange_announcements": "거래소별 공지사항",
-    "exchange_arbitrage": "거래소별 코인 차익(아비트리지)",
-    "tradingview_auto": "트레이딩뷰 자동 거래",
-    "listing_auto": "상장 공지 자동 거래",
+    "price_comparison": "거래소별 가격 비교",
+    "funding_info": "거래소별 펀비 정보",
+    "airdrop_info": "에어드롭 정보",
+    "tradingview_auto": "트레이딩뷰 신호 자동 거래",
+    "listing_info": "거래소 상장 정보",
     "logged_in_as": "로그인 계정",
     "login_required": "로그인이 필요합니다"
   },
   "bottom_nav": {
-    "exchange_announcements": "거래소별 공지사항",
-    "exchange_arbitrage": "거래소별 코인 차익(아비트리지)",
-    "tradingview_auto": "트레이딩뷰 자동 거래",
-    "listing_auto": "상장 공지 자동 거래"
+    "price_comparison": "거래소별 가격 비교",
+    "funding_info": "거래소별 펀비 정보",
+    "airdrop_info": "에어드롭 정보",
+    "tradingview_auto": "트레이딩뷰 신호 자동 거래",
+    "listing_info": "거래소 상장 정보"
   },
   "home": {
     "title": "김치 프리미엄",
@@ -115,12 +117,20 @@
     "early_access_title": "얼리 액세스 신청",
     "early_access_description": "이메일을 남겨주시면 기능 오픈 소식을 가장 먼저 알려드립니다.",
     "email_placeholder": "이메일 주소를 입력하세요",
-    "exchange_arbitrage": {
-      "intro": "거래소별 실시간 가격 차이를 분석해 최적의 차익거래 기회를 포착하세요.",
+    "funding_info": {
+      "intro": "거래소별 펀딩비를 실시간으로 비교하고 포지션 전략을 최적화하세요.",
       "points": [
-        "국내외 거래소 가격 격차를 실시간으로 추적합니다.",
-        "자동 계산된 스프레드와 예상 수익률을 제공합니다.",
-        "맞춤형 알림으로 기회를 놓치지 마세요."
+        "주요 선물 거래소의 롱/숏 펀딩비 흐름을 한눈에 살펴보세요.",
+        "코인별 펀딩비 히스토리와 평균값을 제공합니다.",
+        "이상 급등·급락 시 알림으로 빠르게 대응하세요."
+      ]
+    },
+    "airdrop_info": {
+      "intro": "에어드롭 일정과 참가 조건을 한 곳에서 정리해 기회를 놓치지 마세요.",
+      "points": [
+        "진행 중·예정된 프로젝트의 스냅샷 일정을 제공합니다.",
+        "참여 조건과 필수 체크리스트를 안내합니다.",
+        "완료 후 토큰 분배 현황을 추적합니다."
       ]
     },
     "tradingview_auto": {
@@ -131,12 +141,12 @@
         "전략별 실행 로그와 성과 리포트를 제공합니다."
       ]
     },
-    "listing_auto": {
-      "intro": "상장 공지를 실시간으로 감지하고 자동 매매 전략과 연동하세요.",
+    "listing_info": {
+      "intro": "거래소 상장 공지를 실시간으로 모니터링하고 기회를 포착하세요.",
       "points": [
-        "주요 거래소 상장 공지를 초 단위로 모니터링합니다.",
+        "주요 거래소 상장 소식을 초 단위로 감지합니다.",
         "관심 코인만 선별하도록 사용자 정의 필터를 지원합니다.",
-        "자동 매수·매도 시뮬레이션으로 리스크를 줄입니다."
+        "상장 전후 가격 변화를 데이터로 제공합니다."
       ]
     }
   }

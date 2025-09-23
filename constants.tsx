@@ -17,10 +17,11 @@ export const TRACKED_COINS: CoinId[] = ['BTC', 'ETH', 'SOL'];
 export const COIN_DISPLAY_LIMIT = 30;
 
 export type ExchangeNavKey =
-  | 'exchange_announcements'
-  | 'exchange_arbitrage'
+  | 'price_comparison'
+  | 'funding_info'
+  | 'airdrop_info'
   | 'tradingview_auto'
-  | 'listing_auto';
+  | 'listing_info';
 
 export type ExchangeNavItem = {
   key: ExchangeNavKey;
@@ -29,28 +30,33 @@ export type ExchangeNavItem = {
 };
 
 export const EXCHANGE_NAV_ITEMS: ExchangeNavItem[] = [
-  { key: 'exchange_announcements', icon: 'fa-bullhorn', path: '/announcements' },
-  { key: 'exchange_arbitrage', icon: 'fa-scale-balanced', path: '/arbitrage' },
-  { key: 'tradingview_auto', icon: 'fa-chart-line', path: '/tradingview-auto' },
-  { key: 'listing_auto', icon: 'fa-robot', path: '/listing-auto' },
+  { key: 'price_comparison', icon: 'fa-chart-line', path: '/' },
+  { key: 'funding_info', icon: 'fa-percent', path: '/funding' },
+  { key: 'airdrop_info', icon: 'fa-gift', path: '/airdrop' },
+  { key: 'tradingview_auto', icon: 'fa-robot', path: '/tradingview-auto' },
+  { key: 'listing_info', icon: 'fa-bullhorn', path: '/listing-info' },
 ];
 
 export const EXCHANGE_NAV_TRANSLATIONS: Record<ExchangeNavKey, { primary: string; fallback: string }> = {
-  exchange_announcements: {
-    primary: 'bottom_nav.exchange_announcements',
-    fallback: 'sidebar.exchange_announcements'
+  price_comparison: {
+    primary: 'bottom_nav.price_comparison',
+    fallback: 'sidebar.price_comparison'
   },
-  exchange_arbitrage: {
-    primary: 'bottom_nav.exchange_arbitrage',
-    fallback: 'sidebar.exchange_arbitrage'
+  funding_info: {
+    primary: 'bottom_nav.funding_info',
+    fallback: 'sidebar.funding_info'
+  },
+  airdrop_info: {
+    primary: 'bottom_nav.airdrop_info',
+    fallback: 'sidebar.airdrop_info'
   },
   tradingview_auto: {
     primary: 'bottom_nav.tradingview_auto',
     fallback: 'sidebar.tradingview_auto'
   },
-  listing_auto: {
-    primary: 'bottom_nav.listing_auto',
-    fallback: 'sidebar.listing_auto'
+  listing_info: {
+    primary: 'bottom_nav.listing_info',
+    fallback: 'sidebar.listing_info'
   }
 };
 
