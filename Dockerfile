@@ -1,33 +1,33 @@
-# ----------------------
-# 1단계: React 프런트 빌드 (Vite => dist/)
-# ----------------------
+# Build stage
 FROM node:20 AS builder
+
 WORKDIR /app
 
+# package.json과 package-lock.json 복사
 COPY package*.json ./
-# lock 파일이 없으므로 npm install 사용
+
+# 의존성 설치
 RUN npm install
 
+# 소스 코드 복사
 COPY . .
-RUN npm run build  # => dist/ 생성
 
-# ----------------------
-# 2단계: 런타임 - server/ 사용
-# ----------------------
-FROM node:20
+# React 앱 빌드 (build/ 폴더 생성됨)
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine
+
 WORKDIR /app
 
-# 프런트 산출물
-COPY --from=builder /app/dist ./dist
+# 빌드된 정적 파일 복사 (dist가 아닌 build 폴더)
+COPY --from=builder /app/build ./build
 
-# 서버 의존성 (server/package.json 기준)
-COPY server/package*.json ./server/
-RUN cd server && npm install --omit=dev
+# serve 패키지 전역 설치 (정적 파일 서빙용)
+RUN npm install -g serve
 
-# 서버 소스
-COPY server ./server
+# 포트 설정
+EXPOSE 3000
 
-ENV PORT=8080
-EXPOSE 8080
-
-CMD ["node", "server/server.js"]
+# serve를 사용하여 빌드된 앱 실행
+CMD ["serve", "-s", "build", "-l", "3000"]
