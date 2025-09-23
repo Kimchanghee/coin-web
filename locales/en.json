@@ -14,18 +14,20 @@
   },
   "sidebar": {
     "premium_header": "Premium",
-    "exchange_announcements": "Exchange Announcements",
-    "exchange_arbitrage": "Exchange Arbitrage",
-    "tradingview_auto": "TradingView Auto Trading",
-    "listing_auto": "Listing Auto Trading",
+    "price_comparison": "Exchange Price Comparison",
+    "funding_info": "Exchange Funding Rates",
+    "airdrop_info": "Airdrop Intelligence",
+    "tradingview_auto": "TradingView Signal Auto Trading",
+    "listing_info": "Exchange Listing Intelligence",
     "logged_in_as": "Logged in as",
     "login_required": "Login required"
   },
   "bottom_nav": {
-    "exchange_announcements": "Exchange Announcements",
-    "exchange_arbitrage": "Exchange Arbitrage",
+    "price_comparison": "Price Comparison",
+    "funding_info": "Funding Rates",
+    "airdrop_info": "Airdrop Intelligence",
     "tradingview_auto": "TradingView Auto Trading",
-    "listing_auto": "Listing Auto Trading"
+    "listing_info": "Listing Intelligence"
   },
   "home": {
     "title": "Kimchi Premium",
@@ -115,12 +117,20 @@
     "early_access_title": "Request Early Access",
     "early_access_description": "Leave your email and we'll let you know as soon as the feature launches.",
     "email_placeholder": "Enter your email address",
-    "exchange_arbitrage": {
-      "intro": "Analyze real-time price gaps between exchanges to capture the best arbitrage opportunities.",
+    "funding_info": {
+      "intro": "Compare exchange funding rates in real time to optimise your long/short strategies.",
       "points": [
-        "Track domestic and global exchange spreads in real time.",
-        "Get automatically calculated spreads and projected returns.",
-        "Stay informed with customized alerts so you never miss a trade."
+        "Track long and short funding flows from major derivatives venues.",
+        "Review coin-level funding history and rolling averages.",
+        "Receive alerts when abnormal funding spikes create opportunities."
+      ]
+    },
+    "airdrop_info": {
+      "intro": "Stay ahead of airdrop schedules, requirements, and claim windows in one streamlined view.",
+      "points": [
+        "Browse upcoming and active projects with snapshot deadlines.",
+        "Understand participation requirements with actionable checklists.",
+        "Track token distribution status once an airdrop concludes."
       ]
     },
     "tradingview_auto": {
@@ -131,12 +141,12 @@
         "Review execution logs and performance reports for each strategy."
       ]
     },
-    "listing_auto": {
-      "intro": "Detect listing announcements instantly and link them with automated trading strategies.",
+    "listing_info": {
+      "intro": "Monitor exchange listing announcements in real time and act before the crowd.",
       "points": [
-        "Monitor listing notices from major exchanges every second.",
-        "Apply custom filters to focus on the coins that matter to you.",
-        "Use automated buy/sell simulations to reduce risk."
+        "Detect listing news from major exchanges within seconds.",
+        "Filter alerts to spotlight only the tickers you care about.",
+        "Review pre- and post-listing price movements with contextual data."
       ]
     }
   }

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { allServices } from '../components/services/exchanges';
+import { subscribeToLiveMarketCollector, startLiveMarketCollector } from '../components/services/liveMarketCollector';
 import type { ExtendedPriceUpdate } from '../types';
 
 type ExtendedFields = {
@@ -26,17 +26,19 @@ const createEmptySnapshot = (): LiveMarketSnapshot => ({
   extendedSampleCounts: {},
 });
 
-const initialSnapshot: LiveMarketSnapshot = createEmptySnapshot();
-
 type Listener = () => void;
 
 class LiveMarketStore {
   private state: LiveMarketSnapshot = createEmptySnapshot();
   private listeners = new Set<Listener>();
-  private started = false;
+  private unsubscribeCollector: (() => void) | null = null;
+
+  constructor() {
+    this.ensureCollectorSubscription();
+  }
 
   subscribe = (listener: Listener): (() => void) => {
-    this.ensureStarted();
+    this.ensureCollectorSubscription();
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
@@ -56,98 +58,83 @@ class LiveMarketStore {
     };
   };
 
-  private ensureStarted = () => {
-    if (this.started || typeof window === 'undefined') {
+  private ensureCollectorSubscription = () => {
+    if (this.unsubscribeCollector) {
       return;
     }
 
-    this.started = true;
+    startLiveMarketCollector();
+    this.unsubscribeCollector = subscribeToLiveMarketCollector(this.handleUpdate);
+  };
 
-    const handleUpdate = (update: ExtendedPriceUpdate) => {
-      const now = Date.now();
+  private handleUpdate = (update: ExtendedPriceUpdate) => {
+    const now = Date.now();
 
-      let priceChanged = false;
-      let extendedChanged = false;
+    let priceChanged = false;
+    let extendedChanged = false;
 
-      if (typeof update.price === 'number' && Number.isFinite(update.price) && update.price > 0) {
-        const prevPrice = this.state.prices[update.priceKey];
-        if (prevPrice !== update.price) {
-          this.state.prices[update.priceKey] = update.price;
-          priceChanged = true;
-        }
-
-        if (this.state.priceTimestamps[update.priceKey] !== now) {
-          this.state.priceTimestamps[update.priceKey] = now;
-          priceChanged = true;
-        }
-
-        const nextSample = (this.state.priceSampleCounts[update.priceKey] ?? 0) + 1;
-        if (this.state.priceSampleCounts[update.priceKey] !== nextSample) {
-          this.state.priceSampleCounts[update.priceKey] = nextSample;
-          priceChanged = true;
-        }
+    if (typeof update.price === 'number' && Number.isFinite(update.price) && update.price > 0) {
+      const prevPrice = this.state.prices[update.priceKey];
+      if (prevPrice !== update.price) {
+        this.state.prices[update.priceKey] = update.price;
+        priceChanged = true;
       }
 
-      const nextExtended: ExtendedFields = {};
-
-      if (typeof update.change24h === 'number' && Number.isFinite(update.change24h)) {
-        nextExtended.change24h = update.change24h;
-      }
-      if (typeof update.volume24h === 'number' && Number.isFinite(update.volume24h)) {
-        nextExtended.volume24h = update.volume24h;
-      }
-      if (typeof update.changePrice === 'number' && Number.isFinite(update.changePrice)) {
-        nextExtended.changePrice = update.changePrice;
+      if (this.state.priceTimestamps[update.priceKey] !== now) {
+        this.state.priceTimestamps[update.priceKey] = now;
+        priceChanged = true;
       }
 
-      if (Object.keys(nextExtended).length > 0) {
-        const existing = this.state.extended[update.priceKey] ?? {};
-        const merged: ExtendedFields = {
-          ...existing,
-          ...nextExtended,
-        };
+      const nextSample = (this.state.priceSampleCounts[update.priceKey] ?? 0) + 1;
+      if (this.state.priceSampleCounts[update.priceKey] !== nextSample) {
+        this.state.priceSampleCounts[update.priceKey] = nextSample;
+        priceChanged = true;
+      }
+    }
 
-        if (
-          existing.change24h !== merged.change24h ||
-          existing.volume24h !== merged.volume24h ||
-          existing.changePrice !== merged.changePrice
-        ) {
-          this.state.extended[update.priceKey] = merged;
-          extendedChanged = true;
-        }
+    const nextExtended: ExtendedFields = {};
 
-        if (this.state.extendedTimestamps[update.priceKey] !== now) {
-          this.state.extendedTimestamps[update.priceKey] = now;
-          extendedChanged = true;
-        }
+    if (typeof update.change24h === 'number' && Number.isFinite(update.change24h)) {
+      nextExtended.change24h = update.change24h;
+    }
+    if (typeof update.volume24h === 'number' && Number.isFinite(update.volume24h)) {
+      nextExtended.volume24h = update.volume24h;
+    }
+    if (typeof update.changePrice === 'number' && Number.isFinite(update.changePrice)) {
+      nextExtended.changePrice = update.changePrice;
+    }
 
-        const nextExtendedSample = (this.state.extendedSampleCounts[update.priceKey] ?? 0) + 1;
-        if (this.state.extendedSampleCounts[update.priceKey] !== nextExtendedSample) {
-          this.state.extendedSampleCounts[update.priceKey] = nextExtendedSample;
-          extendedChanged = true;
-        }
+    if (Object.keys(nextExtended).length > 0) {
+      const existing = this.state.extended[update.priceKey] ?? {};
+      const merged: ExtendedFields = {
+        ...existing,
+        ...nextExtended,
+      };
+
+      if (
+        existing.change24h !== merged.change24h ||
+        existing.volume24h !== merged.volume24h ||
+        existing.changePrice !== merged.changePrice
+      ) {
+        this.state.extended[update.priceKey] = merged;
+        extendedChanged = true;
       }
 
-      if (priceChanged || extendedChanged) {
-        this.notify();
+      if (this.state.extendedTimestamps[update.priceKey] !== now) {
+        this.state.extendedTimestamps[update.priceKey] = now;
+        extendedChanged = true;
       }
-    };
 
-    const handlePriceOnlyUpdate = (update: { priceKey: string; price: number }) => {
-      handleUpdate(update);
-    };
-
-    allServices.forEach(service => {
-      try {
-        if (typeof service.connectExtended === 'function') {
-          service.connectExtended(handleUpdate);
-        } else {
-          service.connect(handlePriceOnlyUpdate);
-        }
-      } catch (error) {
-        console.error(`[LiveMarketStore] Failed to connect ${service.id}:`, error);
+      const nextExtendedSample = (this.state.extendedSampleCounts[update.priceKey] ?? 0) + 1;
+      if (this.state.extendedSampleCounts[update.priceKey] !== nextExtendedSample) {
+        this.state.extendedSampleCounts[update.priceKey] = nextExtendedSample;
+        extendedChanged = true;
       }
-    });
+    }
+
+    if (priceChanged || extendedChanged) {
+      this.notify();
+    }
   };
 
   private notify = () => {

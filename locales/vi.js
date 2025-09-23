@@ -15,18 +15,20 @@ export default {
   },
   "sidebar": {
     "premium_header": "Chênh lệch giá",
-    "exchange_announcements": "Thông báo theo sàn giao dịch",
-    "exchange_arbitrage": "Chênh lệch coin theo sàn (Arbitrage)",
-    "tradingview_auto": "Giao dịch tự động TradingView",
-    "listing_auto": "Giao dịch tự động khi niêm yết",
+    "price_comparison": "So sánh giá theo sàn",
+    "funding_info": "Funding rate theo sàn",
+    "airdrop_info": "Thông tin airdrop",
+    "tradingview_auto": "Giao dịch tự động tín hiệu TradingView",
+    "listing_info": "Thông tin niêm yết sàn",
     "logged_in_as": "Đăng nhập với tên",
     "login_required": "Yêu cầu đăng nhập"
   },
   "bottom_nav": {
-    "exchange_announcements": "Thông báo theo sàn giao dịch",
-    "exchange_arbitrage": "Chênh lệch coin theo sàn (Arbitrage)",
-    "tradingview_auto": "Giao dịch tự động TradingView",
-    "listing_auto": "Giao dịch tự động khi niêm yết"
+    "price_comparison": "So sánh giá",
+    "funding_info": "Funding rate",
+    "airdrop_info": "Airdrop",
+    "tradingview_auto": "Tự động",
+    "listing_info": "Niêm yết"
   },
   "home": {
     "title": "Chênh lệch giá Kimchi",
@@ -161,12 +163,20 @@ export default {
     "early_access_title": "Đăng ký truy cập sớm",
     "early_access_description": "Để lại email của bạn và chúng tôi sẽ thông báo ngay khi tính năng ra mắt.",
     "email_placeholder": "Nhập địa chỉ email của bạn",
-    "exchange_arbitrage": {
-      "intro": "Phân tích chênh lệch giá theo thời gian thực giữa các sàn để nắm bắt cơ hội arbitrage tốt nhất.",
+    "funding_info": {
+      "intro": "So sánh funding rate giữa các sàn theo thời gian thực để tối ưu chiến lược long/short.",
       "points": [
-        "Theo dõi chênh lệch giữa các sàn trong nước và quốc tế theo thời gian thực.",
-        "Cung cấp mức chênh lệch và lợi nhuận dự kiến được tính toán tự động.",
-        "Nhận cảnh báo tùy chỉnh để không bỏ lỡ bất kỳ cơ hội nào."
+        "Theo dõi diễn biến funding rate long/short tại các sàn phái sinh lớn.",
+        "Xem lịch sử và giá trị trung bình của funding rate theo từng coin.",
+        "Nhận cảnh báo khi funding biến động bất thường để phản ứng kịp thời."
+      ]
+    },
+    "airdrop_info": {
+      "intro": "Tổng hợp lịch và điều kiện tham gia airdrop ở một nơi duy nhất, tránh bỏ lỡ cơ hội.",
+      "points": [
+        "Liệt kê các dự án đang và sắp airdrop cùng ngày snapshot.",
+        "Cung cấp điều kiện tham gia và checklist chi tiết.",
+        "Theo dõi trạng thái phân phối token sau khi airdrop kết thúc."
       ]
     },
     "tradingview_auto": {
@@ -177,12 +187,12 @@ export default {
         "Xem nhật ký thực thi và báo cáo hiệu suất cho từng chiến lược."
       ]
     },
-    "listing_auto": {
-      "intro": "Phát hiện thông báo niêm yết ngay lập tức và liên kết với chiến lược giao dịch tự động.",
+    "listing_info": {
+      "intro": "Giám sát thông báo niêm yết của các sàn theo thời gian thực để đi trước thị trường.",
       "points": [
-        "Giám sát thông báo niêm yết từ các sàn lớn theo từng giây.",
-        "Hỗ trợ bộ lọc tùy chỉnh để tập trung vào những đồng coin bạn quan tâm.",
-        "Giảm rủi ro nhờ mô phỏng mua/bán tự động."
+        "Phát hiện tin niêm yết từ các sàn lớn chỉ sau vài giây.",
+        "Tùy chỉnh bộ lọc để tập trung vào các mã bạn quan tâm.",
+        "Cung cấp dữ liệu giá trước và sau niêm yết để tham khảo."
       ]
     }
   }
