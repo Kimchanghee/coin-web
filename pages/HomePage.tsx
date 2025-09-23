@@ -740,6 +740,7 @@ const HomePage: React.FC = () => {
     const { t, i18n } = useTranslation();
     const usdKrw = useMemo(() => 1 / (CURRENCY_RATES.USD?.rate ?? (1 / 1385)), []);
 
+    const [currentTime, setCurrentTime] = useState(() => Date.now());
     const lastPriceTimestamps = useRef<Record<string, number>>({});
     const lastExtendedTimestamps = useRef<Record<string, number>>({});
 
@@ -752,6 +753,20 @@ const HomePage: React.FC = () => {
 
     const [selectedBase, setSelectedBase] = useState<ExchangeOption>(translatedAllExchanges[0]);
     const [selectedComparison, setSelectedComparison] = useState<ExchangeOption>(translatedAllExchanges[1]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            setCurrentTime(Date.now());
+        }, 1000);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, []);
 
     useEffect(() => {
         setSelectedBase(current => {
@@ -824,6 +839,11 @@ const HomePage: React.FC = () => {
     const headerStats = useMemo<HeaderStats>(() => {
         const findFirstPrice = (keys: string[]): number | undefined => {
             for (const key of keys) {
+                const timestamp = lastPriceTimestamps.current[key];
+                if (timestamp === undefined || currentTime - timestamp > STALE_PRICE_WINDOW_MS) {
+                    continue;
+                }
+
                 const value = allPrices[key];
                 if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
                     return value;
@@ -888,7 +908,7 @@ const HomePage: React.FC = () => {
             tetherPremium,
             coinbasePremium,
         };
-    }, [allPrices, usdKrw]);
+    }, [allPrices, usdKrw, currentTime]);
 
     const handleSort = (key: SortKey) => {
         let direction: SortDirection = 'desc';
@@ -901,7 +921,7 @@ const HomePage: React.FC = () => {
     const processedCoinData = useMemo(() => {
         const noVolumeLabel = t('table.no_data');
 
-        const now = Date.now();
+        const now = currentTime;
 
         const liveData = COIN_METADATA
             .map(baseCoin => {
@@ -1080,7 +1100,7 @@ const HomePage: React.FC = () => {
         });
 
         return liveData;
-    }, [allPrices, allExtendedData, selectedBase, selectedComparison, sortConfig, i18n.language, usdKrw, currentCurrency, t]);
+    }, [allPrices, allExtendedData, selectedBase, selectedComparison, sortConfig, i18n.language, usdKrw, currentCurrency, currentTime, t]);
 
     const visibleCoinData = useMemo(() => (
         user ? processedCoinData : processedCoinData.slice(0, COIN_DISPLAY_LIMIT)
