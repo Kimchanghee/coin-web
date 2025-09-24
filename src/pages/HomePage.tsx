@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../i18n';
 import { COIN_METADATA, ALL_EXCHANGES_FOR_COMPARISON, COIN_DISPLAY_LIMIT, CURRENCY_RATES, LANGUAGE_CURRENCY_MAP } from '../constants';
 import type { CoinMetadata, User } from '../types';
 import { useAuth } from '../context/AuthContext';

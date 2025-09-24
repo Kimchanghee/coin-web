@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../i18n';
 import type { Announcement, ExchangeId } from '../types';
 import { EXCHANGES } from '../constants';
 import { allAnnouncementServices } from '../components/services/announcements';

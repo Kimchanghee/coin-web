@@ -13,9 +13,12 @@ const resolveWebSocketUrl = (exchangeId: ExchangeId): string | null => {
     typeof window !== 'undefined'
       ? (window as any).__ANNOUNCEMENTS_WS_URL__ ?? (window as any).__ANNOUNCEMENTS_WS_PATH__
       : undefined;
-  const envOverride = typeof import.meta !== 'undefined' && import.meta.env
-    ? (import.meta.env as Record<string, string | undefined>).VITE_ANNOUNCEMENTS_WS_URL
-    : undefined;
+  const env = (typeof process !== 'undefined' ? process.env : {}) as Record<string, string | undefined>;
+  const envOverride =
+    env.REACT_APP_ANNOUNCEMENTS_WS_URL ||
+    env.REACT_APP_ANNOUNCEMENTS_WS_PATH ||
+    env.VITE_ANNOUNCEMENTS_WS_URL ||
+    env.VITE_ANNOUNCEMENTS_WS_PATH;
 
   if (globalOverride) {
     const hasQuery = String(globalOverride).includes('?');

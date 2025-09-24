@@ -8,8 +8,12 @@
 export const buildProxyUrl = (path: string): string => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
-  const env = (import.meta as any)?.env ?? {};
+  const env = (typeof process !== 'undefined' ? process.env : {}) as Record<string, string | undefined>;
   const configuredBase =
+    env.REACT_APP_BACKEND_URL ||
+    env.REACT_APP_API_BASE_URL ||
+    env.REACT_APP_SERVER_URL ||
+    env.REACT_APP_BACKEND_BASE_URL ||
     env.VITE_BACKEND_URL ||
     env.VITE_API_BASE_URL ||
     env.VITE_SERVER_URL ||
