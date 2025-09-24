@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../i18n';
 
 const FeatureListItem: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <li className="flex items-center gap-3">

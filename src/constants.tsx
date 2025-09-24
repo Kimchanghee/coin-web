@@ -1,5 +1,5 @@
 import React from 'react';
-import type { TFunction } from 'i18next';
+import type { TranslationFunction } from './i18n';
 import type { Exchange, CoinMetadata, ExchangeId, CoinId } from './types';
 
 export const EXCHANGES: Exchange[] = [
@@ -60,7 +60,7 @@ export const EXCHANGE_NAV_TRANSLATIONS: Record<ExchangeNavKey, { primary: string
   }
 };
 
-export const resolveExchangeNavLabel = (t: TFunction, key: ExchangeNavKey) => {
+export const resolveExchangeNavLabel = (t: TranslationFunction, key: ExchangeNavKey) => {
   const translationKeys = EXCHANGE_NAV_TRANSLATIONS[key];
   return t(translationKeys.primary, {
     defaultValue: t(translationKeys.fallback)

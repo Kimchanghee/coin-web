@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import type { User } from '../../types';
 import { EXCHANGE_NAV_ITEMS, resolveExchangeNavLabel } from '../../constants';
 import { useAuth } from '../../context/AuthContext';
