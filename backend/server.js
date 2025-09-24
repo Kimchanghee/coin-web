@@ -66,14 +66,7 @@ app.get('/api/proxy/bitget/futures/:symbol', async (req, res) => {
   }
 });
 
-// --- (C) 정적 파일 서빙 + SPA Fallback ---
-const distPath = path.resolve(__dirname, '..', 'dist');
-app.use(express.static(distPath));
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
-});
-
-// --- (F) 실시간 시세 캐시 및 SSE 스트림 ---
+// --- (C) 실시간 시세 캐시 및 SSE 스트림 ---
 app.get('/api/market/upbit/snapshot', (_req, res) => {
   res.json(upbitTickerStream.getSnapshot());
 });
@@ -104,7 +97,14 @@ app.get('/api/market/upbit/stream', (req, res) => {
   });
 });
 
-// --- (D) 에러 핸들링 (프로세스 보호) ---
+// --- (D) 정적 파일 서빙 + SPA Fallback ---
+const distPath = path.resolve(__dirname, '..', 'dist');
+app.use(express.static(distPath));
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
+// --- (E) 에러 핸들링 (프로세스 보호) ---
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Rejection:', err);
 });
@@ -112,7 +112,7 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
 
-// --- (E) 서버 시작 ---
+// --- (F) 서버 시작 ---
 app.listen(PORT, HOST, () => {
   console.log(`Server listening on http://${HOST}:${PORT}`);
 });
