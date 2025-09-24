@@ -3,6 +3,7 @@ const path = require('path');
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const upbitTickerStream = require('./services/upbitTickerStream');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -65,14 +66,45 @@ app.get('/api/proxy/bitget/futures/:symbol', async (req, res) => {
   }
 });
 
-// --- (C) 정적 파일 서빙 + SPA Fallback ---
+// --- (C) 실시간 시세 캐시 및 SSE 스트림 ---
+app.get('/api/market/upbit/snapshot', (_req, res) => {
+  res.json(upbitTickerStream.getSnapshot());
+});
+
+app.get('/api/market/upbit/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const sendEvent = (event, data) => {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  sendEvent('snapshot', upbitTickerStream.getSnapshot());
+
+  const unsubscribeTicker = upbitTickerStream.subscribe((update) => {
+    sendEvent('ticker', update);
+  });
+
+  const unsubscribeStatus = upbitTickerStream.subscribeStatus((status) => {
+    sendEvent('status', status);
+  });
+
+  req.on('close', () => {
+    unsubscribeTicker();
+    unsubscribeStatus();
+  });
+});
+
+// --- (D) 정적 파일 서빙 + SPA Fallback ---
 const distPath = path.resolve(__dirname, '..', 'dist');
 app.use(express.static(distPath));
 app.get('*', (_req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// --- (D) 에러 핸들링 (프로세스 보호) ---
+// --- (E) 에러 핸들링 (프로세스 보호) ---
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Rejection:', err);
 });
@@ -80,7 +112,7 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
 
-// --- (E) 서버 시작 ---
+// --- (F) 서버 시작 ---
 app.listen(PORT, HOST, () => {
   console.log(`Server listening on http://${HOST}:${PORT}`);
 });
