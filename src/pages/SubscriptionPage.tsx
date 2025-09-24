@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '../i18n';
+import PremiumLayout from '../components/layouts/PremiumLayout';
 
 const FeatureListItem: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <li className="flex items-center gap-3">
@@ -42,23 +43,22 @@ const PricingCard: React.FC<{
 const SubscriptionPage: React.FC = () => {
     const { t } = useTranslation();
     return (
-        <div className="bg-gray-50 dark:bg-black min-h-screen text-gray-600 dark:text-gray-300 font-sans p-4 sm:p-6 lg:p-8 flex flex-col items-center">
-            <div className="w-full max-w-5xl">
-                <header className="text-center mb-12">
+        <PremiumLayout>
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-12">
+                <header className="text-center">
                     <Link to="/" className="text-yellow-400 hover:text-yellow-300 transition-colors">
                         &larr; {t('subscription.back_to_dashboard')}
                     </Link>
-                    <h1 className="text-4xl sm:text-5xl font-extrabold text-black dark:text-white mt-4 tracking-tight">
+                    <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-black dark:text-white sm:text-5xl">
                         {t('subscription.title')}
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
+                    <p className="mt-3 mx-auto max-w-2xl text-gray-500 dark:text-gray-400">
                         {t('subscription.subtitle')}
                     </p>
                 </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                    {/* Feature List */}
-                    <div className="lg:col-span-1 bg-white dark:bg-[#1a1a1a] p-6 rounded-lg border border-gray-200 dark:border-gray-800">
+                <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
+                    <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-[#1a1a1a] lg:col-span-1">
                         <h2 className="text-xl font-semibold text-black dark:text-white">{t('subscription.features_title')}</h2>
                         <ul className="mt-6 space-y-4 text-gray-700 dark:text-gray-300">
                             <FeatureListItem>{t('subscription.feature1')}</FeatureListItem>
@@ -70,8 +70,7 @@ const SubscriptionPage: React.FC = () => {
                         </ul>
                     </div>
 
-                    {/* Pricing Tiers */}
-                    <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:col-span-2">
                         <PricingCard plan={t('subscription.monthly_plan')} price="19" period={t('subscription.month')}>
                             {t('subscription.monthly_desc')}
                         </PricingCard>
@@ -81,7 +80,7 @@ const SubscriptionPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </PremiumLayout>
     );
 };
 
