@@ -17,11 +17,12 @@ export const TRACKED_COINS: CoinId[] = ['BTC', 'ETH', 'SOL'];
 export const COIN_DISPLAY_LIMIT = 30;
 
 export type ExchangeNavKey =
-  | 'price_comparison'
-  | 'funding_info'
-  | 'airdrop_info'
-  | 'tradingview_auto'
-  | 'listing_info';
+  | 'premium'
+  | 'arbitrage'
+  | 'live_status'
+  | 'currency_calculator'
+  | 'announcements'
+  | 'premium_guide';
 
 export type ExchangeNavItem = {
   key: ExchangeNavKey;
@@ -30,33 +31,38 @@ export type ExchangeNavItem = {
 };
 
 export const EXCHANGE_NAV_ITEMS: ExchangeNavItem[] = [
-  { key: 'price_comparison', icon: 'fa-chart-line', path: '/' },
-  { key: 'funding_info', icon: 'fa-percent', path: '/funding' },
-  { key: 'airdrop_info', icon: 'fa-gift', path: '/airdrop' },
-  { key: 'tradingview_auto', icon: 'fa-robot', path: '/tradingview-auto' },
-  { key: 'listing_info', icon: 'fa-bullhorn', path: '/listing-info' },
+  { key: 'premium', icon: 'fa-gem', path: '/premium' },
+  { key: 'arbitrage', icon: 'fa-right-left', path: '/arbitrage' },
+  { key: 'live_status', icon: 'fa-signal', path: '/' },
+  { key: 'currency_calculator', icon: 'fa-coins', path: '/currency-calculator' },
+  { key: 'announcements', icon: 'fa-bullhorn', path: '/announcements' },
+  { key: 'premium_guide', icon: 'fa-book-open', path: '/premium-guide' },
 ];
 
 export const EXCHANGE_NAV_TRANSLATIONS: Record<ExchangeNavKey, { primary: string; fallback: string }> = {
-  price_comparison: {
-    primary: 'bottom_nav.price_comparison',
-    fallback: 'sidebar.price_comparison'
+  premium: {
+    primary: 'bottom_nav.premium',
+    fallback: 'sidebar.premium'
   },
-  funding_info: {
-    primary: 'bottom_nav.funding_info',
-    fallback: 'sidebar.funding_info'
+  arbitrage: {
+    primary: 'bottom_nav.arbitrage',
+    fallback: 'sidebar.arbitrage'
   },
-  airdrop_info: {
-    primary: 'bottom_nav.airdrop_info',
-    fallback: 'sidebar.airdrop_info'
+  live_status: {
+    primary: 'bottom_nav.live_status',
+    fallback: 'sidebar.live_status'
   },
-  tradingview_auto: {
-    primary: 'bottom_nav.tradingview_auto',
-    fallback: 'sidebar.tradingview_auto'
+  currency_calculator: {
+    primary: 'bottom_nav.currency_calculator',
+    fallback: 'sidebar.currency_calculator'
   },
-  listing_info: {
-    primary: 'bottom_nav.listing_info',
-    fallback: 'sidebar.listing_info'
+  announcements: {
+    primary: 'bottom_nav.announcements',
+    fallback: 'sidebar.announcements'
+  },
+  premium_guide: {
+    primary: 'bottom_nav.premium_guide',
+    fallback: 'sidebar.premium_guide'
   }
 };
 

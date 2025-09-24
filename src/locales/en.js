@@ -15,20 +15,22 @@ export default {
   },
   "sidebar": {
     "premium_header": "Premium",
-    "price_comparison": "Exchange Price Comparison",
-    "funding_info": "Exchange Funding Rates",
-    "airdrop_info": "Airdrop Intelligence",
-    "tradingview_auto": "TradingView Signal Auto Trading",
-    "listing_info": "Exchange Listing Intelligence",
+    "premium": "Premium",
+    "arbitrage": "Arbitrage",
+    "live_status": "Live Status",
+    "currency_calculator": "FX Calculator",
+    "announcements": "Announcements",
+    "premium_guide": "Premium Guide",
     "logged_in_as": "Logged in as",
     "login_required": "Login required"
   },
   "bottom_nav": {
-    "price_comparison": "Price Comparison",
-    "funding_info": "Funding Rates",
-    "airdrop_info": "Airdrop Intelligence",
-    "tradingview_auto": "TradingView Auto Trading",
-    "listing_info": "Listing Intelligence"
+    "premium": "Premium",
+    "arbitrage": "Arbitrage",
+    "live_status": "Live Status",
+    "currency_calculator": "FX Calc",
+    "announcements": "Announcements",
+    "premium_guide": "Guide"
   },
   "home": {
     "title": "Kimchi Premium",
@@ -163,36 +165,28 @@ export default {
     "early_access_title": "Request Early Access",
     "early_access_description": "Leave your email and we'll let you know as soon as the feature launches.",
     "email_placeholder": "Enter your email address",
-    "funding_info": {
-      "intro": "Compare exchange funding rates in real time to optimise your long/short strategies.",
+    "arbitrage": {
+      "intro": "Track cross-exchange spreads in real time to capture arbitrage opportunities before they disappear.",
       "points": [
-        "Track long and short funding flows from major derivatives venues.",
-        "Review coin-level funding history and rolling averages.",
-        "Receive alerts when abnormal funding spikes create opportunities."
+        "Monitor premium gaps across domestic and global markets in a single dashboard.",
+        "Receive smart alerts when spreads break your custom thresholds.",
+        "Review historical spread charts to validate strategies."
       ]
     },
-    "airdrop_info": {
-      "intro": "Stay ahead of airdrop schedules, requirements, and claim windows in one streamlined view.",
+    "currency_calculator": {
+      "intro": "Quickly convert between KRW, USD and regional currencies with live FX rates tailored to crypto trading.",
       "points": [
-        "Browse upcoming and active projects with snapshot deadlines.",
-        "Understand participation requirements with actionable checklists.",
-        "Track token distribution status once an airdrop concludes."
+        "Convert crypto prices between supported fiat currencies instantly.",
+        "See reference rates sourced from trusted providers updated throughout the day.",
+        "Save your frequently used conversions for faster decisions."
       ]
     },
-    "tradingview_auto": {
-      "intro": "Turn your TradingView strategy signals into automated orders.",
+    "premium_guide": {
+      "intro": "Learn how to unlock the full value of TeamYM Premium with best practices and walkthroughs.",
       "points": [
-        "Connect TradingView alerts to a variety of trading strategies.",
-        "Securely link to major exchanges through API key integration.",
-        "Review execution logs and performance reports for each strategy."
-      ]
-    },
-    "listing_info": {
-      "intro": "Monitor exchange listing announcements in real time and act before the crowd.",
-      "points": [
-        "Detect listing news from major exchanges within seconds.",
-        "Apply filters to focus on the tickers that matter to you.",
-        "Review pre- and post-listing price performance with contextual data."
+        "Discover pro tips for interpreting premium and arbitrage signals.",
+        "Understand plan benefits so you can choose the right membership.",
+        "Get onboarding checklists to configure alerts and workflows quickly."
       ]
     }
   }
