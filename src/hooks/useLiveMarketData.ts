@@ -34,11 +34,17 @@ class LiveMarketStore {
   private unsubscribeCollector: (() => void) | null = null;
 
   constructor() {
-    this.ensureCollectorSubscription();
+    if (typeof window !== 'undefined') {
+      this.ensureCollectorSubscription();
+    }
   }
 
   subscribe = (listener: Listener): (() => void) => {
     this.listeners.add(listener);
+
+    // Guarantee the collector stays active even if no React components are
+    // currently consuming the store.
+    this.ensureCollectorSubscription();
 
     return () => {
       this.listeners.delete(listener);
@@ -59,12 +65,16 @@ class LiveMarketStore {
   };
 
   private ensureCollectorSubscription = () => {
-    if (this.unsubscribeCollector) {
+    if (typeof window === 'undefined' || this.unsubscribeCollector) {
       return;
     }
 
     startLiveMarketCollector();
     this.unsubscribeCollector = subscribeToLiveMarketCollector(this.handleUpdate);
+  };
+
+  ensureWarm = () => {
+    this.ensureCollectorSubscription();
   };
 
   private handleUpdate = (update: ExtendedPriceUpdate) => {
@@ -165,8 +175,9 @@ const store = getStore();
  * warm while the UI is dormant.
  */
 export const bootstrapLiveMarketStore = (): void => {
-  // Access the snapshot to guarantee the singleton instance is retained and
-  // its collector subscription stays active.
+  store.ensureWarm();
+  // Access the snapshot to guarantee the singleton instance is retained so the
+  // collector subscription attached during bootstrap is not garbage-collected.
   void store.getSnapshot();
 };
 
