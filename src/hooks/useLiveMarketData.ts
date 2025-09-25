@@ -43,6 +43,11 @@ class LiveMarketStore {
   }
 
   subscribe = (listener: Listener): (() => void) => {
+    // Ensure the collector remains connected whenever there is any consumer
+    // activity. This is effectively a no-op once the subscription has been
+    // established but guards against edge-cases where the store instance was
+    // created before the browser environment was ready.
+    this.connectCollector();
     this.listeners.add(listener);
 
     return () => {
@@ -167,6 +172,10 @@ const getStore = (): LiveMarketStore => {
 };
 
 const store = getStore();
+
+if (typeof window !== 'undefined') {
+  store.ensureWarm();
+}
 
 /**
  * Eagerly bootstraps the live market store so it begins buffering updates even
