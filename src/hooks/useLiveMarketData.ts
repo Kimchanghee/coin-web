@@ -33,15 +33,20 @@ class LiveMarketStore {
   private listeners = new Set<Listener>();
   private unsubscribeCollector: (() => void) | null = null;
 
-  constructor() {
-    this.ensureCollectorSubscription();
-  }
-
   subscribe = (listener: Listener): (() => void) => {
-    this.ensureCollectorSubscription();
+    const wasEmpty = this.listeners.size === 0;
     this.listeners.add(listener);
+
+    if (wasEmpty) {
+      this.ensureCollectorSubscription();
+    }
+
     return () => {
       this.listeners.delete(listener);
+
+      if (this.listeners.size === 0) {
+        this.teardownCollectorSubscription();
+      }
     };
   };
 
@@ -65,6 +70,15 @@ class LiveMarketStore {
 
     startLiveMarketCollector();
     this.unsubscribeCollector = subscribeToLiveMarketCollector(this.handleUpdate);
+  };
+
+  private teardownCollectorSubscription = () => {
+    if (this.unsubscribeCollector) {
+      this.unsubscribeCollector();
+      this.unsubscribeCollector = null;
+    }
+
+    this.state = createEmptySnapshot();
   };
 
   private handleUpdate = (update: ExtendedPriceUpdate) => {
