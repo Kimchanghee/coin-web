@@ -1,5 +1,8 @@
 import { useSyncExternalStore } from 'react';
-import { subscribeToLiveMarketCollector } from '../components/services/liveMarketCollector';
+import {
+  startLiveMarketCollector,
+  subscribeToLiveMarketCollector,
+} from '../components/services/liveMarketCollector';
 import type { ExtendedPriceUpdate } from '../types';
 
 type ExtendedFields = {
@@ -65,6 +68,7 @@ class LiveMarketStore {
       return;
     }
 
+    startLiveMarketCollector();
     this.unsubscribeCollector = subscribeToLiveMarketCollector(this.handleUpdate);
   };
 
