@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { subscribeToLiveMarketCollector, startLiveMarketCollector } from '../components/services/liveMarketCollector';
+import { subscribeToLiveMarketCollector } from '../components/services/liveMarketCollector';
 import type { ExtendedPriceUpdate } from '../types';
 
 type ExtendedFields = {
@@ -35,16 +35,12 @@ class LiveMarketStore {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      this.ensureCollectorSubscription();
+      this.connectCollector();
     }
   }
 
   subscribe = (listener: Listener): (() => void) => {
     this.listeners.add(listener);
-
-    // Guarantee the collector stays active even if no React components are
-    // currently consuming the store.
-    this.ensureCollectorSubscription();
 
     return () => {
       this.listeners.delete(listener);
@@ -64,17 +60,16 @@ class LiveMarketStore {
     };
   };
 
-  private ensureCollectorSubscription = () => {
+  private connectCollector = () => {
     if (typeof window === 'undefined' || this.unsubscribeCollector) {
       return;
     }
 
-    startLiveMarketCollector();
     this.unsubscribeCollector = subscribeToLiveMarketCollector(this.handleUpdate);
   };
 
   ensureWarm = () => {
-    this.ensureCollectorSubscription();
+    this.connectCollector();
   };
 
   private handleUpdate = (update: ExtendedPriceUpdate) => {
