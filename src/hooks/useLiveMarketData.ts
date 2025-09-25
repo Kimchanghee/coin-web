@@ -38,8 +38,8 @@ class LiveMarketStore {
   }
 
   subscribe = (listener: Listener): (() => void) => {
-    this.ensureCollectorSubscription();
     this.listeners.add(listener);
+
     return () => {
       this.listeners.delete(listener);
     };
