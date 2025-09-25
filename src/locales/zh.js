@@ -15,22 +15,22 @@ export default {
   },
   "sidebar": {
     "premium_header": "尊享版",
-    "premium": "尊享版",
-    "arbitrage": "套利",
-    "live_status": "实时现况",
-    "currency_calculator": "汇率计算器",
+    "price_comparison": "交易所价格对比",
+    "funding_info": "交易所资金费率",
+    "airdrop_info": "空投信息",
+    "tradingview_auto": "TradingView 信号自动交易",
+    "listing_info": "交易所上币信息",
     "announcements": "公告",
-    "premium_guide": "尊享指南",
     "logged_in_as": "登录为",
     "login_required": "需要登录"
   },
   "bottom_nav": {
-    "premium": "尊享版",
-    "arbitrage": "套利",
-    "live_status": "实时",
-    "currency_calculator": "汇率",
-    "announcements": "公告",
-    "premium_guide": "指南"
+    "price_comparison": "价格对比",
+    "funding_info": "资金费率",
+    "airdrop_info": "空投",
+    "tradingview_auto": "自动交易",
+    "listing_info": "上币信息",
+    "announcements": "公告"
   },
   "home": {
     "title": "泡菜溢价",
@@ -165,28 +165,36 @@ export default {
     "early_access_title": "申请抢先体验",
     "early_access_description": "留下您的邮箱，我们会在功能上线时第一时间通知您。",
     "email_placeholder": "请输入您的邮箱地址",
-    "arbitrage": {
-      "intro": "实时追踪跨交易所价差，在机会消失前抓住套利空间。",
+    "funding_info": {
+      "intro": "实时比较各交易所的资金费率，优化多空策略。",
       "points": [
-        "在一个仪表盘上查看国内外主要交易所的溢价差。",
-        "当价差突破自定义阈值时获取智能提醒。",
-        "通过历史价差图验证策略。"
+        "监控主流合约交易所的多空资金费率走势。",
+        "提供各币种的资金费率历史与平均值。",
+        "资金费率异常波动时立即提醒。"
       ]
     },
-    "currency_calculator": {
-      "intro": "使用实时汇率快速换算KRW、USD等主要法币，辅助交易决策。",
+    "airdrop_info": {
+      "intro": "集中查看空投日程与参与条件，不错过任何机会。",
       "points": [
-        "在支持的法币之间即时换算加密资产价格。",
-        "展示来自可信渠道、持续更新的参考汇率。",
-        "保存常用换算，提升决策效率。"
+        "汇总进行中与计划中的项目及快照日期。",
+        "提供参与条件与必备清单。",
+        "跟踪空投结束后的代币发放状态。"
       ]
     },
-    "premium_guide": {
-      "intro": "掌握TeamYM尊享版的全部价值，获取最佳实践与操作指南。",
+    "tradingview_auto": {
+      "intro": "将 TradingView 策略信号转换为自动下单。",
       "points": [
-        "学习解读溢价与套利信号的实用技巧。",
-        "了解会员权益，选择最适合自己的方案。",
-        "利用上手清单快速配置提醒与工作流程。"
+        "把 TradingView 提醒连接到多种交易策略。",
+        "通过 API 密钥与主流交易所安全对接。",
+        "查看每个策略的执行日志和绩效报告。"
+      ]
+    },
+    "listing_info": {
+      "intro": "实时监控交易所上币公告，抢先布局行情。",
+      "points": [
+        "秒级捕捉主流交易所的上币资讯。",
+        "支持自定义筛选，聚焦重点币种。",
+        "提供上币前后的价格走势数据。"
       ]
     }
   }

@@ -14,23 +14,23 @@
     "close": "Đóng"
   },
   "sidebar": {
-    "premium_header": "Premium",
-    "premium": "Premium",
-    "arbitrage": "Arbitrage",
-    "live_status": "Trạng thái thời gian thực",
-    "currency_calculator": "Máy tính tỷ giá",
+    "premium_header": "Chênh lệch giá",
+    "price_comparison": "So sánh giá theo sàn",
+    "funding_info": "Funding rate theo sàn",
+    "airdrop_info": "Thông tin airdrop",
+    "tradingview_auto": "Giao dịch tự động tín hiệu TradingView",
+    "listing_info": "Thông tin niêm yết sàn",
     "announcements": "Thông báo",
-    "premium_guide": "Hướng dẫn Premium",
     "logged_in_as": "Đăng nhập với tên",
     "login_required": "Yêu cầu đăng nhập"
   },
   "bottom_nav": {
-    "premium": "Premium",
-    "arbitrage": "Arbitrage",
-    "live_status": "Thời gian thực",
-    "currency_calculator": "Tỷ giá",
-    "announcements": "Thông báo",
-    "premium_guide": "Hướng dẫn"
+    "price_comparison": "So sánh giá",
+    "funding_info": "Funding rate",
+    "airdrop_info": "Airdrop",
+    "tradingview_auto": "Tự động",
+    "listing_info": "Niêm yết",
+    "announcements": "Thông báo"
   },
   "home": {
     "title": "Chênh lệch giá Kimchi",
@@ -157,28 +157,36 @@
     "early_access_title": "Đăng ký truy cập sớm",
     "early_access_description": "Để lại email của bạn và chúng tôi sẽ thông báo ngay khi tính năng ra mắt.",
     "email_placeholder": "Nhập địa chỉ email của bạn",
-    "arbitrage": {
-      "intro": "Theo dõi chênh lệch giá giữa các sàn theo thời gian thực để nắm bắt cơ hội arbitrage trước khi biến mất.",
+    "funding_info": {
+      "intro": "So sánh funding rate giữa các sàn theo thời gian thực để tối ưu chiến lược long/short.",
       "points": [
-        "Xem khoảng chênh premium giữa thị trường trong và ngoài nước trên một bảng điều khiển.",
-        "Nhận cảnh báo thông minh khi chênh lệch vượt ngưỡng tùy chỉnh.",
-        "Phân tích biểu đồ chênh lệch lịch sử để kiểm chứng chiến lược."
+        "Theo dõi dòng tiền long/short tại các sàn phái sinh lớn.",
+        "Xem lịch sử funding và giá trị trung bình cho từng đồng coin.",
+        "Nhận cảnh báo khi funding biến động bất thường để kịp thời hành động."
       ]
     },
-    "currency_calculator": {
-      "intro": "Chuyển đổi nhanh giữa KRW, USD và các tiền tệ chính với tỷ giá trực tuyến phục vụ giao dịch.",
+    "airdrop_info": {
+      "intro": "Cập nhật lịch airdrop và điều kiện tham gia trong một giao diện duy nhất để không bỏ lỡ cơ hội.",
       "points": [
-        "Chuyển đổi giá crypto giữa các tiền pháp định được hỗ trợ tức thì.",
-        "Hiển thị tỷ giá tham chiếu cập nhật liên tục từ nguồn đáng tin cậy.",
-        "Lưu các phép chuyển đổi dùng thường xuyên để ra quyết định nhanh hơn."
+        "Liệt kê dự án đang diễn ra và sắp tới cùng thời gian snapshot.",
+        "Giải thích điều kiện tham gia với checklist rõ ràng.",
+        "Theo dõi trạng thái phân phối token sau khi airdrop kết thúc."
       ]
     },
-    "premium_guide": {
-      "intro": "Khám phá cách khai thác tối đa giá trị của TeamYM Premium cùng hướng dẫn và kinh nghiệm hay.",
+    "tradingview_auto": {
+      "intro": "Biến tín hiệu chiến lược TradingView thành lệnh giao dịch tự động.",
       "points": [
-        "Nắm vững mẹo đọc tín hiệu premium và arbitrage.",
-        "Hiểu quyền lợi từng gói để chọn lựa gói thành viên phù hợp.",
-        "Dùng checklist khởi động để thiết lập cảnh báo và quy trình làm việc nhanh chóng."
+        "Kết nối cảnh báo TradingView với nhiều chiến lược giao dịch khác nhau.",
+        "Liên kết an toàn với các sàn lớn thông qua API key.",
+        "Xem nhật ký thực thi và báo cáo hiệu suất của từng chiến lược."
+      ]
+    },
+    "listing_info": {
+      "intro": "Theo dõi thông báo niêm yết sàn theo thời gian thực và hành động trước thị trường.",
+      "points": [
+        "Phát hiện tin niêm yết từ các sàn lớn trong tích tắc.",
+        "Bộ lọc tùy chỉnh giúp tập trung vào các mã quan tâm.",
+        "Xem dữ liệu giá trước và sau khi niêm yết để đánh giá cơ hội."
       ]
     }
   }

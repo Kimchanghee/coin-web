@@ -6,7 +6,7 @@ import SubscriptionPage from './pages/SubscriptionPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
-import { ArbitragePage, CurrencyCalculatorPage, PremiumGuidePage } from './pages/FeaturePage';
+import { FundingInfoPage, AirdropInfoPage, TradingviewAutoPage, ListingInfoPage } from './pages/FeaturePage';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -20,10 +20,10 @@ const App: React.FC = () => {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/" element={<HomePage />} />
-                <Route path="/premium" element={<SubscriptionPage />} />
-                <Route path="/arbitrage" element={<ArbitragePage />} />
-                <Route path="/currency-calculator" element={<CurrencyCalculatorPage />} />
-                <Route path="/premium-guide" element={<PremiumGuidePage />} />
+                <Route path="/funding" element={<FundingInfoPage />} />
+                <Route path="/airdrop" element={<AirdropInfoPage />} />
+                <Route path="/tradingview-auto" element={<TradingviewAutoPage />} />
+                <Route path="/listing-info" element={<ListingInfoPage />} />
                 <Route path="/announcements" element={<AnnouncementsPage />} />
                 <Route path="/admin" element={
                   <ProtectedRoute>
