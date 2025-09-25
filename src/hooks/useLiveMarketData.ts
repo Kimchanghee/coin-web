@@ -159,6 +159,17 @@ const getStore = (): LiveMarketStore => {
 
 const store = getStore();
 
+/**
+ * Eagerly bootstraps the live market store so it begins buffering updates even
+ * before any React component subscribes to it. This keeps the internal cache
+ * warm while the UI is dormant.
+ */
+export const bootstrapLiveMarketStore = (): void => {
+  // Access the snapshot to guarantee the singleton instance is retained and
+  // its collector subscription stays active.
+  void store.getSnapshot();
+};
+
 const noopSnapshot: LiveMarketSnapshot = createEmptySnapshot();
 
 export const useLiveMarketData = (): LiveMarketSnapshot => {
