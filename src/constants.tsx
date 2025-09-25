@@ -1,6 +1,6 @@
 import React from 'react';
 import type { TranslationFunction } from './i18n';
-import type { Exchange, CoinMetadata, ExchangeId, CoinId } from './types';
+import type { Exchange, CoinMetadata, CoinId } from './types';
 
 export const EXCHANGES: Exchange[] = [
   { id: 'upbit', name: 'Upbit', color: 'border-t-blue-500', icon: <i className="fa-solid fa-cloud text-blue-500"></i> },
@@ -17,12 +17,12 @@ export const TRACKED_COINS: CoinId[] = ['BTC', 'ETH', 'SOL'];
 export const COIN_DISPLAY_LIMIT = 30;
 
 export type ExchangeNavKey =
-  | 'premium'
-  | 'arbitrage'
-  | 'live_status'
-  | 'currency_calculator'
-  | 'announcements'
-  | 'premium_guide';
+  | 'price_comparison'
+  | 'funding_info'
+  | 'airdrop_info'
+  | 'tradingview_auto'
+  | 'listing_info'
+  | 'announcements';
 
 export type ExchangeNavItem = {
   key: ExchangeNavKey;
@@ -31,38 +31,38 @@ export type ExchangeNavItem = {
 };
 
 export const EXCHANGE_NAV_ITEMS: ExchangeNavItem[] = [
-  { key: 'premium', icon: 'fa-gem', path: '/premium' },
-  { key: 'arbitrage', icon: 'fa-right-left', path: '/arbitrage' },
-  { key: 'live_status', icon: 'fa-signal', path: '/' },
-  { key: 'currency_calculator', icon: 'fa-coins', path: '/currency-calculator' },
-  { key: 'announcements', icon: 'fa-bullhorn', path: '/announcements' },
-  { key: 'premium_guide', icon: 'fa-book-open', path: '/premium-guide' },
+  { key: 'price_comparison', icon: 'fa-chart-line', path: '/' },
+  { key: 'funding_info', icon: 'fa-percent', path: '/funding' },
+  { key: 'airdrop_info', icon: 'fa-gift', path: '/airdrop' },
+  { key: 'tradingview_auto', icon: 'fa-robot', path: '/tradingview-auto' },
+  { key: 'listing_info', icon: 'fa-bullhorn', path: '/listing-info' },
+  { key: 'announcements', icon: 'fa-bell', path: '/announcements' },
 ];
 
 export const EXCHANGE_NAV_TRANSLATIONS: Record<ExchangeNavKey, { primary: string; fallback: string }> = {
-  premium: {
-    primary: 'bottom_nav.premium',
-    fallback: 'sidebar.premium'
+  price_comparison: {
+    primary: 'bottom_nav.price_comparison',
+    fallback: 'sidebar.price_comparison'
   },
-  arbitrage: {
-    primary: 'bottom_nav.arbitrage',
-    fallback: 'sidebar.arbitrage'
+  funding_info: {
+    primary: 'bottom_nav.funding_info',
+    fallback: 'sidebar.funding_info'
   },
-  live_status: {
-    primary: 'bottom_nav.live_status',
-    fallback: 'sidebar.live_status'
+  airdrop_info: {
+    primary: 'bottom_nav.airdrop_info',
+    fallback: 'sidebar.airdrop_info'
   },
-  currency_calculator: {
-    primary: 'bottom_nav.currency_calculator',
-    fallback: 'sidebar.currency_calculator'
+  tradingview_auto: {
+    primary: 'bottom_nav.tradingview_auto',
+    fallback: 'sidebar.tradingview_auto'
+  },
+  listing_info: {
+    primary: 'bottom_nav.listing_info',
+    fallback: 'sidebar.listing_info'
   },
   announcements: {
     primary: 'bottom_nav.announcements',
     fallback: 'sidebar.announcements'
-  },
-  premium_guide: {
-    primary: 'bottom_nav.premium_guide',
-    fallback: 'sidebar.premium_guide'
   }
 };
 

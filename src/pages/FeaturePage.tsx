@@ -3,16 +3,17 @@ import { useTranslation } from '../i18n';
 import PremiumLayout from '../components/layouts/PremiumLayout';
 import { resolveExchangeNavLabel } from '../constants';
 
-type FeatureKey = 'arbitrage' | 'currency_calculator' | 'premium_guide';
+type FeatureKey = 'funding_info' | 'airdrop_info' | 'tradingview_auto' | 'listing_info';
 
 type FeaturePageTemplateProps = {
     featureKey: FeatureKey;
 };
 
 const featureIcons: Record<FeatureKey, string> = {
-    arbitrage: 'fa-right-left',
-    currency_calculator: 'fa-coins',
-    premium_guide: 'fa-book-open',
+    funding_info: 'fa-wave-square',
+    airdrop_info: 'fa-gift',
+    tradingview_auto: 'fa-robot',
+    listing_info: 'fa-bullhorn',
 };
 
 const FeaturePageTemplate: React.FC<FeaturePageTemplateProps> = ({ featureKey }) => {
@@ -94,8 +95,10 @@ const FeaturePageTemplate: React.FC<FeaturePageTemplateProps> = ({ featureKey })
     );
 };
 
-export const ArbitragePage: React.FC = () => <FeaturePageTemplate featureKey="arbitrage" />;
+export const FundingInfoPage: React.FC = () => <FeaturePageTemplate featureKey="funding_info" />;
 
-export const CurrencyCalculatorPage: React.FC = () => <FeaturePageTemplate featureKey="currency_calculator" />;
+export const AirdropInfoPage: React.FC = () => <FeaturePageTemplate featureKey="airdrop_info" />;
 
-export const PremiumGuidePage: React.FC = () => <FeaturePageTemplate featureKey="premium_guide" />;
+export const TradingviewAutoPage: React.FC = () => <FeaturePageTemplate featureKey="tradingview_auto" />;
+
+export const ListingInfoPage: React.FC = () => <FeaturePageTemplate featureKey="listing_info" />;

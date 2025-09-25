@@ -28,7 +28,8 @@ const resources: Record<string, TranslationResources> = {
 };
 
 const STORAGE_KEY = 'i18nextLng';
-const DEFAULT_LANGUAGE = 'en';
+const DEFAULT_LANGUAGE = 'ko';
+const FALLBACK_LANGUAGE = 'en';
 
 const I18nContext = createContext<TranslationContextValue | undefined>(undefined);
 
@@ -84,11 +85,6 @@ const detectInitialLanguage = () => {
     return stored;
   }
 
-  const browserLanguage = window.navigator.language?.split('-')[0];
-  if (browserLanguage && resources[browserLanguage]) {
-    return browserLanguage;
-  }
-
   return DEFAULT_LANGUAGE;
 };
 
@@ -106,17 +102,18 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const translate = useCallback((key: string, options?: TranslationOptions) => {
     const segments = key.split('.');
-    const languageResource = resources[language];
-    const fallbackResource = resources[DEFAULT_LANGUAGE];
+    const languageChain = [language, DEFAULT_LANGUAGE, FALLBACK_LANGUAGE]
+      .filter((lng, index, array) => resources[lng] && array.indexOf(lng) === index);
 
-    const rawValue = getNestedValue(languageResource, segments);
-    const value = rawValue !== undefined ? rawValue : getNestedValue(fallbackResource, segments);
-
-    if (value === undefined) {
-      return options?.defaultValue ?? key;
+    for (const lng of languageChain) {
+      const resource = resources[lng];
+      const value = getNestedValue(resource, segments);
+      if (value !== undefined) {
+        return formatValue(value, options);
+      }
     }
 
-    return formatValue(value, options);
+    return options?.defaultValue ?? key;
   }, [language]);
 
   const changeLanguage = useCallback<TranslationContextValue['changeLanguage']>(async nextLanguage => {
