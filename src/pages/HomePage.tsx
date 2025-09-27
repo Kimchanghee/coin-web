@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import Clock from '../components/Clock';
 import ThemeToggle from '../components/ThemeToggle';
-import { PremiumSidebar, PremiumBottomNav } from '../components/layouts/PremiumLayout';
+import { PremiumSidebar } from '../components/layouts/PremiumLayout';
 import { useLiveMarketData } from '../hooks/useLiveMarketData';
 
 type ExchangeOption = { id: string; name: string };
@@ -105,7 +105,7 @@ type HeaderStats = {
     coinbasePremium: number | null;
 };
 
-const Header: React.FC<{ onMenuClick: () => void; user: User | null; usdKrw: number; stats: HeaderStats }> = ({ onMenuClick, user, usdKrw, stats }) => {
+const Header: React.FC<{ onMenuClick: () => void; user: User | null; usdKrw: number; stats: HeaderStats; isMenuOpen: boolean }> = ({ onMenuClick, user, usdKrw, stats, isMenuOpen }) => {
     const { t } = useTranslation();
 
     const renderPremium = (value: number | null) => {
@@ -125,7 +125,14 @@ const Header: React.FC<{ onMenuClick: () => void; user: User | null; usdKrw: num
         <header className="sticky top-0 z-20 bg-white/80 dark:bg-black/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
             <div className="px-4 py-2 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <button onClick={onMenuClick} className="lg:hidden text-xl text-gray-600 dark:text-gray-300">
+                    <button
+                        type="button"
+                        onClick={onMenuClick}
+                        className="text-xl text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
+                        aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                        aria-expanded={isMenuOpen}
+                        aria-controls="premium-navigation"
+                    >
                         <i className="fas fa-bars"></i>
                     </button>
                     <Link to="/" className="font-bold text-black dark:text-white text-xl">
@@ -968,10 +975,10 @@ const HomePage: React.FC = () => {
                     user={user}
                     onLogout={logout}
                 />
-                {isSidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-30 lg:hidden"></div>}
+                {isSidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/60 z-30"></div>}
                 <div className="flex-1 flex flex-col min-w-0">
-                    <Header onMenuClick={() => setSidebarOpen(true)} user={user} usdKrw={usdKrw} stats={headerStats} />
-                    <main className="p-2 sm:p-4 lg:p-6 pb-20 lg:pb-6">
+                    <Header onMenuClick={() => setSidebarOpen(prev => !prev)} user={user} usdKrw={usdKrw} stats={headerStats} isMenuOpen={isSidebarOpen} />
+                    <main className="p-2 sm:p-4 lg:p-6 pb-12">
                         <ReferralBanner />
                         <div className="mb-4">
                             <h1 className="text-2xl font-bold text-black dark:text-white">{t('home.title')}</h1>
@@ -1018,7 +1025,6 @@ const HomePage: React.FC = () => {
                     </main>
                 </div>
             </div>
-            <PremiumBottomNav />
         </div>
     );
 };

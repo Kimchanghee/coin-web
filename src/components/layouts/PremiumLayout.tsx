@@ -11,16 +11,24 @@ import ThemeToggle from '../ThemeToggle';
 type PremiumHeaderProps = {
     onMenuClick: () => void;
     user: User | null;
+    isMenuOpen: boolean;
 };
 
-const PremiumHeader: React.FC<PremiumHeaderProps> = ({ onMenuClick, user }) => {
+const PremiumHeader: React.FC<PremiumHeaderProps> = ({ onMenuClick, user, isMenuOpen }) => {
     const { t } = useTranslation();
 
     return (
         <header className="sticky top-0 z-20 bg-white/80 dark:bg-black/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
             <div className="px-4 py-2 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <button onClick={onMenuClick} className="lg:hidden text-xl text-gray-600 dark:text-gray-300">
+                    <button
+                        type="button"
+                        onClick={onMenuClick}
+                        className="text-xl text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
+                        aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                        aria-expanded={isMenuOpen}
+                        aria-controls="premium-navigation"
+                    >
                         <i className="fas fa-bars"></i>
                     </button>
                     <Link to="/" className="font-bold text-black dark:text-white text-xl">
@@ -95,10 +103,31 @@ export const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose,
 
     return (
         <aside
-            className={`fixed z-40 inset-y-0 left-0 bg-gray-50 dark:bg-[#111111] w-64 p-4 transform transition-transform duration-300 ${
-                isOpen ? 'translate-x-0' : '-translate-x-full'
-            } lg:relative lg:translate-x-0 lg:w-56 border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex flex-col`}
+            className={`fixed inset-y-0 left-0 z-40 bg-gray-50 dark:bg-[#111111] w-64 sm:w-72 max-w-[90vw] p-4 shadow-xl border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ${
+                isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+            } flex flex-col`}
+            role="dialog"
+            aria-modal={isOpen}
+            aria-hidden={!isOpen}
+            id="premium-navigation"
         >
+            <div className="flex items-center justify-between mb-6">
+                <Link
+                    to="/"
+                    onClick={onClose}
+                    className="text-lg font-bold text-black dark:text-white"
+                >
+                    TeamYM
+                </Link>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white transition-colors"
+                    aria-label="Close menu"
+                >
+                    <i className="fas fa-times"></i>
+                </button>
+            </div>
             <nav className="flex flex-col flex-grow">
                 <div className="mb-8">
                     <h2 className="text-lg font-semibold text-black dark:text-white">{t('sidebar.premium_header')}</h2>
@@ -163,42 +192,6 @@ export const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose,
     );
 };
 
-export const PremiumBottomNav: React.FC = () => {
-    const { t } = useTranslation();
-    const location = useLocation();
-
-    return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#161616] border-t border-gray-200 dark:border-gray-800 flex justify-around p-2 lg:hidden z-20">
-            {EXCHANGE_NAV_ITEMS.map(item => {
-                const isActive = item.path ? location.pathname === item.path : false;
-                const baseClasses = 'flex flex-col items-center gap-1 flex-1 text-xs transition-colors';
-                const activeClasses = 'text-yellow-400';
-                const inactiveClasses = 'text-gray-500 hover:text-black dark:hover:text-white';
-
-                if (item.path) {
-                    return (
-                        <Link
-                            to={item.path}
-                            key={item.key}
-                            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
-                        >
-                            <i className={`fas ${item.icon} text-lg`}></i>
-                            <span>{resolveExchangeNavLabel(t, item.key)}</span>
-                        </Link>
-                    );
-                }
-
-                return (
-                    <button type="button" key={item.key} className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`} disabled>
-                        <i className={`fas ${item.icon} text-lg`}></i>
-                        <span>{resolveExchangeNavLabel(t, item.key)}</span>
-                    </button>
-                );
-            })}
-        </nav>
-    );
-};
-
 type PremiumLayoutProps = {
     children: React.ReactNode;
 };
@@ -219,15 +212,14 @@ const PremiumLayout: React.FC<PremiumLayoutProps> = ({ children }) => {
                 {isSidebarOpen && (
                     <div
                         onClick={() => setSidebarOpen(false)}
-                        className="fixed inset-0 bg-black/60 z-30 lg:hidden"
+                        className="fixed inset-0 bg-black/60 z-30"
                     ></div>
                 )}
                 <div className="flex-1 flex flex-col min-w-0">
-                    <PremiumHeader onMenuClick={() => setSidebarOpen(true)} user={user} />
-                    <main className="p-2 sm:p-4 lg:p-6 pb-20 lg:pb-6">{children}</main>
+                    <PremiumHeader onMenuClick={() => setSidebarOpen(prev => !prev)} user={user} isMenuOpen={isSidebarOpen} />
+                    <main className="p-2 sm:p-4 lg:p-6 pb-12">{children}</main>
                 </div>
             </div>
-            <PremiumBottomNav />
         </div>
     );
 };
