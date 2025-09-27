@@ -150,11 +150,12 @@ unsubscribeStatus();
 
 // --- (D) 정적 파일 서빙 + SPA Fallback ---
 
-const staticCandidates = ['dist', 'build'];
+const staticCandidates = ['build', 'dist'];
 const staticRoot = staticCandidates
   .map(dir => path.resolve(__dirname, '..', dir))
   .find(fs.existsSync) || path.resolve(__dirname, '..', 'dist');
 const distPath = staticRoot;
+console.log(`[static] serving assets from ${distPath}`);
 
 app.use(express.static(distPath));
 

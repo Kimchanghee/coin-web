@@ -24,10 +24,11 @@ const externalWsBaseUrl = 'wss://generativelanguage.googleapis.com';
 const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
 
 // ⚠️ dist는 프로젝트 루트에 생성되므로 server 기준으로 한 단계 위를 바라봐야 함
-const staticCandidates = ['dist', 'build'];
+const staticCandidates = ['build', 'dist'];
 const staticPath = staticCandidates
   .map(dir => path.resolve(__dirname, '..', dir))
   .find(fs.existsSync) || path.resolve(__dirname, '..', 'dist');
+console.log(`[static] serving assets from ${staticPath}`);
 const publicPath = path.join(__dirname, 'public');
 const ANNOUNCEMENTS_DIR = path.resolve(__dirname, '..', 'api', 'announcements');
 const ANNOUNCEMENT_ID_REGEX = /^[a-z0-9_-]+$/i;
