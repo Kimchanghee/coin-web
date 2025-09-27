@@ -2,6 +2,8 @@
 
 const path = require('path');
 
+const fs = require('fs');
+
 const express = require('express');
 
 const axios = require('axios');
@@ -148,7 +150,11 @@ unsubscribeStatus();
 
 // --- (D) 정적 파일 서빙 + SPA Fallback ---
 
-const distPath = path.resolve(__dirname, '..', 'dist');
+const staticCandidates = ['dist', 'build'];
+const staticRoot = staticCandidates
+  .map(dir => path.resolve(__dirname, '..', dir))
+  .find(fs.existsSync) || path.resolve(__dirname, '..', 'dist');
+const distPath = staticRoot;
 
 app.use(express.static(distPath));
 
