@@ -148,7 +148,7 @@ export const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose,
                                         onClick={onClose}
                                     >
                                         <i className={`fas ${item.icon} w-5`}></i>
-                                        <span>{resolveExchangeNavLabel(t, item.key)}</span>
+                                        <span>{resolveExchangeNavLabel(t, item.key, { variant: 'sidebar' })}</span>
                                     </Link>
                                 </li>
                             );
@@ -158,7 +158,7 @@ export const PremiumSidebar: React.FC<PremiumSidebarProps> = ({ isOpen, onClose,
                             <li key={item.key}>
                                 <button type="button" className={`${baseClasses} ${inactiveClasses} cursor-not-allowed`} disabled>
                                     <i className={`fas ${item.icon} w-5`}></i>
-                                    <span>{resolveExchangeNavLabel(t, item.key)}</span>
+                                    <span>{resolveExchangeNavLabel(t, item.key, { variant: 'sidebar' })}</span>
                                 </button>
                             </li>
                         );
