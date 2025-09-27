@@ -19,7 +19,7 @@ const featureIcons: Record<FeatureKey, string> = {
 const FeaturePageTemplate: React.FC<FeaturePageTemplateProps> = ({ featureKey }) => {
     const { t } = useTranslation();
     const icon = featureIcons[featureKey];
-    const featureLabel = resolveExchangeNavLabel(t, featureKey);
+    const featureLabel = resolveExchangeNavLabel(t, featureKey, { variant: 'sidebar' });
     const highlightKeys = [0, 1, 2].map(index => `feature_pages.${featureKey}.points.${index}`);
 
     return (

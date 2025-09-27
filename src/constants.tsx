@@ -39,39 +39,54 @@ export const EXCHANGE_NAV_ITEMS: ExchangeNavItem[] = [
   { key: 'announcements', icon: 'fa-bell', path: '/announcements' },
 ];
 
-export const EXCHANGE_NAV_TRANSLATIONS: Record<ExchangeNavKey, { primary: string; fallback: string }> = {
+type ExchangeNavLabelVariant = 'sidebar' | 'mobile';
+
+const EXCHANGE_NAV_TRANSLATIONS: Record<ExchangeNavKey, Record<ExchangeNavLabelVariant, string>> = {
   price_comparison: {
-    primary: 'bottom_nav.price_comparison',
-    fallback: 'sidebar.price_comparison'
+    sidebar: 'sidebar.price_comparison',
+    mobile: 'bottom_nav.price_comparison'
   },
   funding_info: {
-    primary: 'bottom_nav.funding_info',
-    fallback: 'sidebar.funding_info'
+    sidebar: 'sidebar.funding_info',
+    mobile: 'bottom_nav.funding_info'
   },
   airdrop_info: {
-    primary: 'bottom_nav.airdrop_info',
-    fallback: 'sidebar.airdrop_info'
+    sidebar: 'sidebar.airdrop_info',
+    mobile: 'bottom_nav.airdrop_info'
   },
   tradingview_auto: {
-    primary: 'bottom_nav.tradingview_auto',
-    fallback: 'sidebar.tradingview_auto'
+    sidebar: 'sidebar.tradingview_auto',
+    mobile: 'bottom_nav.tradingview_auto'
   },
   listing_info: {
-    primary: 'bottom_nav.listing_info',
-    fallback: 'sidebar.listing_info'
+    sidebar: 'sidebar.listing_info',
+    mobile: 'bottom_nav.listing_info'
   },
   announcements: {
-    primary: 'bottom_nav.announcements',
-    fallback: 'sidebar.announcements'
+    sidebar: 'sidebar.announcements',
+    mobile: 'bottom_nav.announcements'
   }
 };
 
-export const resolveExchangeNavLabel = (t: TranslationFunction, key: ExchangeNavKey) => {
+type ResolveExchangeNavLabelOptions = {
+  variant?: ExchangeNavLabelVariant;
+};
+
+export const resolveExchangeNavLabel = (
+  t: TranslationFunction,
+  key: ExchangeNavKey,
+  options?: ResolveExchangeNavLabelOptions
+) => {
+  const variant: ExchangeNavLabelVariant = options?.variant ?? 'sidebar';
+  const fallbackVariant: ExchangeNavLabelVariant = variant === 'sidebar' ? 'mobile' : 'sidebar';
   const translationKeys = EXCHANGE_NAV_TRANSLATIONS[key];
-  return t(translationKeys.primary, {
-    defaultValue: t(translationKeys.fallback)
+
+  return t(translationKeys[variant], {
+    defaultValue: t(translationKeys[fallbackVariant])
   });
 };
+
+export type { ExchangeNavLabelVariant, ResolveExchangeNavLabelOptions };
 
 // 모든 거래소를 하나로 합친 리스트 (기준거래소용)
 export const ALL_EXCHANGES_FOR_COMPARISON = [
